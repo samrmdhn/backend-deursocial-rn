@@ -1,0 +1,14 @@
+[Unit]
+Description=runner for backend on systemd /etc/systemd/system
+After=network.target
+
+[Service]
+Environment=APP_PORT=3010
+ExecStart=/home/ftedev/.nvm/versions/node/v18.15.0/bin/node /mainData/backend/app.js
+Restart=on-failure
+user=ftedev
+group=ftedev
+WorkingDirectory=/mainData/backend/
+
+[Install]
+WantedBy=multi-user.target
