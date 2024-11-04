@@ -34,7 +34,8 @@ export const getUsers = async (req, res) => {
 
 export const visitorToken = async (req, res) => {
     // const forwarded = req.headers["x-forwarded-for"];
-	var forwarded = req.headers['x-forwarded-for']  || req.connection.remoteAddress;
+	// var forwarded = req.headers['x-forwarded-for']  || req.connection.remoteAddress;
+    var forwarded = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
 
     const reqIp = req.ip;
