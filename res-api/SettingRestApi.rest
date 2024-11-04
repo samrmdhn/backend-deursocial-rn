@@ -1,0 +1,9 @@
+GET http://localhost:3010/users
+Content-Type: application/json
+x-api-key: ku4jaK6v%$gd364GAga5
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQsImVtYWlsIjoiaXZhbm5vZmlja0BnbWFpbC5jb20iLCJpYXQiOjE3MDM3MzIxNzYsImV4cCI6MTcwMzgxODU3Nn0.LCtSdzrzCv8X9VP7YJI75B7M1oE34MQTQ5fiVtLH3io
+
+###
+GET http://localhost:3010/kadieu
+Content-Type: application/json
+x-api-key: ku4jaK6v%$gd364GAga5
