@@ -1,5 +1,6 @@
 import db from '../configs/Database.js';
 import Example from '../apps/models/Example.js';
+import UsersModels from '../apps/models/UsersModels.js';
 
 
 async function syncDatabase() {
@@ -8,8 +9,11 @@ async function syncDatabase() {
     console.log('Connection has been established successfully.');
 
     // Sinkronisasi model dengan database
-    await Example.sync({ force: true }); // Menggunakan force: true akan membuat ulang tabel setiap kali dijalankan
-    console.log('Table table has been created.');
+    await Example.sync({ force: false }); // Menggunakan force: true akan membuat ulang tabel setiap kali dijalankan
+    console.log('Table table example has been created.');
+
+    await UsersModels.sync({ force: false }); // Menggunakan force: true akan membuat ulang tabel setiap kali dijalankan
+    console.log('Table table Users has been created.');
 
     await db.close();
   } catch (error) {
