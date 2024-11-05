@@ -8,7 +8,7 @@ export const getUsers = async (req, res) => {
     try {
         const users = await UsersModels.findAll();
         return responseApi(res, {
-            data: userss,
+            data: users,
             meta: {
                 assets_image_url: "https://google.com",
                 pagination: {
@@ -24,6 +24,7 @@ export const getUsers = async (req, res) => {
             },
         });
     } catch (error) {
+        console.log("error", error)
         return responseApi(res, {
             data: [],
             message: "server error....",
@@ -33,17 +34,37 @@ export const getUsers = async (req, res) => {
 };
 
 export const visitorToken = async (req, res) => {
-    // const forwarded = req.headers["x-forwarded-for"];
-	// var forwarded = req.headers['x-forwarded-for']  || req.connection.remoteAddress;
-    var forwarded = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-
-
-    const reqIp = req.ip;
-
-    console.log({ forwarded, reqIp });
-    return responseApi(res, {
-        message: { forwarded, reqIp },
-    });
-    // X-Forwarded-For
-    // signVisitorToken()
+    try {
+        var forwarded =
+            req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+        var agent = req.headers["user-agent"];
+        const encryptData = {
+            tod: 0,
+            uip: forwarded,
+            uag: agent,
+        };
+        const datas = {
+            ...encryptData,
+            token: btoa(
+                JSON.stringify(encryptData) +
+                    process.env.APP_ACCESS_TOKEN_SECRET
+            ),
+        };
+        return responseApi(res, {
+            data: {
+                access_token: signVisitorToken(datas),
+            },
+            status: {
+                code: 0,
+                message_client: "Data has been retrieved",
+            },
+        });
+    } catch (error) {
+        console.log(error);
+        return responseApi(res, {
+            data: [],
+            message: "server error....",
+            status: 1,
+        });
+    }
 };
