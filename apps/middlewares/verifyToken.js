@@ -24,9 +24,7 @@ const validationToken = (req, res, next, authHeader) => {
             token,
             process.env.APP_ACCESS_TOKEN_SECRET,
             (err, decoded) => {
-                console.log("decoded", decoded)
                 if (err) return res.status(403).json({ message: "Forbidden" });
-                req.email = decoded.email;
                 next();
             }
         );

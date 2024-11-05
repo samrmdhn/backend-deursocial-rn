@@ -1,8 +1,15 @@
 import express from "express";
 import * as SettingControllers from "../apps/index.js";
+import * as HomepageControllers from "../apps/index.js";
 import { verifyToken } from "../apps/middlewares/verifyToken.js";
 
 const api = express.Router();
-api.get("/kadieu", verifyToken, SettingControllers.visitorToken);
-api.get("/users", verifyToken, SettingControllers.getUsers);
+api.get("/api/kadieu", verifyToken, SettingControllers.visitorToken);
+api.get("/api/users", verifyToken, SettingControllers.getUsers);
+api.post("/api/display/types", verifyToken, HomepageControllers.createDisplayTypes);
+api.post("/api/display/types/:id", verifyToken, HomepageControllers.updateDisplayTypes);
+api.get("/api/display/types", verifyToken, HomepageControllers.getDisplayTypes);
+api.post("/api/contents", verifyToken, HomepageControllers.createContents);
+api.post("/api/contents/:id", verifyToken, HomepageControllers.updateContents);
+api.get("/api/contents", verifyToken, HomepageControllers.getContents);
 export default api;

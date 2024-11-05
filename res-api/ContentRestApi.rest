@@ -1,0 +1,60 @@
+# this rest api for making data content
+
+POST http://localhost:3010/api/display/types
+Content-Type: application/json
+x-api-key: ku4jaK6v%$gd364GAga5
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4wLjAuMSIsInVhZyI6InZzY29kZS1yZXN0Y2xpZW50IiwidG9rZW4iOiJleUowYjJRaU9qQXNJblZwY0NJNklqRXlOeTR3TGpBdU1TSXNJblZoWnlJNkluWnpZMjlrWlMxeVpYTjBZMnhwWlc1MEluMWhabk5oT1NSQ1JrVTRORE15WW10cVpqTW9LaWg1TWlrcCIsImlhdCI6MTczMDc5MDUxOSwiZXhwIjoxNzMwODc2OTE5fQ.2aTn6QG0UVWSMYlpK7UQ4ZZQulIGJmdO-dqwvXuW42I
+
+{
+    "title": "rectangle",
+    "status": 1
+}
+
+###
+POST http://localhost:3010/api/display/types/1
+Content-Type: application/json
+x-api-key: ku4jaK6v%$gd364GAga5
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4wLjAuMSIsInVhZyI6InZzY29kZS1yZXN0Y2xpZW50IiwidG9rZW4iOiJleUowYjJRaU9qQXNJblZwY0NJNklqRXlOeTR3TGpBdU1TSXNJblZoWnlJNkluWnpZMjlrWlMxeVpYTjBZMnhwWlc1MEluMWhabk5oT1NSQ1JrVTRORE15WW10cVpqTW9LaWg1TWlrcCIsImlhdCI6MTczMDc5MDUxOSwiZXhwIjoxNzMwODc2OTE5fQ.2aTn6QG0UVWSMYlpK7UQ4ZZQulIGJmdO-dqwvXuW42I
+
+{
+    "title": "rectangles",
+    "status": 1
+}
+
+### Get Display Types with Pagination and Filtering ###
+GET http://localhost:3010/api/display/types?page=1&limit=10&status=1
+Content-Type: application/json
+x-api-key: ku4jaK6v%$gd364GAga5
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4wLjAuMSIsInVhZyI6InZzY29kZS1yZXN0Y2xpZW50IiwidG9rZW4iOiJleUowYjJRaU9qQXNJblZwY0NJNklqRXlOeTR3TGpBdU1TSXNJblZoWnlJNkluWnpZMjlrWlMxeVpYTjBZMnhwWlc1MEluMWhabk5oT1NSQ1JrVTRORE15WW10cVpqTW9LaWg1TWlrcCIsImlhdCI6MTczMDc5MDUxOSwiZXhwIjoxNzMwODc2OTE5fQ.2aTn6QG0UVWSMYlpK7UQ4ZZQulIGJmdO-dqwvXuW42I
+
+
+###
+POST http://localhost:3010/api/contents
+Content-Type: application/json
+x-api-key: ku4jaK6v%$gd364GAga5
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4wLjAuMSIsInVhZyI6InZzY29kZS1yZXN0Y2xpZW50IiwidG9rZW4iOiJleUowYjJRaU9qQXNJblZwY0NJNklqRXlOeTR3TGpBdU1TSXNJblZoWnlJNkluWnpZMjlrWlMxeVpYTjBZMnhwWlc1MEluMWhabk5oT1NSQ1JrVTRORE15WW10cVpqTW9LaWg1TWlrcCIsImlhdCI6MTczMDc5MDUxOSwiZXhwIjoxNzMwODc2OTE5fQ.2aTn6QG0UVWSMYlpK7UQ4ZZQulIGJmdO-dqwvXuW42I
+
+{
+    "title": "pestapora 1",
+    "status": 1,
+    "display_types_id": 1
+}
+
+###
+POST http://localhost:3010/api/contents/1
+Content-Type: application/json
+x-api-key: ku4jaK6v%$gd364GAga5
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4wLjAuMSIsInVhZyI6InZzY29kZS1yZXN0Y2xpZW50IiwidG9rZW4iOiJleUowYjJRaU9qQXNJblZwY0NJNklqRXlOeTR3TGpBdU1TSXNJblZoWnlJNkluWnpZMjlrWlMxeVpYTjBZMnhwWlc1MEluMWhabk5oT1NSQ1JrVTRORE15WW10cVpqTW9LaWg1TWlrcCIsImlhdCI6MTczMDc5MDUxOSwiZXhwIjoxNzMwODc2OTE5fQ.2aTn6QG0UVWSMYlpK7UQ4ZZQulIGJmdO-dqwvXuW42I
+
+{
+    "title": "pestapora 2",
+    "status": 1,
+    "display_types_id": 1
+}
+
+### Get Display Types with Pagination and Filtering ###
+# GET http://localhost:3010/api/contents?page=1&limit=10&status=1&title=pestapora
+GET http://localhost:3010/api/contents?page=1&limit=10&status=1
+Content-Type: application/json
+x-api-key: ku4jaK6v%$gd364GAga5
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4wLjAuMSIsInVhZyI6InZzY29kZS1yZXN0Y2xpZW50IiwidG9rZW4iOiJleUowYjJRaU9qQXNJblZwY0NJNklqRXlOeTR3TGpBdU1TSXNJblZoWnlJNkluWnpZMjlrWlMxeVpYTjBZMnhwWlc1MEluMWhabk5oT1NSQ1JrVTRORE15WW10cVpqTW9LaWg1TWlrcCIsImlhdCI6MTczMDc5MDUxOSwiZXhwIjoxNzMwODc2OTE5fQ.2aTn6QG0UVWSMYlpK7UQ4ZZQulIGJmdO-dqwvXuW42I
