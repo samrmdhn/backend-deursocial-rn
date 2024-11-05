@@ -5,6 +5,6 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6I
 
 ###
 GET http://localhost:3010/kadieu
-# GET https://fire.deursocial.com/kadieu
+# GET https://seuneu.deursocial.com/kadieu
 Content-Type: application/json
 x-api-key: ku4jaK6v%$gd364GAga5
