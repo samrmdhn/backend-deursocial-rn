@@ -1,7 +1,7 @@
 import { makeEpocTime } from "../../helpers/customHelpers.js";
 import { signVisitorToken } from "../../libs/JwtHandlers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
-import UsersActivityModels from "../models/UsersActivityModels.js";
+import UsersAccessModels from "../models/UsersAccessModels.js";
 import UsersModels from "../models/UsersModels.js";
 import { Sequelize } from "sequelize";
 const Op = Sequelize.Op;
@@ -26,7 +26,7 @@ export const getUsers = async (req, res) => {
             },
         });
     } catch (error) {
-        console.log("error", error)
+        console.log("error", error);
         return responseApi(res, {
             data: [],
             message: "server error....",
@@ -52,31 +52,37 @@ export const visitorToken = async (req, res) => {
                     process.env.APP_ACCESS_TOKEN_SECRET
             ),
         };
-        const sevenDaysAgo = Math.floor(Date.now() / 1000) - (7 * 24 * 60 * 60); 
+        const sevenDaysAgo = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60; // Menghitung waktu 7 hari yang lalu
+        const now = Math.floor(Date.now() / 1000); // Waktu saat ini
+
         var configFindAll = {
-            attributes: [
-                "id"
-            ],
+            attributes: ["id", "access_token"],
             where: {
                 user_ip: forwarded,
                 created_at: {
-                    [Op.lt]: sevenDaysAgo // Mencari data yang lebih lama dari 7 hari
-                }
-            }
-        }
-        const visitorToken = signVisitorToken(datas)
-        const dataUser = await UsersActivityModels.findOne(configFindAll);
+                    [Op.gt]: sevenDaysAgo, // Data yang dibuat lebih besar dari 7 hari yang lalu
+                    [Op.lt]: now, // Data yang dibuat lebih kecil dari waktu saat ini
+                },
+            },
+        };
+
+        const dataUser = await UsersAccessModels.findOne(configFindAll);
+        var visitorToken = "";
         if (!dataUser) {
-            const newData = await UsersActivityModels.create({
-                created_at: makeEpocTime(),
-                user_ip: forwarded,
-                user_agent: agent,
-                mark_user_id: 0,
-                access_token: visitorToken
-            });
-            console.log("Data baru berhasil dibuat:", newData);
+            visitorToken = signVisitorToken(datas);
+            try {
+                await UsersAccessModels.create({
+                    created_at: makeEpocTime(),
+                    user_ip: forwarded,
+                    user_agent: agent,
+                    mark_user_id: 0,
+                    access_token: visitorToken,
+                });
+            } catch (error) {
+                throw new Error("error");
+            }
         } else {
-            console.log("Data ditemukan:", dataUser);
+            visitorToken = dataUser?.access_token;
         }
         return responseApi(res, {
             data: {
