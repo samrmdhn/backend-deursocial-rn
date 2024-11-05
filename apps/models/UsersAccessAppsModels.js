@@ -45,6 +45,7 @@ const UsersAccessAppsModels = db.define('ir_user_access_apps', {
         allowNull: true,
     },
 }, {
+    freezeTableName: true,
     timestamps: false
 })
 export default UsersAccessAppsModels
