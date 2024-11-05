@@ -1,6 +1,7 @@
 import db from '../configs/Database.js';
 import Example from '../apps/models/Example.js';
 import UsersModels from '../apps/models/UsersModels.js';
+import UsersActivityModels from '../apps/models/UsersActivityModels.js';
 
 
 async function syncDatabase() {
@@ -14,6 +15,9 @@ async function syncDatabase() {
 
     await UsersModels.sync({ force: false }); // Menggunakan force: true akan membuat ulang tabel setiap kali dijalankan
     console.log('Table table Users has been created.');
+
+    await UsersActivityModels.sync({ force: false }); // Menggunakan force: true akan membuat ulang tabel setiap kali dijalankan
+    console.log('Table table Users Activity has been created.');
 
     await db.close();
   } catch (error) {

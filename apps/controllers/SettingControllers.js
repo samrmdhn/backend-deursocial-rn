@@ -1,5 +1,7 @@
+import { makeEpocTime } from "../../helpers/customHelpers.js";
 import { signVisitorToken } from "../../libs/JwtHandlers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
+import UsersActivityModels from "../models/UsersActivityModels.js";
 import UsersModels from "../models/UsersModels.js";
 import { Sequelize } from "sequelize";
 const Op = Sequelize.Op;
@@ -50,9 +52,35 @@ export const visitorToken = async (req, res) => {
                     process.env.APP_ACCESS_TOKEN_SECRET
             ),
         };
+        const sevenDaysAgo = Math.floor(Date.now() / 1000) - (7 * 24 * 60 * 60); 
+        var configFindAll = {
+            attributes: [
+                "id"
+            ],
+            where: {
+                user_ip: forwarded,
+                created_at: {
+                    [Op.lt]: sevenDaysAgo // Mencari data yang lebih lama dari 7 hari
+                }
+            }
+        }
+        const visitorToken = signVisitorToken(datas)
+        const dataUser = await UsersActivityModels.findOne(configFindAll);
+        if (!dataUser) {
+            const newData = await UsersActivityModels.create({
+                created_at: makeEpocTime(),
+                user_ip: forwarded,
+                user_agent: agent,
+                mark_user_id: 0,
+                access_token: visitorToken
+            });
+            console.log("Data baru berhasil dibuat:", newData);
+        } else {
+            console.log("Data ditemukan:", dataUser);
+        }
         return responseApi(res, {
             data: {
-                access_token: signVisitorToken(datas),
+                access_token: visitorToken,
             },
             status: {
                 code: 0,
