@@ -4,6 +4,12 @@ import DisplayTypesModels from "../models/DisplayTypesModels.js";
 import ContentModels from "../models/ContentModels.js";
 import { Sequelize } from "sequelize";
 const Op = Sequelize.Op;
+ContentModels.belongsTo(DisplayTypesModels, {
+    foreignKey: "display_types_id",
+});
+DisplayTypesModels.hasMany(ContentModels, {
+    foreignKey: "display_types_id",
+});
 
 export const homepage = async (req, res) => {
     return res.status(200).json({
@@ -259,18 +265,12 @@ export const getContents = async (req, res) => {
                 [Op.iLike]: `%${title}%`,
             };
         }
-        ContentModels.belongsTo(DisplayTypesModels, {
-            foreignKey: "display_types_id",
-        });
-        DisplayTypesModels.hasMany(ContentModels, {
-            foreignKey: "display_types_id",
-        });
         const contentData = await ContentModels.findAll({
             where,
             limit: parseInt(limit),
             offset: parseInt(offset),
             attributes: {
-                exclude: ["created_at", "updated_at", "status"],
+                exclude: ["created_at", "updated_at", "status", "id"],
             },
             include: [
                 {
@@ -288,7 +288,7 @@ export const getContents = async (req, res) => {
             title: item.title,
             display_types: item.ir_display_type
                 ? item.ir_display_type.title
-                : null
+                : null,
         }));
         return responseApi(res, {
             data: responseData,
