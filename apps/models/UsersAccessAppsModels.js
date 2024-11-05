@@ -14,7 +14,7 @@ const {
  * created_at bigint
  * updated_at bigint
  */
-const UsersAccessModels = db.define('ir_user_access_apps', {
+const UsersAccessAppsModels = db.define('ir_user_access_apps', {
     id: {
         type: TYPES.BIGINT,
         primaryKey: true,
@@ -47,4 +47,4 @@ const UsersAccessModels = db.define('ir_user_access_apps', {
 }, {
     timestamps: false
 })
-export default UsersAccessModels
+export default UsersAccessAppsModels

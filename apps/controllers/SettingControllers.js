@@ -1,7 +1,7 @@
 import { makeEpocTime } from "../../helpers/customHelpers.js";
 import { signVisitorToken } from "../../libs/JwtHandlers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
-import UsersAccessModels from "../models/UsersAccessModels.js";
+import UsersAccessAppsModels from "../models/UsersAccessAppsModels.js";
 import UsersModels from "../models/UsersModels.js";
 import { Sequelize } from "sequelize";
 const Op = Sequelize.Op;
@@ -66,7 +66,7 @@ export const visitorToken = async (req, res) => {
             },
         };
 
-        const dataUser = await UsersAccessModels.findOne(configFindAll);
+        const dataUser = await UsersAccessAppsModels.findOne(configFindAll);
         var visitorToken = "";
         if (!dataUser) {
             visitorToken = signVisitorToken(datas);
