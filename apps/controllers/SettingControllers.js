@@ -1,6 +1,7 @@
 import { makeEpocTime } from "../../helpers/customHelpers.js";
 import { signVisitorToken } from "../../libs/JwtHandlers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
+import CountriesModels from "../models/CountriesModels.js";
 import UsersAccessAppsModels from "../models/UsersAccessAppsModels.js";
 import UsersModels from "../models/UsersModels.js";
 import { Sequelize } from "sequelize";
@@ -71,7 +72,7 @@ export const visitorToken = async (req, res) => {
         if (!dataUser) {
             visitorToken = signVisitorToken(datas);
             try {
-                await UsersAccessModels.create({
+                await UsersAccessAppsModels.create({
                     created_at: makeEpocTime(),
                     user_ip: forwarded,
                     user_agent: agent,
@@ -91,6 +92,30 @@ export const visitorToken = async (req, res) => {
             status: {
                 code: 0,
                 message_client: "Data has been retrieved",
+            },
+        });
+    } catch (error) {
+        console.log(error);
+        return responseApi(res, {
+            data: [],
+            message: "server error....",
+            status: 1,
+        });
+    }
+};
+
+export const createCountries = async (req, res) => {
+    try {
+        const { title } = req.body;
+        await CountriesModels.create({
+            title: title,
+            created_at: makeEpocTime(),
+        });
+        return responseApi(res, {
+            data: [],
+            status: {
+                code: 0,
+                message_client: "Data has been saved",
             },
         });
     } catch (error) {

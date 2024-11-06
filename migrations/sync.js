@@ -1,28 +1,34 @@
 import db from "../configs/Database.js";
-import Example from "../apps/models/Example.js";
-import UsersModels from "../apps/models/UsersModels.js";
 import UsersAccessAppsModels from "../apps/models/UsersAccessAppsModels.js";
 import DisplayTypesModels from "../apps/models/DisplayTypesModels.js";
 import ContentModels from "../apps/models/ContentModels.js";
+import CountriesModels from "../apps/models/CountriesModels.js";
+import RegionsModels from "../apps/models/RegionsModels.js";
+import SubregionsModels from "../apps/models/SubregionsModels.js";
+import ProvincesModels from "../apps/models/ProvincesModels.js";
+import CitysModels from "../apps/models/CitysModels.js";
 
 // Menggunakan force: true akan membuat ulang tabel setiap kali dijalankan contoh => Example.sync({ force: true })
 async function syncDatabase() {
     try {
         await db.authenticate();
         console.log("Connection has been established successfully.");
-
-        // await Example.sync({ force: false });
-        // console.log('Table table example has been created.');
-
-        // await UsersModels.sync({ force: false });
-        // console.log('Table table Users has been created.');
-
         await UsersAccessAppsModels.sync({ force: false });
         console.log("Table table Users Access App has been created.");
         await DisplayTypesModels.sync({ force: false });
         console.log("Table table Display Types has been created.");
         await ContentModels.sync({ force: false });
         console.log("Table table Contents has been created.");
+        await RegionsModels.sync({ force: false });
+        console.log("Table table regions has been created.");
+        await SubregionsModels.sync({ force: false });
+        console.log("Table table subregions has been created.");
+        await CountriesModels.sync({ force: false });
+        console.log("Table table countries has been created.");
+        await ProvincesModels.sync({ force: false });
+        console.log("Table table Provinces has been created.");
+        await CitysModels.sync({ force: false });
+        console.log("Table table City has been created.");
 
 
         await db.close();
