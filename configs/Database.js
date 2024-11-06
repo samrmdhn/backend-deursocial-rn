@@ -10,9 +10,9 @@ const db = new Sequelize(
         dialect: process.env.APP_DB_CONNECTION,
         port: process.env.APP_DB_PORT,
         pool: {
-            max: 5,
+            max: 40,
             min: 0,
-            acquire: 60000,
+            acquire: 120000,
             idle: 10000,
         }
     }
