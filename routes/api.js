@@ -23,4 +23,6 @@ api.get("/api/event/organizers", verifyToken, HomepageControllers.getEventOrgani
 api.post("/api/event/organizers", verifyToken, HomepageControllers.createEventOrganizers);
 api.get("/api/type/content/detail", verifyToken, HomepageControllers.getTypeContentDetails);
 api.post("/api/type/content/detail", verifyToken, HomepageControllers.createTypeContentDetails);
+api.get("/api/tags", verifyToken, HomepageControllers.getTags);
+api.post("/api/tags", verifyToken, HomepageControllers.createTags);
 export default api;
