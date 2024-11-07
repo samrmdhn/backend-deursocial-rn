@@ -160,29 +160,6 @@ Table group_post_comments {
   updated_at bigint
 }
 
-Table countries {
-  id bigint [increment, pk]
-  title string(100) [not null]
-  created_at bigint
-  updated_at bigint
-}
-Table provinces {
-  id bigint [increment, pk]
-  countries_id bigint [ref: > countries.id]
-  title string(100) [not null]
-  created_at bigint
-  updated_at bigint
-}
-
-Table citys {
-  id bigint [increment, pk]
-  countries_id bigint [ref: > countries.id]
-  provinces_id bigint [ref: > provinces.id]
-  title string(100) [not null]
-  created_at bigint
-  updated_at bigint
-}
-
 Table vanues {
   id bigint [increment, pk]
   citys_id bigint [ref: > citys.id]
@@ -236,14 +213,7 @@ Table actress {
   updated_at bigint
 }
 
-Table event_organizers {
-  id bigint [increment, pk]
-  fullname string(100) [not null]
-  image string(255) [not null]
-  detail text [null]
-  created_at bigint
-  updated_at bigint
-}
+
 
 Table roles {
   id bigint [increment, pk]

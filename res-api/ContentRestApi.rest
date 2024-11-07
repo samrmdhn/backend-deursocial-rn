@@ -1,5 +1,8 @@
 # this rest api for making data content
 
+###
+GET http://localhost:3010/api/homepages
+
 POST http://localhost:3010/api/display/types
 Content-Type: application/json
 x-api-key: ku4jaK6v%$gd364GAga5
@@ -58,5 +61,20 @@ GET http://localhost:3010/api/contents?page=1&limit=10&status=1
 Content-Type: application/json
 x-api-key: ku4jaK6v%$gd364GAga5
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4wLjAuMSIsInVhZyI6InZzY29kZS1yZXN0Y2xpZW50IiwidG9rZW4iOiJleUowYjJRaU9qQXNJblZwY0NJNklqRXlOeTR3TGpBdU1TSXNJblZoWnlJNkluWnpZMjlrWlMxeVpYTjBZMnhwWlc1MEluMWhabk5oT1NSQ1JrVTRORE15WW10cVpqTW9LaWg1TWlrcCIsImlhdCI6MTczMDc5MDUxOSwiZXhwIjoxNzMwODc2OTE5fQ.2aTn6QG0UVWSMYlpK7UQ4ZZQulIGJmdO-dqwvXuW42I
+
 ###
-GET http://localhost:3010/api/homepages
+POST http://localhost:3010/api/event/organizers
+Content-Type: application/json
+x-api-key: ku4jaK6v%$gd364GAga5
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4wLjAuMSIsInVhZyI6InZzY29kZS1yZXN0Y2xpZW50IiwidG9rZW4iOiJleUowYjJRaU9qQXNJblZwY0NJNklqRXlOeTR3TGpBdU1TSXNJblZoWnlJNkluWnpZMjlrWlMxeVpYTjBZMnhwWlc1MEluMWhabk5oT1NSQ1JrVTRORE15WW10cVpqTW9LaWg1TWlrcCIsImlhdCI6MTczMDk0NzEwNywiZXhwIjoxNzMxNTUxOTA3fQ.6Ex2saYkRLdbpHMrt87lRY9hgvOXsNDClk8njhsM4O0
+
+{
+    "name": "P didy Corporate",
+    "detail": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris turpis sem, posuere gravida nibh a, vestibulum finibus neque. Phasellus pulvinar metus erat, nec bibendum eros ultrices sed. Sed sagittis turpis id nisl auctor aliquam ac sed nisl. Mauris vitae nisl et tortor fermentum volutpat. Aenean et ultrices erat. Aliquam erat volutpat. Vivamus tempor ultrices diam, rutrum egestas mi euismod non. Cras elementum nisl quis ullamcorper aliquam. Vivamus maximus ante urna, nec sagittis dolor dignissim quis."
+}
+
+###
+GET http://localhost:3010/api/event/organizers?name=p
+Content-Type: application/json
+x-api-key: ku4jaK6v%$gd364GAga5
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4wLjAuMSIsInVhZyI6InZzY29kZS1yZXN0Y2xpZW50IiwidG9rZW4iOiJleUowYjJRaU9qQXNJblZwY0NJNklqRXlOeTR3TGpBdU1TSXNJblZoWnlJNkluWnpZMjlrWlMxeVpYTjBZMnhwWlc1MEluMWhabk5oT1NSQ1JrVTRORE15WW10cVpqTW9LaWg1TWlrcCIsImlhdCI6MTczMDk0NzEwNywiZXhwIjoxNzMxNTUxOTA3fQ.6Ex2saYkRLdbpHMrt87lRY9hgvOXsNDClk8njhsM4O0
