@@ -8,6 +8,7 @@ import SubregionsModels from "../apps/models/SubregionsModels.js";
 import ProvincesModels from "../apps/models/ProvincesModels.js";
 import CitysModels from "../apps/models/CitysModels.js";
 import VanuesModels from "../apps/models/VanuesModels.js";
+import EventOrganizersModels from "../apps/models/EventOrganizersModels.js";
 
 // Menggunakan force: true akan membuat ulang tabel setiap kali dijalankan contoh => Example.sync({ force: true })
 async function syncDatabase() {
@@ -32,6 +33,8 @@ async function syncDatabase() {
         console.log("Table table City has been created.");
         await VanuesModels.sync({ force: false });
         console.log("Table table Vanues has been created.");
+        await EventOrganizersModels.sync({ force: false });
+        console.log("Table table event organizer has been created.");
 
 
         await db.close();

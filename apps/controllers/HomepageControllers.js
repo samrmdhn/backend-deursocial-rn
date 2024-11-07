@@ -15,6 +15,7 @@ import runnerForJsonSubRegions from "../../databases/json/scripts/subRegionsCrea
 import runnerForJsonCountries from "../../databases/json/scripts/countriesCreates.js"
 import runnerForJsonProvinces from "../../databases/json/scripts/provincesCreates.js"
 import runnerForJsonCitys from "../../databases/json/scripts/citysCreates.js"
+import EventOrganizersModels from "../models/EventOrganizersModels.js";
 
 export const homepage = async (req, res) => {
     runnerForJsonRegions()
@@ -299,6 +300,97 @@ export const getContents = async (req, res) => {
             display_types: item.ir_display_type
                 ? item.ir_display_type.title
                 : null,
+        }));
+        return responseApi(res, {
+            data: responseData,
+            meta: {
+                assets_image_url: "https://google.com", // Contoh URL gambar
+                pagination: {
+                    current_page: parseInt(page),
+                    per_page: parseInt(limit),
+                    total: totalCount,
+                    total_page: totalPages,
+                },
+            },
+            status: {
+                code: 0,
+                message_client: "Data retrieved successfully",
+            },
+        });
+    } catch (error) {
+        console.error("Error fetching display types:", error);
+        return responseApi(res, {
+            data: [],
+            message: "Server error....",
+            status: 1,
+        });
+    }
+};
+
+
+/**
+ * function create new event organizers
+ * @param {*} req
+ * @param {*} res
+ * @returns {Object}
+ */
+export const createEventOrganizers = async (req, res) => {
+    try {
+        const { name, detail } = req.body;
+        await EventOrganizersModels.create({
+            name: name,
+            detail: detail,
+            created_at: makeEpocTime(),
+        });
+        return responseApi(res, {
+            data: [],
+            status: {
+                code: 0,
+                message_client: "Data has been saved",
+            },
+        });
+    } catch (error) {
+        console.log(error);
+        return responseApi(res, {
+            data: [],
+            message: "server error....",
+            status: 1,
+        });
+    }
+};
+
+
+/**
+ * Fungsi untuk get data event organizers.
+ * @param {*} req
+ * @param {*} res
+ * @returns {Promise} - Promise yang berisi hasil dari operasi update.
+ */
+export const getEventOrganizers = async (req, res) => {
+    try {
+        const { page = 1, limit = 10, name = ""} = req.query;
+        const offset = (page - 1) * limit;
+        const where  = {}
+        if (name) {
+            where.name = {
+                [Op.iLike]: `%${name}%`,
+            };
+        }
+        const contentData = await EventOrganizersModels.findAll({
+            where,
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            attributes: {
+                exclude: ["created_at", "updated_at", "id"],
+            }
+        });
+        const totalCount = await EventOrganizersModels.count({
+            where,
+        });
+        const totalPages = Math.ceil(totalCount / limit);
+        const responseData = contentData.map((item) => ({
+            id: item.id,
+            name: item.name
         }));
         return responseApi(res, {
             data: responseData,

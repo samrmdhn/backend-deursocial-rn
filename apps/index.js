@@ -5,7 +5,9 @@ export {
     getDisplayTypes,
     createContents,
     updateContents,
-    getContents
+    getContents,
+    getEventOrganizers,
+    createEventOrganizers
 } from "./controllers/HomepageControllers.js";
 export {
     getUsers,
