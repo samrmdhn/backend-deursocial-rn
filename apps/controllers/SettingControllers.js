@@ -1,10 +1,11 @@
 import { makeEpocTime } from "../../helpers/customHelpers.js";
 import { signVisitorToken } from "../../libs/JwtHandlers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
-import CountriesModels from "../models/CountriesModels.js";
+import CitysModels from "../models/CitysModels.js";
 import UsersAccessAppsModels from "../models/UsersAccessAppsModels.js";
 import UsersModels from "../models/UsersModels.js";
 import { Sequelize } from "sequelize";
+import VanuesModels from "../models/VanuesModels.js";
 const Op = Sequelize.Op;
 
 export const getUsers = async (req, res) => {
@@ -104,11 +105,143 @@ export const visitorToken = async (req, res) => {
     }
 };
 
-export const createCountries = async (req, res) => {
+export const getCitys = async (req, res) => {
     try {
-        const { title } = req.body;
-        await CountriesModels.create({
+        const { page = 1, limit = 10, title = "", provinces_id = 1 } = req.query;
+        const offset = (page - 1) * limit;
+        const where = {
+            provinces_id: provinces_id ? provinces_id : 1,
+        };
+        if (title) {
+            where.title = {
+                [Op.iLike]: `%${title}%`,
+            };
+        }
+        const contentData = await CitysModels.findAll({
+            where,
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            attributes: {
+                exclude: ["created_at", "updated_at", "provinces_id"],
+            }
+        });
+        const totalCount = await CitysModels.count({
+            where,
+        });
+        const totalPages = Math.ceil(totalCount / limit);
+        const responseData = contentData.map((item) => ({
+            id: item.id,
+            title: item.title
+        }));
+        return responseApi(res, {
+            data: responseData,
+            meta: {
+                assets_image_url: "https://google.com", // Contoh URL gambar
+                pagination: {
+                    current_page: parseInt(page),
+                    per_page: parseInt(limit),
+                    total: totalCount,
+                    total_page: totalPages,
+                },
+            },
+            status: {
+                code: 0,
+                message_client: "Data retrieved successfully",
+            },
+        });
+    } catch (error) {
+        console.error("Error fetching display types:", error);
+        return responseApi(res, {
+            data: [],
+            message: "Server error....",
+            status: 1,
+        });
+    }
+};
+export const createCitys = async (req, res) => {
+    try {
+        const { title, provinces_id } = req.body;
+        await CitysModels.create({
             title: title,
+            provinces_id: provinces_id,
+            created_at: makeEpocTime(),
+        });
+        return responseApi(res, {
+            data: [],
+            status: {
+                code: 0,
+                message_client: "Data has been saved",
+            },
+        });
+    } catch (error) {
+        console.log(error);
+        return responseApi(res, {
+            data: [],
+            message: "server error....",
+            status: 1,
+        });
+    }
+};
+
+export const getVanues = async (req, res) => {
+    try {
+        const { page = 1, limit = 10, title = "", citys_id = 1 } = req.query;
+        const offset = (page - 1) * limit;
+        const where = {
+            citys_id: citys_id ? citys_id : 1,
+        };
+        if (title) {
+            where.title = {
+                [Op.iLike]: `%${title}%`,
+            };
+        }
+        const contentData = await VanuesModels.findAll({
+            where,
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            attributes: {
+                exclude: ["created_at", "updated_at", "citys_id"],
+            }
+        });
+        const totalCount = await VanuesModels.count({
+            where,
+        });
+        const totalPages = Math.ceil(totalCount / limit);
+        const responseData = contentData.map((item) => ({
+            id: item.id,
+            title: item.title
+        }));
+        return responseApi(res, {
+            data: responseData,
+            meta: {
+                assets_image_url: "https://google.com", // Contoh URL gambar
+                pagination: {
+                    current_page: parseInt(page),
+                    per_page: parseInt(limit),
+                    total: totalCount,
+                    total_page: totalPages,
+                },
+            },
+            status: {
+                code: 0,
+                message_client: "Data retrieved successfully",
+            },
+        });
+    } catch (error) {
+        console.error("Error fetching display types:", error);
+        return responseApi(res, {
+            data: [],
+            message: "Server error....",
+            status: 1,
+        });
+    }
+};
+export const createVanues = async (req, res) => {
+    try {
+        const { title, citys_id } = req.body;
+        await VanuesModels.create({
+            title: title,
+            citys_id: citys_id,
             created_at: makeEpocTime(),
         });
         return responseApi(res, {
