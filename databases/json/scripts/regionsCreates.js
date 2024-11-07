@@ -13,8 +13,8 @@ const runnerForJsonRegions = async () => {
 
         // Mengubah string JSON menjadi objek JavaScript
         const jsonData = JSON.parse(data);
-        jsonData.forEach(async(val, index) => {
-            await RegionsModels.create({
+        jsonData.forEach((val, index) => {
+            RegionsModels.create({
                 id: val.id,
                 title: val.name,
                 created_at: makeEpocTime(),
