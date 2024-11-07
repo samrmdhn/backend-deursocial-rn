@@ -13,9 +13,9 @@ const runnerForJsonProvinces = async () => {
 
         // Mengubah string JSON menjadi objek JavaScript
         const jsonData = JSON.parse(data);
-        jsonData.forEach(async(val, index) => {
+        jsonData.forEach((val, index) => {
             if (val.country_id) {
-                await ProvincesModels.create({
+                ProvincesModels.create({
                     id: val.id,
                     title: val.name,
                     countries_id: Number(val.country_id),

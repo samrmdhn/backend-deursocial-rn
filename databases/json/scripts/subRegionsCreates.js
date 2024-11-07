@@ -13,9 +13,9 @@ const runnerForJsonSubRegions = async () => {
 
         // Mengubah string JSON menjadi objek JavaScript
         const jsonData = JSON.parse(data);
-        jsonData.forEach(async (val, index) => {
+        jsonData.forEach((val, index) => {
             if (val.region_id) {
-                await SubregionsModels.create({
+                SubregionsModels.create({
                     id: val.id,
                     title: val.name,
                     regions_id: Number(val.region_id),
