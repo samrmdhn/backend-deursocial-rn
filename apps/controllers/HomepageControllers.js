@@ -16,6 +16,7 @@ import runnerForJsonCountries from "../../databases/json/scripts/countriesCreate
 import runnerForJsonProvinces from "../../databases/json/scripts/provincesCreates.js"
 import runnerForJsonCitys from "../../databases/json/scripts/citysCreates.js"
 import EventOrganizersModels from "../models/EventOrganizersModels.js";
+import TypeContentDetailsModels from "../models/TypeContentDetailsModels.js";
 
 export const homepage = async (req, res) => {
     runnerForJsonRegions()
@@ -385,6 +386,97 @@ export const getEventOrganizers = async (req, res) => {
             }
         });
         const totalCount = await EventOrganizersModels.count({
+            where,
+        });
+        const totalPages = Math.ceil(totalCount / limit);
+        const responseData = contentData.map((item) => ({
+            id: item.id,
+            name: item.name
+        }));
+        return responseApi(res, {
+            data: responseData,
+            meta: {
+                assets_image_url: "https://google.com", // Contoh URL gambar
+                pagination: {
+                    current_page: parseInt(page),
+                    per_page: parseInt(limit),
+                    total: totalCount,
+                    total_page: totalPages,
+                },
+            },
+            status: {
+                code: 0,
+                message_client: "Data retrieved successfully",
+            },
+        });
+    } catch (error) {
+        console.error("Error fetching display types:", error);
+        return responseApi(res, {
+            data: [],
+            message: "Server error....",
+            status: 1,
+        });
+    }
+};
+
+
+
+/**
+ * function create new types content details
+ * @param {*} req
+ * @param {*} res
+ * @returns {Object}
+ */
+export const createTypeContentDetails = async (req, res) => {
+    try {
+        const { name } = req.body;
+        await TypeContentDetailsModels.create({
+            name: name,
+            created_at: makeEpocTime(),
+        });
+        return responseApi(res, {
+            data: [],
+            status: {
+                code: 0,
+                message_client: "Data has been saved",
+            },
+        });
+    } catch (error) {
+        console.log(error);
+        return responseApi(res, {
+            data: [],
+            message: "server error....",
+            status: 1,
+        });
+    }
+};
+
+
+/**
+ * Fungsi untuk get data event organizers.
+ * @param {*} req
+ * @param {*} res
+ * @returns {Promise} - Promise yang berisi hasil dari operasi update.
+ */
+export const getTypeContentDetails = async (req, res) => {
+    try {
+        const { page = 1, limit = 10, name = ""} = req.query;
+        const offset = (page - 1) * limit;
+        const where  = {}
+        if (name) {
+            where.name = {
+                [Op.iLike]: `%${name}%`,
+            };
+        }
+        const contentData = await TypeContentDetailsModels.findAll({
+            where,
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            attributes: {
+                exclude: ["created_at", "updated_at", "id"],
+            }
+        });
+        const totalCount = await TypeContentDetailsModels.count({
             where,
         });
         const totalPages = Math.ceil(totalCount / limit);

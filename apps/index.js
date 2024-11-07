@@ -7,7 +7,9 @@ export {
     updateContents,
     getContents,
     getEventOrganizers,
-    createEventOrganizers
+    createEventOrganizers,
+    getTypeContentDetails,
+    createTypeContentDetails,
 } from "./controllers/HomepageControllers.js";
 export {
     getUsers,
