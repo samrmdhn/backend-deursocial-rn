@@ -11,6 +11,7 @@ import VanuesModels from "../apps/models/VanuesModels.js";
 import EventOrganizersModels from "../apps/models/EventOrganizersModels.js";
 import TypeContentDetailsModels from "../apps/models/TypeContentDetailsModels.js";
 import TagsModels from "../apps/models/TagsModels.js";
+import ActressModels from "../apps/models/ActressModels.js";
 
 // Menggunakan force: true akan membuat ulang tabel setiap kali dijalankan contoh => Example.sync({ force: true })
 async function syncDatabase() {
@@ -41,6 +42,8 @@ async function syncDatabase() {
         console.log("Table table event Type content details has been created.");
         await TagsModels.sync({ force: false });
         console.log("Table table event Tags has been created.");
+        await ActressModels.sync({ force: false });
+        console.log("Table table Actress has been created.");
 
 
         await db.close();

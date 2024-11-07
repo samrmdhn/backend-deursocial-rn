@@ -195,16 +195,6 @@ Table content_detail_followers {
   updated_at bigint
 }
 
-Table actress {
-  id bigint [increment, pk]
-  name string(100) [not null]
-  image string(255) [not null]
-  gender tinyint[2] [note: '1: Men, 2: women']
-  birth_of_day date [null]
-  detail longtext [null]
-  created_at bigint
-  updated_at bigint
-}
 
 
 
