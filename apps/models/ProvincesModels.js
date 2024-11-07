@@ -28,6 +28,9 @@ const ProvincesModels = db.define("ir_provinces", {
         type: TYPES.BIGINT,
         allowNull: true,
     },
+},     {
+    freezeTableName: true,
+    timestamps: false,
 });
 
 export default ProvincesModels;

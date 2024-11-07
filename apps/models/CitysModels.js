@@ -28,6 +28,9 @@ const CitysModels = db.define("ir_citys", {
         type: TYPES.BIGINT,
         allowNull: true,
     },
+},     {
+    freezeTableName: true,
+    timestamps: false,
 });
 
 export default CitysModels;
