@@ -25,4 +25,7 @@ api.get("/api/type/content/detail", verifyToken, HomepageControllers.getTypeCont
 api.post("/api/type/content/detail", verifyToken, HomepageControllers.createTypeContentDetails);
 api.get("/api/tags", verifyToken, HomepageControllers.getTags);
 api.post("/api/tags", verifyToken, HomepageControllers.createTags);
+
+api.get("/api/actress", verifyToken, HomepageControllers.getActress);
+api.post("/api/actress", verifyToken, HomepageControllers.createActress);
 export default api;

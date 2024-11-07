@@ -18,6 +18,7 @@ import runnerForJsonCitys from "../../databases/json/scripts/citysCreates.js"
 import EventOrganizersModels from "../models/EventOrganizersModels.js";
 import TypeContentDetailsModels from "../models/TypeContentDetailsModels.js";
 import TagsModels from "../models/TagsModels.js";
+import ActressModels from "../models/ActressModels.js";
 
 export const homepage = async (req, res) => {
     runnerForJsonRegions()
@@ -573,6 +574,98 @@ export const getTags = async (req, res) => {
         const responseData = contentData.map((item) => ({
             id: item.id,
             title: item.title
+        }));
+        return responseApi(res, {
+            data: responseData,
+            meta: {
+                assets_image_url: "https://google.com", // Contoh URL gambar
+                pagination: {
+                    current_page: parseInt(page),
+                    per_page: parseInt(limit),
+                    total: totalCount,
+                    total_page: totalPages,
+                },
+            },
+            status: {
+                code: 0,
+                message_client: "Data retrieved successfully",
+            },
+        });
+    } catch (error) {
+        console.error("Error fetching display types:", error);
+        return responseApi(res, {
+            data: [],
+            message: "Server error....",
+            status: 1,
+        });
+    }
+};
+
+/**
+ * function create new tags
+ * @param {*} req
+ * @param {*} res
+ * @returns {Object}
+ */
+export const createActress = async (req, res) => {
+    try {
+        const { name, gender, detail, image } = req.body;
+        await ActressModels.create({
+            name: name,
+            gender: gender,
+            detail: detail,
+            image: image,
+            created_at: makeEpocTime(),
+        });
+        return responseApi(res, {
+            data: [],
+            status: {
+                code: 0,
+                message_client: "Data has been saved",
+            },
+        });
+    } catch (error) {
+        console.log(error);
+        return responseApi(res, {
+            data: [],
+            message: "server error....",
+            status: 1,
+        });
+    }
+};
+
+
+/**
+ * Fungsi untuk get data tags.
+ * @param {*} req
+ * @param {*} res
+ * @returns {Promise} - Promise yang berisi hasil dari operasi update.
+ */
+export const getActress = async (req, res) => {
+    try {
+        const { page = 1, limit = 10, name = ""} = req.query;
+        const offset = (page - 1) * limit;
+        const where  = {}
+        if (name) {
+            where.name = {
+                [Op.iLike]: `%${name}%`,
+            };
+        }
+        const contentData = await ActressModels.findAll({
+            where,
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            attributes: {
+                exclude: ["created_at", "updated_at", "id"],
+            }
+        });
+        const totalCount = await ActressModels.count({
+            where,
+        });
+        const totalPages = Math.ceil(totalCount / limit);
+        const responseData = contentData.map((item) => ({
+            id: item.id,
+            name: item.name
         }));
         return responseApi(res, {
             data: responseData,
