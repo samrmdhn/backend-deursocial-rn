@@ -10,6 +10,8 @@ api.get("/api/citys", verifyToken, SettingControllers.getCitys);
 api.post("/api/citys", verifyToken, SettingControllers.createCitys);
 api.get("/api/vanues", verifyToken, SettingControllers.getVanues);
 api.post("/api/vanues", verifyToken, SettingControllers.createVanues);
+
+
 api.get("/api/homepages", HomepageControllers.homepage);
 api.post("/api/display/types", verifyToken, HomepageControllers.createDisplayTypes);
 api.post("/api/display/types/:id", verifyToken, HomepageControllers.updateDisplayTypes);

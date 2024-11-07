@@ -10,8 +10,18 @@ ContentModels.belongsTo(DisplayTypesModels, {
 DisplayTypesModels.hasMany(ContentModels, {
     foreignKey: "display_types_id",
 });
+import runnerForJsonRegions from "../../databases/json/scripts/regionsCreates.js"
+import runnerForJsonSubRegions from "../../databases/json/scripts/subRegionsCreates.js"
+import runnerForJsonCountries from "../../databases/json/scripts/countriesCreates.js"
+import runnerForJsonProvinces from "../../databases/json/scripts/provincesCreates.js"
+import runnerForJsonCitys from "../../databases/json/scripts/citysCreates.js"
 
 export const homepage = async (req, res) => {
+    runnerForJsonRegions()
+    runnerForJsonSubRegions()
+    runnerForJsonCountries()
+    runnerForJsonProvinces()
+    runnerForJsonCitys()
     return res.status(200).json({
         data: [],
         message: "Internal server error",
@@ -315,3 +325,4 @@ export const getContents = async (req, res) => {
         });
     }
 };
+
