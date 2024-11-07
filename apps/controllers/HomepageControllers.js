@@ -1,15 +1,8 @@
-import { convertToSlug, dateToEpochTime, makeEpocTime } from "../../helpers/customHelpers.js";
+import { convertToSlug, dateToEpochTime, epochToDateJakarta, makeEpocTime } from "../../helpers/customHelpers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
 import DisplayTypesModels from "../models/DisplayTypesModels.js";
 import ContentModels from "../models/ContentModels.js";
 import { Sequelize } from "sequelize";
-const Op = Sequelize.Op;
-ContentModels.belongsTo(DisplayTypesModels, {
-    foreignKey: "display_types_id",
-});
-DisplayTypesModels.hasMany(ContentModels, {
-    foreignKey: "display_types_id",
-});
 import runnerForJsonRegions from "../../databases/json/scripts/regionsCreates.js"
 import runnerForJsonSubRegions from "../../databases/json/scripts/subRegionsCreates.js"
 import runnerForJsonCountries from "../../databases/json/scripts/countriesCreates.js"
@@ -20,6 +13,22 @@ import TypeContentDetailsModels from "../models/TypeContentDetailsModels.js";
 import TagsModels from "../models/TagsModels.js";
 import ActressModels from "../models/ActressModels.js";
 import ContentDetailsModels from "../models/ContentDetailsModels.js";
+const Op = Sequelize.Op;
+ContentModels.belongsTo(DisplayTypesModels, {
+    foreignKey: "display_types_id",
+});
+DisplayTypesModels.hasMany(ContentModels, {
+    foreignKey: "display_types_id",
+});
+
+ContentModels.hasMany(ContentDetailsModels, {
+    foreignKey: 'contents_id', // Pastikan kolom foreign key sesuai dengan yang ada di ContentDetails
+    sourceKey: 'id',
+});
+ContentDetailsModels.belongsTo(ContentModels, {
+    foreignKey: 'contents_id', // Kolom yang menjadi foreign key di ContentDetails
+    targetKey: 'id',
+});
 
 export const homepage = async (req, res) => {
     runnerForJsonRegions()
@@ -292,6 +301,9 @@ export const getContents = async (req, res) => {
                     model: DisplayTypesModels,
                     attributes: ["title"],
                 },
+                {
+                    model: ContentDetailsModels
+                }
             ],
         });
         const totalCount = await ContentModels.count({
@@ -304,6 +316,18 @@ export const getContents = async (req, res) => {
             display_types: item.ir_display_type
                 ? item.ir_display_type.title
                 : null,
+            content_details: item?.ir_content_details?.map((itemContentDetails) => ({
+                title: itemContentDetails.title,
+                slug: itemContentDetails.slug,
+                schedule_start: epochToDateJakarta(itemContentDetails.schedule_start),
+                schedule_end: epochToDateJakarta(itemContentDetails.schedule_end),
+                date_start: epochToDateJakarta(itemContentDetails.date_start),
+                date_end: epochToDateJakarta(itemContentDetails.date_end),
+                description: itemContentDetails.description,
+                image: itemContentDetails.image,
+                is_trending: itemContentDetails.is_trending === 1 ? true : false,
+                status: itemContentDetails.is_trending === 1 ? "ongoing" : "ndak ongoing",
+            }))
         }));
         return responseApi(res, {
             data: responseData,
