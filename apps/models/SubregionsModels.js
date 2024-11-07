@@ -28,6 +28,9 @@ const SubregionsModels = db.define("ir_subregions", {
         type: TYPES.BIGINT,
         allowNull: true,
     },
+},     {
+    freezeTableName: true,
+    timestamps: false,
 });
 
 export default SubregionsModels;

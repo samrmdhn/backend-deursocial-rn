@@ -28,6 +28,9 @@ const CountriesModels = db.define("ir_countries", {
         type: TYPES.BIGINT,
         allowNull: true,
     },
+},{
+    freezeTableName: true,
+    timestamps: false,
 });
 
 export default CountriesModels;
