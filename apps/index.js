@@ -10,5 +10,8 @@ export {
 export {
     getUsers,
     visitorToken,
-    createCountries
+    getCitys,
+    createCitys,
+    getVanues,
+    createVanues
 } from "./controllers/SettingControllers.js";

@@ -12,7 +12,7 @@ const validationToken = (req, res, next, authHeader) => {
     var fullUrl = req.originalUrl;
     var agent = req.headers['user-agent']
     console.log("agent", agent)
-    if (fullUrl === "/kadieu") {
+    if (fullUrl === "/api/kadieu") {
         next();
     } else {
         const token = authHeader && authHeader.split(" ")[1];
