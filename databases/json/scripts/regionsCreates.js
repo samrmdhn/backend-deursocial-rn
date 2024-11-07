@@ -2,7 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import RegionsModels from "../../../apps/models/RegionsModels.js";
 import { makeEpocTime } from "../../../helpers/customHelpers.js";
-const runnerForJson = async () => {
+const runnerForJsonRegions = async () => {
     try {
         const __filename = new URL(import.meta.url).pathname;
         const __dirname = path.dirname(__filename);
@@ -13,8 +13,8 @@ const runnerForJson = async () => {
 
         // Mengubah string JSON menjadi objek JavaScript
         const jsonData = JSON.parse(data);
-        jsonData.forEach((val, index) => {
-            RegionsModels.create({
+        jsonData.forEach(async(val, index) => {
+            await RegionsModels.create({
                 id: val.id,
                 title: val.name,
                 created_at: makeEpocTime(),
@@ -25,4 +25,5 @@ const runnerForJson = async () => {
         console.log("error :", error);
     }
 };
-runnerForJson();
+
+export default runnerForJsonRegions;

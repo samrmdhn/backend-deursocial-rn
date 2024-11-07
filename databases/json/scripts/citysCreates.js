@@ -2,7 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import { makeEpocTime } from "../../../helpers/customHelpers.js";
 import CitysModels from "../../../apps/models/CitysModels.js";
-const runnerForJson = async () => {
+const runnerForJsonCitys = async () => {
     try {
         const __filename = new URL(import.meta.url).pathname;
         const __dirname = path.dirname(__filename);
@@ -13,9 +13,9 @@ const runnerForJson = async () => {
 
         // Mengubah string JSON menjadi objek JavaScript
         const jsonData = JSON.parse(data);
-        jsonData.forEach((val, index) => {
+        jsonData.forEach(async(val, index) => {
             if (val.state_id) {
-                CitysModels.create({
+                await CitysModels.create({
                     id: val.id,
                     title: val.name,
                     provinces_id: Number(val.state_id),
@@ -28,4 +28,5 @@ const runnerForJson = async () => {
         console.log("error :", error);
     }
 };
-runnerForJson();
+
+export default runnerForJsonCitys;
