@@ -72,13 +72,6 @@ Table post_comments {
   updated_at bigint
 }
 
-Table type_content_details {
-  id bigint [increment, pk]
-  title string(100) [not null]
-  created_at bigint
-  updated_at bigint
-}
-
 Table content_details {
   id bigint [increment, pk]
   title string(100) [not null]
@@ -233,12 +226,6 @@ Table roles_permissions {
   id bigint [increment, pk]
   permissions_id bigint [ref: > permissions.id]
   roles_id bigint [ref: > roles.id]
-  created_at bigint
-  updated_at bigint
-}
-Table tags {
-  id bigint [increment, pk]
-  title string(100) [not null]
   created_at bigint
   updated_at bigint
 }

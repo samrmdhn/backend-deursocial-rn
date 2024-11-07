@@ -10,6 +10,8 @@ export {
     createEventOrganizers,
     getTypeContentDetails,
     createTypeContentDetails,
+    getTags,
+    createTags
 } from "./controllers/HomepageControllers.js";
 export {
     getUsers,
