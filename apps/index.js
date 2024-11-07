@@ -13,7 +13,9 @@ export {
     getTags,
     createTags,
     createActress,
-    getActress
+    getActress,
+    createContentDetails,
+    getContentDetails
 } from "./controllers/HomepageControllers.js";
 export {
     getUsers,

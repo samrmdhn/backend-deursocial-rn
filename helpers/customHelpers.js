@@ -22,3 +22,17 @@ export const epochToDateJakarta = (epochTime) => {
     const jakartaDate = new Intl.DateTimeFormat("en-US", options).format(date);
     return jakartaDate;
 };
+
+export const dateToEpochTime = (time) => {
+    const date = new Date(time); // time is a Format ISO 8601 atau format yang didukung JavaScript
+    const epochTimeInMilliseconds = date.getTime();
+
+    return Math.floor(epochTimeInMilliseconds / 1000);
+};
+
+export const convertToSlug = (text) => {
+    text = text.replace(/[^\w\s-]+/g, " ");
+    text = text.replace(/\s+/g, " ");
+    text = text.trim().replace(/ /g, "-");
+    return text.toLowerCase();
+};

@@ -72,25 +72,6 @@ Table post_comments {
   updated_at bigint
 }
 
-Table content_details {
-  id bigint [increment, pk]
-  title string(100) [not null]
-  schedule_start bigint
-  schedule_end bigint
-  date_start bigint
-  date_end bigint
-  description longtext
-  image string(200)
-  vanues_id bigint [ref: > vanues.id, not null]
-  contents_id bigint [ref: > contents.id, not null]
-  event_organizers_id bigint [ref: > event_organizers.id, not null]
-  is_trending tinyint(2) [note: "0: no trending, 1: yes trending"]
-  status tinyint(2) [note: "0: ended, 1: ongoing, 2: upcomming"]
-  type_content_details_id bigint [ref: > type_content_details.id, not null]
-  created_at bigint
-  updated_at bigint
-}
-
 Table content_detail_tags {
   id bigint [increment, pk]
   content_details_id bigint [ref: > content_details.id]
