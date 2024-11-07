@@ -1,4 +1,4 @@
-import { makeEpocTime } from "../../helpers/customHelpers.js";
+import { convertToSlug, dateToEpochTime, makeEpocTime } from "../../helpers/customHelpers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
 import DisplayTypesModels from "../models/DisplayTypesModels.js";
 import ContentModels from "../models/ContentModels.js";
@@ -19,6 +19,7 @@ import EventOrganizersModels from "../models/EventOrganizersModels.js";
 import TypeContentDetailsModels from "../models/TypeContentDetailsModels.js";
 import TagsModels from "../models/TagsModels.js";
 import ActressModels from "../models/ActressModels.js";
+import ContentDetailsModels from "../models/ContentDetailsModels.js";
 
 export const homepage = async (req, res) => {
     runnerForJsonRegions()
@@ -379,7 +380,7 @@ export const getEventOrganizers = async (req, res) => {
                 [Op.iLike]: `%${name}%`,
             };
         }
-        const contentData = await EventOrganizersModels.findAll({
+        const eventOrganizersData = await EventOrganizersModels.findAll({
             where,
             limit: parseInt(limit),
             offset: parseInt(offset),
@@ -391,7 +392,7 @@ export const getEventOrganizers = async (req, res) => {
             where,
         });
         const totalPages = Math.ceil(totalCount / limit);
-        const responseData = contentData.map((item) => ({
+        const responseData = eventOrganizersData.map((item) => ({
             id: item.id,
             name: item.name
         }));
@@ -470,7 +471,7 @@ export const getTypeContentDetails = async (req, res) => {
                 [Op.iLike]: `%${name}%`,
             };
         }
-        const contentData = await TypeContentDetailsModels.findAll({
+        const typeContentDetailsData = await TypeContentDetailsModels.findAll({
             where,
             limit: parseInt(limit),
             offset: parseInt(offset),
@@ -482,7 +483,7 @@ export const getTypeContentDetails = async (req, res) => {
             where,
         });
         const totalPages = Math.ceil(totalCount / limit);
-        const responseData = contentData.map((item) => ({
+        const responseData = typeContentDetailsData.map((item) => ({
             id: item.id,
             name: item.name
         }));
@@ -559,7 +560,7 @@ export const getTags = async (req, res) => {
                 [Op.iLike]: `%${title}%`,
             };
         }
-        const contentData = await TagsModels.findAll({
+        const tagsData = await TagsModels.findAll({
             where,
             limit: parseInt(limit),
             offset: parseInt(offset),
@@ -571,7 +572,7 @@ export const getTags = async (req, res) => {
             where,
         });
         const totalPages = Math.ceil(totalCount / limit);
-        const responseData = contentData.map((item) => ({
+        const responseData = tagsData.map((item) => ({
             id: item.id,
             title: item.title
         }));
@@ -651,7 +652,7 @@ export const getActress = async (req, res) => {
                 [Op.iLike]: `%${name}%`,
             };
         }
-        const contentData = await ActressModels.findAll({
+        const actressData = await ActressModels.findAll({
             where,
             limit: parseInt(limit),
             offset: parseInt(offset),
@@ -663,7 +664,7 @@ export const getActress = async (req, res) => {
             where,
         });
         const totalPages = Math.ceil(totalCount / limit);
-        const responseData = contentData.map((item) => ({
+        const responseData = actressData.map((item) => ({
             id: item.id,
             name: item.name
         }));
@@ -693,3 +694,139 @@ export const getActress = async (req, res) => {
     }
 };
 
+/**
+ * Function to create new content details
+ * @param {*} req
+ * @param {*} res
+ * @returns {Object}
+ */
+export const createContentDetails = async (req, res) => {
+    try {
+        const {
+            title,
+            schedule_start,
+            schedule_end,
+            date_start,
+            date_end,
+            description,
+            image,
+            vanues_id,
+            contents_id,
+            event_organizers_id,
+            is_trending,
+            status,
+            type_content_details_id,
+        } = req.body;
+
+        await ContentDetailsModels.create({
+            title,
+            slug: convertToSlug(title),
+            schedule_start: dateToEpochTime(schedule_start),
+            schedule_end: dateToEpochTime(schedule_end),
+            date_start: dateToEpochTime(date_start),
+            date_end: dateToEpochTime(date_end),
+            description,
+            image,
+            vanues_id,
+            contents_id,
+            event_organizers_id,
+            is_trending,
+            status,
+            type_content_details_id,
+            created_at: makeEpocTime()
+        });
+
+        return responseApi(res, {
+            data: [],
+            status: {
+                code: 0,
+                message_client: "Data has been saved",
+            },
+        });
+    } catch (error) {
+        console.log(error);
+        return responseApi(res, {
+            data: [],
+            message: "Server error....",
+            status: 1,
+        });
+    }
+};
+
+/**
+ * Function to get content details data
+ * @param {*} req
+ * @param {*} res
+ * @returns {Promise} - Promise containing the result of the operation
+ */
+export const getContentDetails = async (req, res) => {
+    try {
+        const { page = 1, limit = 10, title = "", status = null } = req.query;
+        const offset = (page - 1) * limit;
+        const where = {};
+
+        // Filter by title if provided
+        if (title) {
+            where.title = {
+                [Op.iLike]: `%${title}%`,
+            };
+        }
+
+        // Filter by status if provided
+        if (status !== null) {
+            where.status = status;
+        }
+
+        const ContentDetailsData = await ContentDetailsModels.findAll({
+            where,
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            attributes: {
+                exclude: ["created_at", "updated_at"], // Exclude certain attributes
+            },
+        });
+
+        const totalCount = await ContentDetailsModels.count({ where });
+        const totalPages = Math.ceil(totalCount / limit);
+
+        const responseData = ContentDetailsData.map((item) => ({
+            id: item.id,
+            title: item.title,
+            schedule_start: item.schedule_start,
+            schedule_end: item.schedule_end,
+            date_start: item.date_start,
+            date_end: item.date_end,
+            description: item.description,
+            image: item.image,
+            vanues_id: item.vanues_id,
+            contents_id: item.contents_id,
+            event_organizers_id: item.event_organizers_id,
+            is_trending: item.is_trending,
+            status: item.status,
+            type_content_details_id: item.type_content_details_id,
+        }));
+
+        return responseApi(res, {
+            data: responseData,
+            meta: {
+                pagination: {
+                    current_page: parseInt(page),
+                    per_page: parseInt(limit),
+                    total: totalCount,
+                    total_page: totalPages,
+                },
+            },
+            status: {
+                code: 0,
+                message_client: "Data retrieved successfully",
+            },
+        });
+    } catch (error) {
+        console.error("Error fetching content details:", error);
+        return responseApi(res, {
+            data: [],
+            message: "Server error....",
+            status: 1,
+        });
+    }
+};

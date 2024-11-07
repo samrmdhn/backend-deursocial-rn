@@ -17,7 +17,7 @@ const ActressModels = db.define("ir_actress", {
         allowNull: false, // Harus NOT NULL sesuai dengan dbdiagram
     },
     gender: {
-        type: TYPES.TINYINT(2),
+        type: TYPES.TINYINT,
         allowNull: true,  // Gender bisa null, karena `birth_of_day` dan `detail` boleh null
         validate: {
             isIn: [[1, 2]], // Hanya boleh 1 atau 2 (1: Men, 2: Women)
