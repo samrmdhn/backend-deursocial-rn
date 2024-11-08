@@ -24,7 +24,9 @@ import VanuesModels from "../models/VanuesModels.js";
 import CitysModels from "../models/CitysModels.js";
 import ProvincesModels from "../models/ProvincesModels.js";
 import CountriesModels from "../models/CountriesModels.js";
-const Op = Sequelize.Op;
+import db from "../../configs/Database.js";
+
+const Op = db.Op;
 
 export const homepage = async (req, res) => {
     runnerForJsonRegions();
@@ -275,250 +277,127 @@ export const updateContents = async (req, res) => {
  */
 export const getContents = async (req, res) => {
     try {
-        ContentModels.belongsTo(DisplayTypesModels, {
-            foreignKey: "display_types_id",
-        });
-        DisplayTypesModels.hasMany(ContentModels, {
-            foreignKey: "display_types_id",
-        });
-
-        ContentModels.hasMany(ContentDetailsModels, {
-            foreignKey: "contents_id",
-            sourceKey: "id",
-        });
-        ContentDetailsModels.belongsTo(ContentModels, {
-            foreignKey: "contents_id",
-            targetKey: "id",
-        });
-        ContentDetailsModels.belongsTo(TypeContentDetailsModels, {
-            foreignKey: "type_content_details_id",
-            sourceKey: "id",
-        });
-        TypeContentDetailsModels.hasMany(ContentDetailsModels, {
-            foreignKey: "type_content_details_id",
-            targetKey: "id",
-        });
-
-        ContentDetailsModels.belongsTo(EventOrganizersModels, {
-            foreignKey: "event_organizers_id",
-            sourceKey: "id",
-        });
-        EventOrganizersModels.hasMany(ContentDetailsModels, {
-            foreignKey: "event_organizers_id",
-            targetKey: "id",
-        });
-        ContentDetailsModels.belongsTo(VanuesModels, {
-            foreignKey: "vanues_id",
-            sourceKey: "id",
-        });
-        VanuesModels.hasMany(ContentDetailsModels, {
-            foreignKey: "vanues_id",
-            targetKey: "id",
-        });
-        VanuesModels.belongsTo(CitysModels, {
-            foreignKey: "citys_id",
-            sourceKey: "id",
-        });
-        CitysModels.hasMany(VanuesModels, {
-            foreignKey: "citys_id",
-            targetKey: "id",
-        });
-        VanuesModels.belongsTo(ProvincesModels, {
-            foreignKey: "provinces_id",
-            sourceKey: "id",
-        });
-        ProvincesModels.hasMany(VanuesModels, {
-            foreignKey: "provinces_id",
-            targetKey: "id",
-        });
-        VanuesModels.belongsTo(CountriesModels, {
-            foreignKey: "countries_id",
-            sourceKey: "id",
-        });
-        CountriesModels.hasMany(VanuesModels, {
-            foreignKey: "countries_id",
-            targetKey: "id",
-        });
-        // end
-        ContentDetailTagsModels.belongsTo(ContentDetailsModels, {
-            foreignKey: "content_details_id",
-            sourceKey: "id",
-        });
-        ContentDetailsModels.hasMany(ContentDetailTagsModels, {
-            foreignKey: "content_details_id",
-            targetKey: "id",
-        });
-        ContentDetailTagsModels.belongsTo(TagsModels, {
-            foreignKey: "tags_id",
-            sourceKey: "id",
-        });
-        TagsModels.hasMany(ContentDetailTagsModels, {
-            foreignKey: "tags_id",
-            targetKey: "id",
-        });
-        // end
-        ContentDetailActressModels.belongsTo(ContentDetailsModels, {
-            foreignKey: "content_details_id",
-            sourceKey: "id",
-        });
-        ContentDetailsModels.hasMany(ContentDetailActressModels, {
-            foreignKey: "content_details_id",
-            targetKey: "id",
-        });
-        ContentDetailActressModels.belongsTo(ActressModels, {
-            foreignKey: "actress_id",
-            sourceKey: "id",
-        });
-        ActressModels.hasMany(ContentDetailActressModels, {
-            foreignKey: "actress_id",
-            targetKey: "id",
-        });
         const { page = 1, limit = 10, title = "", status = 1 } = req.query;
         const offset = (page - 1) * limit;
-        const where = {
-            status: status ? status : 1,
-        };
-        if (title) {
-            where.title = {
-                [Op.iLike]: `%${title}%`,
-            };
-        }
-        const contentData = await ContentModels.findAll({
-            where,
+
+        // Construct where clause with parameterized values
+        let whereClause = `WHERE c.status = :status`;
+        const replacements = {
+            status,
             limit: parseInt(limit),
             offset: parseInt(offset),
-            attributes: {
-                exclude: ["created_at", "updated_at", "status", "id"],
-            },
-            include: [
-                {
-                    model: DisplayTypesModels,
-                    attributes: ["title"],
-                },
-                {
-                    model: ContentDetailsModels,
-                    include: [
-                        {
-                            model: TypeContentDetailsModels,
-                        },
-                        {
-                            model: EventOrganizersModels,
-                        },
-                        {
-                            model: VanuesModels,
-                            include: [
-                                {
-                                    model: CitysModels
-                                },
-                                {
-                                    model: ProvincesModels
-                                },
-                                {
-                                    model: CountriesModels
-                                }
-                            ],
-                        },
-                        {
-                            model: ContentDetailTagsModels,
-                            include: [
-                                {
-                                    model: TagsModels,
-                                },
-                            ],
-                        },
-                        {
-                            model: ContentDetailActressModels,
-                            include: [
-                                {
-                                    model: ActressModels,
-                                },
-                            ],
-                        },
-                    ],
-                },
-            ],
+        };
+
+        if (title) {
+            whereClause += ` AND c.title ILIKE :title`;
+            replacements.title = `%${title}%`;
+        }
+
+        const query = `
+            SELECT 
+                c.id, 
+                c.title,
+                dt.title AS display_type,
+                json_agg(
+                    json_build_object(
+                        'title', cd.title,
+                        'slug', cd.slug,
+                        'schedule_start', TO_CHAR(TO_TIMESTAMP(cd.schedule_start), 'YYYY-MM-DD HH24:MI:SS'),
+                        'schedule_end', TO_CHAR(TO_TIMESTAMP(cd.schedule_end), 'YYYY-MM-DD HH24:MI:SS'),
+                        'date_start', TO_CHAR(TO_TIMESTAMP(cd.date_start), 'YYYY-MM-DD HH24:MI:SS'),
+                        'date_end', TO_CHAR(TO_TIMESTAMP(cd.date_end), 'YYYY-MM-DD HH24:MI:SS'),
+                        'description', cd.description,
+                        'image', cd.image,
+                        'is_trending', CASE WHEN cd.is_trending = 1 THEN true ELSE false END,
+                        'status', CASE WHEN cd.is_trending = 0 THEN 'ended' WHEN cd.is_trending = 1 THEN 'ongoing' ELSE 'upcoming' END,
+                        'type_content_details', json_build_object(
+                            'id', tcd.id,
+                            'name', tcd.name
+                        ),
+                        'event_organizers', json_build_object(
+                            'id', eo.id,
+                            'name', eo.name,
+                            'image', eo.image
+                        ),
+                        'tags', (
+                            SELECT json_agg(
+                                json_build_object(
+                                    'id', t.id,
+                                    'title', t.title
+                                )
+                            )
+                            FROM ir_content_detail_tags cdt
+                            JOIN ir_tags t ON cdt.tags_id = t.id
+                            WHERE cdt.content_details_id = cd.id
+                        ),
+                        'actress', (
+                            SELECT json_agg(
+                                json_build_object(
+                                    'id', a.id,
+                                    'name', a.name
+                                )
+                            )
+                            FROM ir_content_detail_actress cda
+                            JOIN ir_actress a ON cda.actress_id = a.id
+                            WHERE cda.content_details_id = cd.id
+                        ),
+                        'location', json_build_object(
+                            'region', json_build_object(
+                                'id', co.id,
+                                'name', co.title
+                            ),
+                            'city', json_build_object(
+                                'id', ci.id,
+                                'name', ci.title
+                            ),
+                            'venue', json_build_object(
+                                'id', v.id,
+                                'name', v.title
+                            )
+                        )
+                    )
+                ) AS content_details
+            FROM ir_contents c
+            LEFT JOIN ir_display_types dt ON c.display_types_id = dt.id
+            LEFT JOIN ir_content_details cd ON cd.contents_id = c.id
+            LEFT JOIN ir_type_content_details tcd ON cd.type_content_details_id = tcd.id
+            LEFT JOIN ir_event_organizers eo ON cd.event_organizers_id = eo.id
+            LEFT JOIN ir_vanues v ON cd.vanues_id = v.id
+            LEFT JOIN ir_citys ci ON v.citys_id = ci.id
+            LEFT JOIN ir_provinces p ON v.provinces_id = p.id
+            LEFT JOIN ir_countries co ON v.countries_id = co.id
+            ${whereClause}
+            GROUP BY c.id, dt.title
+            ORDER BY c.id
+            LIMIT :limit OFFSET :offset;
+        `;
+
+        const contentData = await db.query(query, {
+            replacements,
+            type: db.QueryTypes.SELECT,
         });
-        const totalCount = await ContentModels.count({
-            where,
+
+        const countQuery = `
+            SELECT COUNT(*) AS total_count
+            FROM ir_contents c
+            ${whereClause};
+        `;
+        const totalCountResult = await db.query(countQuery, {
+            replacements,
+            type: db.QueryTypes.SELECT,
         });
+        const totalCount = totalCountResult[0].total_count;
         const totalPages = Math.ceil(totalCount / limit);
+
         const responseData = contentData.map((item) => ({
             id: item.id,
             title: item.title,
-            display_types: item.ir_display_type
-                ? item.ir_display_type.title
-                : null,
-            content_details: item?.ir_content_details?.map(
-                (itemContentDetails) => ({
-                    title: itemContentDetails.title,
-                    slug: itemContentDetails.slug,
-                    schedule_start: epochToDateJakarta(
-                        itemContentDetails.schedule_start
-                    ),
-                    schedule_end: epochToDateJakarta(
-                        itemContentDetails.schedule_end
-                    ),
-                    date_start: epochToDateJakarta(
-                        itemContentDetails.date_start
-                    ),
-                    date_end: epochToDateJakarta(itemContentDetails.date_end),
-                    description: itemContentDetails.description,
-                    image: itemContentDetails.image,
-                    is_trending:
-                        itemContentDetails.is_trending === 1 ? true : false,
-                    status:
-                        itemContentDetails.is_trending === 0
-                            ? "ended"
-                            : itemContentDetails.is_trending === 1
-                            ? "ongoing"
-                            : "upcoming",
-                    type_content_details: {
-                        id: itemContentDetails?.ir_type_content_detail?.id,
-                        name: itemContentDetails?.ir_type_content_detail?.name,
-                    },
-                    event_organizers: {
-                        id: itemContentDetails?.ir_event_organizer?.id,
-                        name: itemContentDetails?.ir_event_organizer?.name,
-                        image: itemContentDetails?.ir_event_organizer?.image,
-                    },
-                    tags: itemContentDetails?.ir_content_detail_tags?.map(
-                        (itemContentDetailTags) => ({
-                            id: itemContentDetailTags?.ir_tag?.id,
-                            title: itemContentDetailTags?.ir_tag?.title,
-                        })
-                    ),
-                    actress:
-                        itemContentDetails?.ir_content_detail_actresses?.map(
-                            (itemContentDetailTags) => ({
-                                id: itemContentDetailTags?.ir_actress?.id,
-                                name: itemContentDetailTags?.ir_actress?.name,
-                            })
-                        ),
-                    location: itemContentDetails?.ir_vanue
-                        ? {
-                              region: {
-                                  id: itemContentDetails?.ir_vanue?.ir_country
-                                      ?.id,
-                                  name: itemContentDetails?.ir_vanue?.ir_country
-                                      ?.title
-                              },
-                              city: {
-                                  id: itemContentDetails?.ir_vanue?.ir_city?.id,
-                                  name: itemContentDetails?.ir_vanue?.ir_city
-                                      ?.title
-                              },
-                              venue: {
-                                  id: itemContentDetails?.ir_vanue?.id,
-                                  name: itemContentDetails?.ir_vanue?.title
-                              },
-                          }
-                        : null,
-                })
-            ),
+            display_types: item.display_type,
+            content_details: item.content_details,
         }));
+
         return responseApi(res, {
             data: responseData,
-            // nyimak: contentData,
             meta: {
                 assets_image_url: "https://google.com", // Contoh URL gambar
                 pagination: {
