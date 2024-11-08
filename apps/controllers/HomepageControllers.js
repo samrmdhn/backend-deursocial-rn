@@ -3,6 +3,7 @@ import {
     dateToEpochTime,
     epochToDateJakarta,
     makeEpocTime,
+    withTransaction,
 } from "../../helpers/customHelpers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
 import DisplayTypesModels from "../models/DisplayTypesModels.js";
@@ -11,6 +12,7 @@ import EventOrganizersModels from "../models/EventOrganizersModels.js";
 import TypeContentDetailsModels from "../models/TypeContentDetailsModels.js";
 import TagsModels from "../models/TagsModels.js";
 import ActressModels from "../models/ActressModels.js";
+import ContentDetailActressModels from "../models/ContentDetailActressModels.js";
 import ContentDetailsModels from "../models/ContentDetailsModels.js";
 import db from "../../configs/Database.js";
 import { Sequelize } from "sequelize";
@@ -768,8 +770,8 @@ export const getActress = async (req, res) => {
  * @param {*} res
  * @returns {Object}
  */
-export const createContentDetails = async (req, res) => {
-    try {
+export const createContentDetails = withTransaction(
+    async (req, res, transaction) => {
         const {
             title,
             schedule_start,
@@ -784,42 +786,56 @@ export const createContentDetails = async (req, res) => {
             is_trending,
             status,
             type_content_details_id,
+            actress,
+            tags,
         } = req.body;
 
-        await ContentDetailsModels.create({
-            title,
-            slug: convertToSlug(title),
-            schedule_start: dateToEpochTime(schedule_start),
-            schedule_end: dateToEpochTime(schedule_end),
-            date_start: dateToEpochTime(date_start),
-            date_end: dateToEpochTime(date_end),
-            description,
-            image,
-            vanues_id,
-            contents_id,
-            event_organizers_id,
-            is_trending,
-            status,
-            type_content_details_id,
-            created_at: makeEpocTime(),
-        });
-
-        return responseApi(res, {
-            data: [],
-            status: {
-                code: 0,
-                message_client: "Data has been saved",
-            },
-        });
-    } catch (error) {
-        console.log(error);
-        return responseApi(res, {
-            data: [],
-            message: "Server error....",
-            status: 1,
-        });
+        try {
+            // Membuat record di ContentDetailsModels
+            let contentDetailData = await ContentDetailsModels.create(
+                {
+                    title,
+                    slug: convertToSlug(title),
+                    schedule_start: dateToEpochTime(schedule_start),
+                    schedule_end: dateToEpochTime(schedule_end),
+                    date_start: dateToEpochTime(date_start),
+                    date_end: dateToEpochTime(date_end),
+                    description,
+                    image,
+                    vanues_id,
+                    contents_id,
+                    event_organizers_id,
+                    is_trending,
+                    status,
+                    type_content_details_id,
+                    created_at: makeEpocTime(),
+                },
+                { transaction }
+            );
+            await Promise.all(
+                actress.map(async (valActress) => {
+                    await ContentDetailActressModels.create(
+                        {
+                            content_details_id: contentDetailData.id,
+                            actress_id: valActress.id,
+                        },
+                        { transaction } 
+                    );
+                })
+            );
+            return responseApi(res, {
+                data: [],
+                status: {
+                    code: 0,
+                    message_client: "Data has been saved",
+                },
+            });
+        } catch (error) {
+            console.error("Error in createContentDetails:", error);
+            throw error;
+        }
     }
-};
+);
 
 /**
  * Function to get content details data
