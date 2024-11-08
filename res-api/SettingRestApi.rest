@@ -1,23 +1,9 @@
-GET http://localhost:3010/users
-Content-Type: application/json
-x-api-key: ku4jaK6v%$gd364GAga5
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4wLjAuMSIsInVhZyI6InZzY29kZS1yZXN0Y2xpZW50IiwidG9rZW4iOiJleUowYjJRaU9qQXNJblZwY0NJNklqRXlOeTR3TGpBdU1TSXNJblZoWnlJNkluWnpZMjlrWlMxeVpYTjBZMnhwWlc1MEluMWhabk5oT1NSQ1JrVTRORE15WW10cVpqTW9LaWg1TWlrcCIsImlhdCI6MTczMDc5MDUxOSwiZXhwIjoxNzMwODc2OTE5fQ.2aTn6QG0UVWSMYlpK7UQ4ZZQulIGJmdO-dqwvXuW42I
-
 ###
 GET http://localhost:3010/api/kadieu
 # GET https://seuneu.deursocial.com/api/kadieu
 Content-Type: application/json
 x-api-key: ku4jaK6v%$gd364GAga5
 
-###
-POST http://localhost:3010/api/countries
-Content-Type: application/json
-x-api-key: ku4jaK6v%$gd364GAga5
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4wLjAuMSIsInVhZyI6InZzY29kZS1yZXN0Y2xpZW50IiwidG9rZW4iOiJleUowYjJRaU9qQXNJblZwY0NJNklqRXlOeTR3TGpBdU1TSXNJblZoWnlJNkluWnpZMjlrWlMxeVpYTjBZMnhwWlc1MEluMWhabk5oT1NSQ1JrVTRORE15WW10cVpqTW9LaWg1TWlrcCIsImlhdCI6MTczMDc5MDUxOSwiZXhwIjoxNzMwODc2OTE5fQ.2aTn6QG0UVWSMYlpK7UQ4ZZQulIGJmdO-dqwvXuW42I
-
-{
-    "title": "Indonesia"
-}
 
 ###
 # ini mencari jakarta
@@ -51,5 +37,7 @@ Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4w
 
 {
     "title": "Pestapora",
-    "citys_id": 154152 
+    "citys_id": 154152,
+    "provinces_id": 1805,
+    "countries_id": 102
 }
