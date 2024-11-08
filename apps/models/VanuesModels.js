@@ -20,6 +20,22 @@ const VanuesModels = db.define("ir_vanues", {
             key: "id",
         },
     },
+    provinces_id: {
+        type: TYPES.BIGINT,
+        allowNull: false,
+        references: {
+            model: "ir_provinces",
+            key: "id",
+        },
+    },
+    countries_id: {
+        type: TYPES.BIGINT,
+        allowNull: false,
+        references: {
+            model: "ir_countries",
+            key: "id",
+        },
+    },
     created_at: {
         type: TYPES.BIGINT,
         allowNull: true,
