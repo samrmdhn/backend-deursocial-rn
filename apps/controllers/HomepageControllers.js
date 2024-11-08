@@ -7,33 +7,16 @@ import {
 import { responseApi } from "../../libs/RestApiHandler.js";
 import DisplayTypesModels from "../models/DisplayTypesModels.js";
 import ContentModels from "../models/ContentModels.js";
-import { Sequelize } from "sequelize";
-import runnerForJsonRegions from "../../databases/json/scripts/regionsCreates.js";
-import runnerForJsonSubRegions from "../../databases/json/scripts/subRegionsCreates.js";
-import runnerForJsonCountries from "../../databases/json/scripts/countriesCreates.js";
-import runnerForJsonProvinces from "../../databases/json/scripts/provincesCreates.js";
-import runnerForJsonCitys from "../../databases/json/scripts/citysCreates.js";
 import EventOrganizersModels from "../models/EventOrganizersModels.js";
 import TypeContentDetailsModels from "../models/TypeContentDetailsModels.js";
 import TagsModels from "../models/TagsModels.js";
 import ActressModels from "../models/ActressModels.js";
 import ContentDetailsModels from "../models/ContentDetailsModels.js";
-import ContentDetailTagsModels from "../models/ContentDetailTagsModels.js";
-import ContentDetailActressModels from "../models/ContentDetailActressModels.js";
-import VanuesModels from "../models/VanuesModels.js";
-import CitysModels from "../models/CitysModels.js";
-import ProvincesModels from "../models/ProvincesModels.js";
-import CountriesModels from "../models/CountriesModels.js";
 import db from "../../configs/Database.js";
 
 const Op = db.Op;
 
 export const homepage = async (req, res) => {
-    runnerForJsonRegions();
-    runnerForJsonSubRegions();
-    runnerForJsonCountries();
-    runnerForJsonProvinces();
-    runnerForJsonCitys();
     return res.status(200).json({
         data: [],
         message: "Internal server error",

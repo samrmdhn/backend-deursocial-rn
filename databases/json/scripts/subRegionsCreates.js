@@ -28,5 +28,4 @@ const runnerForJsonSubRegions = async () => {
         console.log("error :", error);
     }
 };
-
-export default runnerForJsonSubRegions;
+runnerForJsonSubRegions()

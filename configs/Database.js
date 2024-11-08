@@ -14,8 +14,9 @@ const db = new Sequelize(
             min: 0,
             acquire: 120000,
             idle: 10000,
-        }
-    }
+        },
+        logging: process.env.APP_MODE !== 'production' ? true : false,
+    },
 );
 
 export default db;

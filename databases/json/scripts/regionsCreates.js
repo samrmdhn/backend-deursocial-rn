@@ -26,4 +26,4 @@ const runnerForJsonRegions = async () => {
     }
 };
 
-export default runnerForJsonRegions;
+runnerForJsonRegions();
