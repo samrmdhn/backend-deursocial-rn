@@ -3,10 +3,16 @@
 ###
 GET http://localhost:3010/api/homepages
 
+###
+GET http://localhost:3010/api/display/types
+Content-Type: application/json
+x-api-key: ku4jaK6v%$gd364GAga5
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4wLjAuMSIsInVhZyI6InZzY29kZS1yZXN0Y2xpZW50IiwidG9rZW4iOiJleUowYjJRaU9qQXNJblZwY0NJNklqRXlOeTR3TGpBdU1TSXNJblZoWnlJNkluWnpZMjlrWlMxeVpYTjBZMnhwWlc1MEluMWhabk5oT1NSQ1JrVTRORE15WW10cVpqTW9LaWg1TWlrcCIsImlhdCI6MTczMDk0NzEwNywiZXhwIjoxNzMxNTUxOTA3fQ.6Ex2saYkRLdbpHMrt87lRY9hgvOXsNDClk8njhsM4O0
+###
 POST http://localhost:3010/api/display/types
 Content-Type: application/json
 x-api-key: ku4jaK6v%$gd364GAga5
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4wLjAuMSIsInVhZyI6InZzY29kZS1yZXN0Y2xpZW50IiwidG9rZW4iOiJleUowYjJRaU9qQXNJblZwY0NJNklqRXlOeTR3TGpBdU1TSXNJblZoWnlJNkluWnpZMjlrWlMxeVpYTjBZMnhwWlc1MEluMWhabk5oT1NSQ1JrVTRORE15WW10cVpqTW9LaWg1TWlrcCIsImlhdCI6MTczMDc5MDUxOSwiZXhwIjoxNzMwODc2OTE5fQ.2aTn6QG0UVWSMYlpK7UQ4ZZQulIGJmdO-dqwvXuW42I
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4wLjAuMSIsInVhZyI6InZzY29kZS1yZXN0Y2xpZW50IiwidG9rZW4iOiJleUowYjJRaU9qQXNJblZwY0NJNklqRXlOeTR3TGpBdU1TSXNJblZoWnlJNkluWnpZMjlrWlMxeVpYTjBZMnhwWlc1MEluMWhabk5oT1NSQ1JrVTRORE15WW10cVpqTW9LaWg1TWlrcCIsImlhdCI6MTczMDk0NzEwNywiZXhwIjoxNzMxNTUxOTA3fQ.6Ex2saYkRLdbpHMrt87lRY9hgvOXsNDClk8njhsM4O0
 
 {
     "title": "rectangle",
@@ -17,7 +23,7 @@ Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4w
 POST http://localhost:3010/api/display/types/1
 Content-Type: application/json
 x-api-key: ku4jaK6v%$gd364GAga5
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4wLjAuMSIsInVhZyI6InZzY29kZS1yZXN0Y2xpZW50IiwidG9rZW4iOiJleUowYjJRaU9qQXNJblZwY0NJNklqRXlOeTR3TGpBdU1TSXNJblZoWnlJNkluWnpZMjlrWlMxeVpYTjBZMnhwWlc1MEluMWhabk5oT1NSQ1JrVTRORE15WW10cVpqTW9LaWg1TWlrcCIsImlhdCI6MTczMDc5MDUxOSwiZXhwIjoxNzMwODc2OTE5fQ.2aTn6QG0UVWSMYlpK7UQ4ZZQulIGJmdO-dqwvXuW42I
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4wLjAuMSIsInVhZyI6InZzY29kZS1yZXN0Y2xpZW50IiwidG9rZW4iOiJleUowYjJRaU9qQXNJblZwY0NJNklqRXlOeTR3TGpBdU1TSXNJblZoWnlJNkluWnpZMjlrWlMxeVpYTjBZMnhwWlc1MEluMWhabk5oT1NSQ1JrVTRORE15WW10cVpqTW9LaWg1TWlrcCIsImlhdCI6MTczMDk0NzEwNywiZXhwIjoxNzMxNTUxOTA3fQ.6Ex2saYkRLdbpHMrt87lRY9hgvOXsNDClk8njhsM4O0
 
 {
     "title": "rectangles",
@@ -47,7 +53,7 @@ Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4w
 POST http://localhost:3010/api/contents/1
 Content-Type: application/json
 x-api-key: ku4jaK6v%$gd364GAga5
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4wLjAuMSIsInVhZyI6InZzY29kZS1yZXN0Y2xpZW50IiwidG9rZW4iOiJleUowYjJRaU9qQXNJblZwY0NJNklqRXlOeTR3TGpBdU1TSXNJblZoWnlJNkluWnpZMjlrWlMxeVpYTjBZMnhwWlc1MEluMWhabk5oT1NSQ1JrVTRORE15WW10cVpqTW9LaWg1TWlrcCIsImlhdCI6MTczMDc5MDUxOSwiZXhwIjoxNzMwODc2OTE5fQ.2aTn6QG0UVWSMYlpK7UQ4ZZQulIGJmdO-dqwvXuW42I
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4wLjAuMSIsInVhZyI6InZzY29kZS1yZXN0Y2xpZW50IiwidG9rZW4iOiJleUowYjJRaU9qQXNJblZwY0NJNklqRXlOeTR3TGpBdU1TSXNJblZoWnlJNkluWnpZMjlrWlMxeVpYTjBZMnhwWlc1MEluMWhabk5oT1NSQ1JrVTRORE15WW10cVpqTW9LaWg1TWlrcCIsImlhdCI6MTczMTA1OTA1MSwiZXhwIjoxNzMxNjYzODUxfQ.Ekph_z5fi-CbZqFhHqPdGT1Vnfur3st9ALE6GqSY-PE
 
 {
     "title": "pestapora 2",
@@ -145,8 +151,8 @@ Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4w
     "date_end": "2024-11-07T12:00:00Z",
     "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris turpis sem, posuere gravida nibh a, vestibulum finibus neque. Phasellus pulvinar metus erat, nec bibendum eros ultrices sed. Sed sagittis turpis id nisl auctor aliquam ac sed nisl. Mauris vitae nisl et tortor fermentum volutpat. Aenean et ultrices erat. Aliquam erat volutpat. Vivamus tempor ultrices diam, rutrum egestas mi euismod non. Cras elementum nisl quis ullamcorper aliquam. Vivamus maximus ante urna, nec sagittis dolor dignissim quis.",
     "image": "https://linebank.co.id/blog/wp-content/uploads/2024/09/pestapora-2024-LB-Blog-jpg.webp",
-    "vanues_id": 2,
-    "contents_id": 1,
+    "vanues_id": 1,
+    "contents_id": 2,
     "event_organizers_id": 1,
     "is_trending": 0,
     "status": 2,

@@ -13,8 +13,9 @@ import TagsModels from "../models/TagsModels.js";
 import ActressModels from "../models/ActressModels.js";
 import ContentDetailsModels from "../models/ContentDetailsModels.js";
 import db from "../../configs/Database.js";
+import { Sequelize } from "sequelize";
 
-const Op = db.Op;
+const Op = Sequelize.Op;
 
 export const homepage = async (req, res) => {
     return res.status(200).json({
