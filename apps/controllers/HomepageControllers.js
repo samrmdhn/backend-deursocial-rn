@@ -14,9 +14,10 @@ import TagsModels from "../models/TagsModels.js";
 import ActressModels from "../models/ActressModels.js";
 import ContentDetailActressModels from "../models/ContentDetailActressModels.js";
 import ContentDetailsModels from "../models/ContentDetailsModels.js";
+import { buildWhereClause } from "../../helpers/queryBuilderHelpers.js";
+import { getPagination } from "../../helpers/paginationHelpers.js";
 import db from "../../configs/Database.js";
 import { Sequelize } from "sequelize";
-
 const Op = Sequelize.Op;
 
 export const homepage = async (req, res) => {
@@ -118,57 +119,44 @@ export const updateDisplayTypes = async (req, res) => {
  */
 export const getDisplayTypes = async (req, res) => {
     try {
-        const { page = 1, limit = 10, title = "", status = 1 } = req.query;
-        const offset = (page - 1) * limit;
+        const { page = 1, title = "" } = req.query;
         const where = {
-            status: status ? status : 1,
+            status: 1,
         };
+        const { limitPerPage, offset, totalPages, currentPage } = getPagination(
+            page,
+            10,
+            await DisplayTypesModels.count({
+                where: buildWhereClause(where, "title", title),
+            })
+        );
 
-        if (title) {
-            where.title = {
-                [Op.iLike]: `%${title}%`,
-            };
-        }
-        const displayTypesData = await DisplayTypesModels.findAll({
-            where,
-            limit: parseInt(limit),
-            offset: parseInt(offset),
+        const contentData = await DisplayTypesModels.findAll({
+            where: buildWhereClause(where, "title", title),
+            limit: limitPerPage,
+            offset,
             attributes: {
                 exclude: ["created_at", "updated_at", "status"],
             },
         });
 
-        // Hitung total record untuk pagination
-        const totalCount = await DisplayTypesModels.count({
-            where,
-        });
+        const responseData = contentData.map((item) => ({
+            id: item.id,
+            title: item.title,
+        }));
 
-        // Menghitung jumlah halaman
-        const totalPages = Math.ceil(totalCount / limit);
-
-        return responseApi(res, {
-            data: displayTypesData,
-            meta: {
-                assets_image_url: "https://google.com", // Contoh URL gambar
-                pagination: {
-                    current_page: parseInt(page),
-                    per_page: parseInt(limit),
-                    total: totalCount,
-                    total_page: totalPages,
-                },
-            },
-            status: {
-                code: 0,
-                message_client: "Data retrieved successfully",
+        return responseApi(res, responseData, {
+            assets_image_url: "https://google.com",
+            pagination: {
+                current_page: currentPage,
+                per_page: limitPerPage,
+                total: contentData.length,
+                total_page: totalPages,
             },
         });
     } catch (error) {
-        console.error("Error fetching display types:", error);
-        return responseApi(res, {
-            data: [],
-            message: "Server error....",
-            status: 1,
-        });
+        console.log("errro", error);
+        return responseApi(res, [], null, "Server error....", 1);
     }
 };
 
@@ -263,7 +251,9 @@ export const updateContents = async (req, res) => {
  */
 export const getContents = async (req, res) => {
     try {
-        const { page = 1, limit = 10, title = "", status = 1 } = req.query;
+        const { page = 1, title = "" } = req.query;
+        const limit = 10;
+        const status = 1;
         const offset = (page - 1) * limit;
 
         // Construct where clause with parameterized values
@@ -447,53 +437,42 @@ export const createEventOrganizers = async (req, res) => {
  */
 export const getEventOrganizers = async (req, res) => {
     try {
-        const { page = 1, limit = 10, name = "" } = req.query;
-        const offset = (page - 1) * limit;
+        const { page = 1, name = "" } = req.query;
         const where = {};
-        if (name) {
-            where.name = {
-                [Op.iLike]: `%${name}%`,
-            };
-        }
-        const eventOrganizersData = await EventOrganizersModels.findAll({
-            where,
-            limit: parseInt(limit),
-            offset: parseInt(offset),
+        const { limitPerPage, offset, totalPages, currentPage } = getPagination(
+            page,
+            10,
+            await EventOrganizersModels.count({
+                where: buildWhereClause(where, "name", name),
+            })
+        );
+
+        const contentData = await EventOrganizersModels.findAll({
+            where: buildWhereClause(where, "name", name),
+            limit: limitPerPage,
+            offset,
             attributes: {
                 exclude: ["created_at", "updated_at", "id"],
             },
         });
-        const totalCount = await EventOrganizersModels.count({
-            where,
-        });
-        const totalPages = Math.ceil(totalCount / limit);
-        const responseData = eventOrganizersData.map((item) => ({
+
+        const responseData = contentData.map((item) => ({
             id: item.id,
             name: item.name,
         }));
-        return responseApi(res, {
-            data: responseData,
-            meta: {
-                assets_image_url: "https://google.com", // Contoh URL gambar
-                pagination: {
-                    current_page: parseInt(page),
-                    per_page: parseInt(limit),
-                    total: totalCount,
-                    total_page: totalPages,
-                },
-            },
-            status: {
-                code: 0,
-                message_client: "Data retrieved successfully",
+
+        return responseApi(res, responseData, {
+            assets_image_url: "https://google.com",
+            pagination: {
+                current_page: currentPage,
+                per_page: limitPerPage,
+                total: contentData.length,
+                total_page: totalPages,
             },
         });
     } catch (error) {
-        console.error("Error fetching display types:", error);
-        return responseApi(res, {
-            data: [],
-            message: "Server error....",
-            status: 1,
-        });
+        console.log("errro", error);
+        return responseApi(res, [], null, "Server error....", 1);
     }
 };
 
@@ -535,53 +514,42 @@ export const createTypeContentDetails = async (req, res) => {
  */
 export const getTypeContentDetails = async (req, res) => {
     try {
-        const { page = 1, limit = 10, name = "" } = req.query;
-        const offset = (page - 1) * limit;
+        const { page = 1, name = "" } = req.query;
         const where = {};
-        if (name) {
-            where.name = {
-                [Op.iLike]: `%${name}%`,
-            };
-        }
-        const typeContentDetailsData = await TypeContentDetailsModels.findAll({
-            where,
-            limit: parseInt(limit),
-            offset: parseInt(offset),
+        const { limitPerPage, offset, totalPages, currentPage } = getPagination(
+            page,
+            10,
+            await TypeContentDetailsModels.count({
+                where: buildWhereClause(where, "name", name),
+            })
+        );
+
+        const contentData = await TypeContentDetailsModels.findAll({
+            where: buildWhereClause(where, "name", name),
+            limit: limitPerPage,
+            offset,
             attributes: {
                 exclude: ["created_at", "updated_at", "id"],
             },
         });
-        const totalCount = await TypeContentDetailsModels.count({
-            where,
-        });
-        const totalPages = Math.ceil(totalCount / limit);
-        const responseData = typeContentDetailsData.map((item) => ({
+
+        const responseData = contentData.map((item) => ({
             id: item.id,
             name: item.name,
         }));
-        return responseApi(res, {
-            data: responseData,
-            meta: {
-                assets_image_url: "https://google.com", // Contoh URL gambar
-                pagination: {
-                    current_page: parseInt(page),
-                    per_page: parseInt(limit),
-                    total: totalCount,
-                    total_page: totalPages,
-                },
-            },
-            status: {
-                code: 0,
-                message_client: "Data retrieved successfully",
+
+        return responseApi(res, responseData, {
+            assets_image_url: "https://google.com",
+            pagination: {
+                current_page: currentPage,
+                per_page: limitPerPage,
+                total: contentData.length,
+                total_page: totalPages,
             },
         });
     } catch (error) {
-        console.error("Error fetching display types:", error);
-        return responseApi(res, {
-            data: [],
-            message: "Server error....",
-            status: 1,
-        });
+        console.log("errro", error);
+        return responseApi(res, [], null, "Server error....", 1);
     }
 };
 
@@ -623,53 +591,44 @@ export const createTags = async (req, res) => {
  */
 export const getTags = async (req, res) => {
     try {
-        const { page = 1, limit = 10, title = "" } = req.query;
-        const offset = (page - 1) * limit;
+        const { page = 1, title = "" } = req.query;
         const where = {};
-        if (title) {
-            where.title = {
-                [Op.iLike]: `%${title}%`,
-            };
-        }
-        const tagsData = await TagsModels.findAll({
-            where,
-            limit: parseInt(limit),
-            offset: parseInt(offset),
+        console.log("masuk 1");
+        const { limitPerPage, offset, totalPages, currentPage } = getPagination(
+            page,
+            10,
+            await TagsModels.count({
+                where: buildWhereClause(where, "title", title),
+            })
+        );
+        console.log("masuk 2");
+
+        const contentData = await TagsModels.findAll({
+            where: buildWhereClause(where, "title", title),
+            limit: limitPerPage,
+            offset,
             attributes: {
                 exclude: ["created_at", "updated_at", "id"],
             },
         });
-        const totalCount = await TagsModels.count({
-            where,
-        });
-        const totalPages = Math.ceil(totalCount / limit);
-        const responseData = tagsData.map((item) => ({
+
+        const responseData = contentData.map((item) => ({
             id: item.id,
             title: item.title,
         }));
-        return responseApi(res, {
-            data: responseData,
-            meta: {
-                assets_image_url: "https://google.com", // Contoh URL gambar
-                pagination: {
-                    current_page: parseInt(page),
-                    per_page: parseInt(limit),
-                    total: totalCount,
-                    total_page: totalPages,
-                },
-            },
-            status: {
-                code: 0,
-                message_client: "Data retrieved successfully",
+
+        return responseApi(res, responseData, {
+            assets_image_url: "https://google.com",
+            pagination: {
+                current_page: currentPage,
+                per_page: limitPerPage,
+                total: contentData.length,
+                total_page: totalPages,
             },
         });
     } catch (error) {
-        console.error("Error fetching display types:", error);
-        return responseApi(res, {
-            data: [],
-            message: "Server error....",
-            status: 1,
-        });
+        console.log("errro", error);
+        return responseApi(res, [], null, "Server error....", 1);
     }
 };
 
@@ -714,53 +673,42 @@ export const createActress = async (req, res) => {
  */
 export const getActress = async (req, res) => {
     try {
-        const { page = 1, limit = 10, name = "" } = req.query;
-        const offset = (page - 1) * limit;
+        const { page = 1, name = "" } = req.query;
         const where = {};
-        if (name) {
-            where.name = {
-                [Op.iLike]: `%${name}%`,
-            };
-        }
-        const actressData = await ActressModels.findAll({
-            where,
-            limit: parseInt(limit),
-            offset: parseInt(offset),
+        const { limitPerPage, offset, totalPages, currentPage } = getPagination(
+            page,
+            10,
+            await ActressModels.count({
+                where: buildWhereClause(where, "name", name),
+            })
+        );
+
+        const contentData = await ActressModels.findAll({
+            where: buildWhereClause(where, "name", name),
+            limit: limitPerPage,
+            offset,
             attributes: {
                 exclude: ["created_at", "updated_at", "id"],
             },
         });
-        const totalCount = await ActressModels.count({
-            where,
-        });
-        const totalPages = Math.ceil(totalCount / limit);
-        const responseData = actressData.map((item) => ({
+
+        const responseData = contentData.map((item) => ({
             id: item.id,
             name: item.name,
         }));
-        return responseApi(res, {
-            data: responseData,
-            meta: {
-                assets_image_url: "https://google.com", // Contoh URL gambar
-                pagination: {
-                    current_page: parseInt(page),
-                    per_page: parseInt(limit),
-                    total: totalCount,
-                    total_page: totalPages,
-                },
-            },
-            status: {
-                code: 0,
-                message_client: "Data retrieved successfully",
+
+        return responseApi(res, responseData, {
+            assets_image_url: "https://google.com",
+            pagination: {
+                current_page: currentPage,
+                per_page: limitPerPage,
+                total: contentData.length,
+                total_page: totalPages,
             },
         });
     } catch (error) {
-        console.error("Error fetching display types:", error);
-        return responseApi(res, {
-            data: [],
-            message: "Server error....",
-            status: 1,
-        });
+        console.log("errro", error);
+        return responseApi(res, [], null, "Server error....", 1);
     }
 };
 
@@ -819,7 +767,7 @@ export const createContentDetails = withTransaction(
                             content_details_id: contentDetailData.id,
                             actress_id: valActress.id,
                         },
-                        { transaction } 
+                        { transaction }
                     );
                 })
             );

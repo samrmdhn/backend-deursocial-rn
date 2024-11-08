@@ -5,7 +5,6 @@ import { verifyToken } from "../apps/middlewares/verifyToken.js";
 
 const api = express.Router();
 api.get("/api/kadieu", verifyToken, SettingControllers.visitorToken);
-api.get("/api/users", verifyToken, SettingControllers.getUsers);
 api.get("/api/citys", verifyToken, SettingControllers.getCitys);
 api.post("/api/citys", verifyToken, SettingControllers.createCitys);
 api.get("/api/vanues", verifyToken, SettingControllers.getVanues);

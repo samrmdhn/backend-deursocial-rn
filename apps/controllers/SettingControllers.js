@@ -10,34 +10,6 @@ import { getPagination } from "../../helpers/paginationHelpers.js";
 import { buildWhereClause } from "../../helpers/queryBuilderHelpers.js";
 const Op = Sequelize.Op;
 
-export const getUsers = async (req, res) => {
-    try {
-        const users = await UsersModels.findAll();
-        return responseApi(res, {
-            data: users,
-            meta: {
-                assets_image_url: "https://google.com",
-                pagination: {
-                    current_page: 0,
-                    per_page: 0,
-                    total: 0,
-                    total_page: 0,
-                },
-            },
-            status: {
-                code: 0,
-                message_client: "Data has been retrieved",
-            },
-        });
-    } catch (error) {
-        console.log("error", error);
-        return responseApi(res, {
-            data: [],
-            message: "server error....",
-            status: 1,
-        });
-    }
-};
 
 export const visitorToken = async (req, res) => {
     try {
@@ -56,7 +28,6 @@ export const visitorToken = async (req, res) => {
                     process.env.APP_ACCESS_TOKEN_SECRET
             ),
         };
-        console.log("datas", datas);
         const sevenDaysAgo = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60; // Menghitung waktu 7 hari yang lalu
         const now = Math.floor(Date.now() / 1000); // Waktu saat ini
 
@@ -89,22 +60,13 @@ export const visitorToken = async (req, res) => {
         } else {
             visitorToken = dataUser?.access_token;
         }
+
         return responseApi(res, {
-            data: {
-                access_token: visitorToken,
-            },
-            status: {
-                code: 0,
-                message_client: "Data has been retrieved",
-            },
-        });
+            access_token: visitorToken,
+        }, null, "Data has been retrieved", 0);
+
     } catch (error) {
-        console.log(error);
-        return responseApi(res, {
-            data: [],
-            message: "server error....",
-            status: 1,
-        });
+        return responseApi(res, [], null, "Server error....", 1);
     }
 };
 
@@ -177,57 +139,46 @@ export const createCitys = async (req, res) => {
 };
 
 export const getVanues = async (req, res) => {
+
     try {
-        const { page = 1, limit = 10, title = "", citys_id = 1 } = req.query;
-        const offset = (page - 1) * limit;
-        const where = {
-            citys_id: citys_id ? citys_id : 1,
-        };
-        if (title) {
-            where.title = {
-                [Op.iLike]: `%${title}%`,
-            };
-        }
+        const { page = 1, title = "", citys_id = 1 } = req.query;
+        const where = { citys_id: citys_id };
+        const { limitPerPage, offset, totalPages, currentPage } = getPagination(
+            page,
+            10,
+            await VanuesModels.count({
+                where: buildWhereClause(where, 'title', title),
+            })
+        );
+
         const contentData = await VanuesModels.findAll({
-            where,
-            limit: parseInt(limit),
-            offset: parseInt(offset),
+            where: buildWhereClause(where, 'title', title),
+            limit: limitPerPage,
+            offset,
             attributes: {
                 exclude: ["created_at", "updated_at", "citys_id"],
             },
         });
-        const totalCount = await VanuesModels.count({
-            where,
-        });
-        const totalPages = Math.ceil(totalCount / limit);
+
         const responseData = contentData.map((item) => ({
             id: item.id,
             title: item.title,
         }));
-        return responseApi(res, {
-            data: responseData,
-            meta: {
-                assets_image_url: "https://google.com", // Contoh URL gambar
-                pagination: {
-                    current_page: parseInt(page),
-                    per_page: parseInt(limit),
-                    total: totalCount,
-                    total_page: totalPages,
-                },
-            },
-            status: {
-                code: 0,
-                message_client: "Data retrieved successfully",
+
+        return responseApi(res, responseData, {
+            assets_image_url: "https://google.com",
+            pagination: {
+                current_page: currentPage,
+                per_page: limitPerPage,
+                total: contentData.length,
+                total_page: totalPages,
             },
         });
     } catch (error) {
-        console.error("Error fetching display types:", error);
-        return responseApi(res, {
-            data: [],
-            message: "Server error....",
-            status: 1,
-        });
+        console.log("errro", error)
+        return responseApi(res, [], null, "Server error....", 1);
     }
+
 };
 export const createVanues = async (req, res) => {
     try {
