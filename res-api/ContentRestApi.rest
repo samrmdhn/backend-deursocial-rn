@@ -172,8 +172,3 @@ Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4w
     ]
 }
 
-###
-GET http://localhost:3010/api/content/details
-Content-Type: application/json
-x-api-key: ku4jaK6v%$gd364GAga5
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4wLjAuMSIsInVhZyI6InZzY29kZS1yZXN0Y2xpZW50IiwidG9rZW4iOiJleUowYjJRaU9qQXNJblZwY0NJNklqRXlOeTR3TGpBdU1TSXNJblZoWnlJNkluWnpZMjlrWlMxeVpYTjBZMnhwWlc1MEluMWhabk5oT1NSQ1JrVTRORE15WW10cVpqTW9LaWg1TWlrcCIsImlhdCI6MTczMTA1NzczMSwiZXhwIjoxNzMxNjYyNTMxfQ.r_b0yZ-CsivXrP6xkPcp2VvGAxlJM10lnOqiXlqL4ew

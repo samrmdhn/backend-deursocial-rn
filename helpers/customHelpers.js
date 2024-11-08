@@ -42,12 +42,12 @@ export const convertToSlug = (text) => {
 
 export const withTransaction = (fn) => {
     return async (req, res) => {
-        const transaction = await db.transaction(); // Mulai transaksi baru
+        const transaction = await db.transaction();
         try {
-            await fn(req, res, transaction); // Menjalankan fungsi, passing `transaction`
-            await transaction.commit(); // Commit jika semua berhasil
+            await fn(req, res, transaction);
+            await transaction.commit();
         } catch (error) {
-            await transaction.rollback(); // Rollback jika ada error
+            await transaction.rollback();
             console.error("Transaction Rolled Back Due to Error:", error);
             return responseApi(res, {
                 data: [],
