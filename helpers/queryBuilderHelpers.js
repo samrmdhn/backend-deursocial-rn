@@ -1,3 +1,6 @@
+import { Sequelize } from "sequelize";
+const Op = Sequelize.Op;
+
 /**
  * helper where clause query(ORM only)
  * @param {*} where object for initiator condition

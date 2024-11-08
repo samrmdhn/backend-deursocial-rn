@@ -18,7 +18,6 @@ export {
     getContentDetails
 } from "./controllers/HomepageControllers.js";
 export {
-    getUsers,
     visitorToken,
     getCitys,
     createCitys,

@@ -1,8 +1,3 @@
-###
-GET http://localhost:3010/api/kadieu
-# GET https://seuneu.deursocial.com/api/kadieu
-Content-Type: application/json
-x-api-key: ku4jaK6v%$gd364GAga5
 
 ###
 POST http://localhost:3010/api/citys
@@ -14,11 +9,6 @@ Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4w
     "title": "Jakarta Timur",
     "provinces_id": 1805 
 }
-###
-GET http://localhost:3010/api/vanues?page=1&limit=10&citys_id=154152
-Content-Type: application/json
-x-api-key: ku4jaK6v%$gd364GAga5
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4wLjAuMSIsInVhZyI6InZzY29kZS1yZXN0Y2xpZW50IiwidG9rZW4iOiJleUowYjJRaU9qQXNJblZwY0NJNklqRXlOeTR3TGpBdU1TSXNJblZoWnlJNkluWnpZMjlrWlMxeVpYTjBZMnhwWlc1MEluMWhabk5oT1NSQ1JrVTRORE15WW10cVpqTW9LaWg1TWlrcCIsImlhdCI6MTczMDk0NzEwNywiZXhwIjoxNzMxNTUxOTA3fQ.6Ex2saYkRLdbpHMrt87lRY9hgvOXsNDClk8njhsM4O0
 
 ###
 POST http://localhost:3010/api/vanues
