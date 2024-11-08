@@ -15,7 +15,7 @@ const db = new Sequelize(
             acquire: 120000,
             idle: 10000,
         },
-        logging: process.env.APP_MODE !== 'production' ? true : false,
+        logging: process.env.APP_MODE === 'production' ?? false
     },
 );
 
