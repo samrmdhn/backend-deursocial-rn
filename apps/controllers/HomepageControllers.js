@@ -323,20 +323,19 @@ export const getContents = async (req, res) => {
             foreignKey: "citys_id",
             targetKey: "id",
         });
-        CitysModels.belongsTo(ProvincesModels, {
+        VanuesModels.belongsTo(ProvincesModels, {
             foreignKey: "provinces_id",
             sourceKey: "id",
         });
-        ProvincesModels.hasMany(CitysModels, {
+        ProvincesModels.hasMany(VanuesModels, {
             foreignKey: "provinces_id",
             targetKey: "id",
         });
-
-        ProvincesModels.belongsTo(CountriesModels, {
+        VanuesModels.belongsTo(CountriesModels, {
             foreignKey: "countries_id",
             sourceKey: "id",
         });
-        CountriesModels.hasMany(ProvincesModels, {
+        CountriesModels.hasMany(VanuesModels, {
             foreignKey: "countries_id",
             targetKey: "id",
         });
@@ -407,15 +406,17 @@ export const getContents = async (req, res) => {
                         },
                         {
                             model: VanuesModels,
-                            include: {
-                                model: CitysModels,
-                                include: {
-                                    model: ProvincesModels,
-                                    include: {
-                                        model: CountriesModels,
-                                    },
+                            include: [
+                                {
+                                    model: CitysModels
                                 },
-                            },
+                                {
+                                    model: ProvincesModels
+                                },
+                                {
+                                    model: CountriesModels
+                                }
+                            ],
                         },
                         {
                             model: ContentDetailTagsModels,
@@ -496,10 +497,10 @@ export const getContents = async (req, res) => {
                     location: itemContentDetails?.ir_vanue
                         ? {
                               region: {
-                                  id: itemContentDetails?.ir_vanue?.ir_city
-                                      ?.ir_province?.ir_country?.id,
-                                  name: itemContentDetails?.ir_vanue?.ir_city
-                                      ?.ir_province?.ir_country?.titl
+                                  id: itemContentDetails?.ir_vanue?.ir_country
+                                      ?.id,
+                                  name: itemContentDetails?.ir_vanue?.ir_country
+                                      ?.title
                               },
                               city: {
                                   id: itemContentDetails?.ir_vanue?.ir_city?.id,
