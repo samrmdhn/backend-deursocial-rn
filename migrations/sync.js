@@ -14,7 +14,7 @@ import TagsModels from "../apps/models/TagsModels.js";
 import ActressModels from "../apps/models/ActressModels.js";
 import ContentDetailsModels from "../apps/models/ContentDetailsModels.js";
 import ContentDetailTagsModels from "../apps/models/ContentDetailTagsModels.js";
-import ContentDetailActressModels from "../apps/models/contentDetailActressModels.js";
+import ContentDetailActressModels from "../apps/models/ContentDetailActressModels.js";
 
 // Menggunakan force: true akan membuat ulang tabel setiap kali dijalankan contoh => Example.sync({ force: true })
 async function syncDatabase() {
