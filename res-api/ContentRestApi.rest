@@ -156,7 +156,20 @@ Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2QiOjAsInVpcCI6IjEyNy4w
     "event_organizers_id": 1,
     "is_trending": 0,
     "status": 2,
-    "type_content_details_id": 1
+    "type_content_details_id": 1,
+    "actress": [
+        {
+            "id": "1"
+        },
+        {
+            "id": "1"
+        }
+    ],
+    "tags": [
+        {
+            "id": "1"
+        }
+    ]
 }
 
 ###

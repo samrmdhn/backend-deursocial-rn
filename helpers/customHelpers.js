@@ -1,3 +1,6 @@
+import db from "../configs/Database.js";
+import { responseApi } from "../libs/RestApiHandler.js";
+
 export const makeEpocTime = () => {
     const date = new Date();
     const options = { timeZone: "Asia/Jakarta" };
@@ -35,4 +38,22 @@ export const convertToSlug = (text) => {
     text = text.replace(/\s+/g, " ");
     text = text.trim().replace(/ /g, "-");
     return text.toLowerCase();
+};
+
+export const withTransaction = (fn) => {
+    return async (req, res) => {
+        const transaction = await db.transaction(); // Mulai transaksi baru
+        try {
+            await fn(req, res, transaction); // Menjalankan fungsi, passing `transaction`
+            await transaction.commit(); // Commit jika semua berhasil
+        } catch (error) {
+            await transaction.rollback(); // Rollback jika ada error
+            console.error("Transaction Rolled Back Due to Error:", error);
+            return responseApi(res, {
+                data: [],
+                message: "Server error occurred.",
+                status: 1,
+            });
+        }
+    };
 };
