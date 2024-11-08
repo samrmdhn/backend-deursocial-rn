@@ -238,10 +238,12 @@ export const getVanues = async (req, res) => {
 };
 export const createVanues = async (req, res) => {
     try {
-        const { title, citys_id } = req.body;
+        const { title, citys_id, provinces_id, countries_id } = req.body;
         await VanuesModels.create({
             title: title,
             citys_id: citys_id,
+            provinces_id: provinces_id,
+            countries_id: countries_id,
             created_at: makeEpocTime(),
         });
         return responseApi(res, {
