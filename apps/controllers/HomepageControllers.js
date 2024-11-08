@@ -1,41 +1,31 @@
-import { convertToSlug, dateToEpochTime, epochToDateJakarta, makeEpocTime } from "../../helpers/customHelpers.js";
+import {
+    convertToSlug,
+    dateToEpochTime,
+    epochToDateJakarta,
+    makeEpocTime,
+} from "../../helpers/customHelpers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
 import DisplayTypesModels from "../models/DisplayTypesModels.js";
 import ContentModels from "../models/ContentModels.js";
 import { Sequelize } from "sequelize";
-import runnerForJsonRegions from "../../databases/json/scripts/regionsCreates.js"
-import runnerForJsonSubRegions from "../../databases/json/scripts/subRegionsCreates.js"
-import runnerForJsonCountries from "../../databases/json/scripts/countriesCreates.js"
-import runnerForJsonProvinces from "../../databases/json/scripts/provincesCreates.js"
-import runnerForJsonCitys from "../../databases/json/scripts/citysCreates.js"
+import runnerForJsonRegions from "../../databases/json/scripts/regionsCreates.js";
+import runnerForJsonSubRegions from "../../databases/json/scripts/subRegionsCreates.js";
+import runnerForJsonCountries from "../../databases/json/scripts/countriesCreates.js";
+import runnerForJsonProvinces from "../../databases/json/scripts/provincesCreates.js";
+import runnerForJsonCitys from "../../databases/json/scripts/citysCreates.js";
 import EventOrganizersModels from "../models/EventOrganizersModels.js";
 import TypeContentDetailsModels from "../models/TypeContentDetailsModels.js";
 import TagsModels from "../models/TagsModels.js";
 import ActressModels from "../models/ActressModels.js";
 import ContentDetailsModels from "../models/ContentDetailsModels.js";
 const Op = Sequelize.Op;
-ContentModels.belongsTo(DisplayTypesModels, {
-    foreignKey: "display_types_id",
-});
-DisplayTypesModels.hasMany(ContentModels, {
-    foreignKey: "display_types_id",
-});
-
-ContentModels.hasMany(ContentDetailsModels, {
-    foreignKey: 'contents_id', // Pastikan kolom foreign key sesuai dengan yang ada di ContentDetails
-    sourceKey: 'id',
-});
-ContentDetailsModels.belongsTo(ContentModels, {
-    foreignKey: 'contents_id', // Kolom yang menjadi foreign key di ContentDetails
-    targetKey: 'id',
-});
 
 export const homepage = async (req, res) => {
-    runnerForJsonRegions()
-    runnerForJsonSubRegions()
-    runnerForJsonCountries()
-    runnerForJsonProvinces()
-    runnerForJsonCitys()
+    runnerForJsonRegions();
+    runnerForJsonSubRegions();
+    runnerForJsonCountries();
+    runnerForJsonProvinces();
+    runnerForJsonCitys();
     return res.status(200).json({
         data: [],
         message: "Internal server error",
@@ -279,6 +269,38 @@ export const updateContents = async (req, res) => {
  */
 export const getContents = async (req, res) => {
     try {
+        ContentModels.belongsTo(DisplayTypesModels, {
+            foreignKey: "display_types_id",
+        });
+        DisplayTypesModels.hasMany(ContentModels, {
+            foreignKey: "display_types_id",
+        });
+
+        ContentModels.hasMany(ContentDetailsModels, {
+            foreignKey: "contents_id",
+            sourceKey: "id",
+        });
+        ContentDetailsModels.belongsTo(ContentModels, {
+            foreignKey: "contents_id",
+            targetKey: "id",
+        });
+        ContentDetailsModels.belongsTo(TypeContentDetailsModels, {
+            foreignKey: "type_content_details_id",
+            sourceKey: "id",
+        });
+        TypeContentDetailsModels.hasMany(ContentDetailsModels, {
+            foreignKey: "type_content_details_id",
+            targetKey: "id",
+        });
+
+        ContentDetailsModels.belongsTo(EventOrganizersModels, {
+            foreignKey: "event_organizers_id",
+            sourceKey: "id",
+        });
+        EventOrganizersModels.hasMany(ContentDetailsModels, {
+            foreignKey: "event_organizers_id",
+            targetKey: "id",
+        });
         const { page = 1, limit = 10, title = "", status = 1 } = req.query;
         const offset = (page - 1) * limit;
         const where = {
@@ -302,8 +324,16 @@ export const getContents = async (req, res) => {
                     attributes: ["title"],
                 },
                 {
-                    model: ContentDetailsModels
-                }
+                    model: ContentDetailsModels,
+                    include: [
+                        {
+                            model: TypeContentDetailsModels,
+                        },
+                        {
+                            model: EventOrganizersModels,
+                        },
+                    ],
+                },
             ],
         });
         const totalCount = await ContentModels.count({
@@ -316,21 +346,45 @@ export const getContents = async (req, res) => {
             display_types: item.ir_display_type
                 ? item.ir_display_type.title
                 : null,
-            content_details: item?.ir_content_details?.map((itemContentDetails) => ({
-                title: itemContentDetails.title,
-                slug: itemContentDetails.slug,
-                schedule_start: epochToDateJakarta(itemContentDetails.schedule_start),
-                schedule_end: epochToDateJakarta(itemContentDetails.schedule_end),
-                date_start: epochToDateJakarta(itemContentDetails.date_start),
-                date_end: epochToDateJakarta(itemContentDetails.date_end),
-                description: itemContentDetails.description,
-                image: itemContentDetails.image,
-                is_trending: itemContentDetails.is_trending === 1 ? true : false,
-                status: itemContentDetails.is_trending === 1 ? "ongoing" : "ndak ongoing",
-            }))
+            content_details: item?.ir_content_details?.map(
+                (itemContentDetails) => ({
+                    title: itemContentDetails.title,
+                    slug: itemContentDetails.slug,
+                    schedule_start: epochToDateJakarta(
+                        itemContentDetails.schedule_start
+                    ),
+                    schedule_end: epochToDateJakarta(
+                        itemContentDetails.schedule_end
+                    ),
+                    date_start: epochToDateJakarta(
+                        itemContentDetails.date_start
+                    ),
+                    date_end: epochToDateJakarta(itemContentDetails.date_end),
+                    description: itemContentDetails.description,
+                    image: itemContentDetails.image,
+                    is_trending:
+                        itemContentDetails.is_trending === 1 ? true : false,
+                    status:
+                        itemContentDetails.is_trending === 0
+                            ? "ended"
+                            : itemContentDetails.is_trending === 1
+                            ? "ongoing"
+                            : "upcoming",
+                    type_content_details: {
+                        id: itemContentDetails?.ir_type_content_detail?.id,
+                        name: itemContentDetails?.ir_type_content_detail?.name,
+                    },
+                    event_organizers: {
+                        id: itemContentDetails?.ir_event_organizer?.id,
+                        name: itemContentDetails?.ir_event_organizer?.name,
+                        image: itemContentDetails?.ir_event_organizer?.image,
+                    },
+                })
+            ),
         }));
         return responseApi(res, {
             data: responseData,
+            // nyimak: contentData,
             meta: {
                 assets_image_url: "https://google.com", // Contoh URL gambar
                 pagination: {
@@ -354,7 +408,6 @@ export const getContents = async (req, res) => {
         });
     }
 };
-
 
 /**
  * function create new event organizers
@@ -387,7 +440,6 @@ export const createEventOrganizers = async (req, res) => {
     }
 };
 
-
 /**
  * Fungsi untuk get data event organizers.
  * @param {*} req
@@ -396,9 +448,9 @@ export const createEventOrganizers = async (req, res) => {
  */
 export const getEventOrganizers = async (req, res) => {
     try {
-        const { page = 1, limit = 10, name = ""} = req.query;
+        const { page = 1, limit = 10, name = "" } = req.query;
         const offset = (page - 1) * limit;
-        const where  = {}
+        const where = {};
         if (name) {
             where.name = {
                 [Op.iLike]: `%${name}%`,
@@ -410,7 +462,7 @@ export const getEventOrganizers = async (req, res) => {
             offset: parseInt(offset),
             attributes: {
                 exclude: ["created_at", "updated_at", "id"],
-            }
+            },
         });
         const totalCount = await EventOrganizersModels.count({
             where,
@@ -418,7 +470,7 @@ export const getEventOrganizers = async (req, res) => {
         const totalPages = Math.ceil(totalCount / limit);
         const responseData = eventOrganizersData.map((item) => ({
             id: item.id,
-            name: item.name
+            name: item.name,
         }));
         return responseApi(res, {
             data: responseData,
@@ -445,8 +497,6 @@ export const getEventOrganizers = async (req, res) => {
         });
     }
 };
-
-
 
 /**
  * function create new types content details
@@ -478,7 +528,6 @@ export const createTypeContentDetails = async (req, res) => {
     }
 };
 
-
 /**
  * Fungsi untuk get data event organizers.
  * @param {*} req
@@ -487,9 +536,9 @@ export const createTypeContentDetails = async (req, res) => {
  */
 export const getTypeContentDetails = async (req, res) => {
     try {
-        const { page = 1, limit = 10, name = ""} = req.query;
+        const { page = 1, limit = 10, name = "" } = req.query;
         const offset = (page - 1) * limit;
-        const where  = {}
+        const where = {};
         if (name) {
             where.name = {
                 [Op.iLike]: `%${name}%`,
@@ -501,7 +550,7 @@ export const getTypeContentDetails = async (req, res) => {
             offset: parseInt(offset),
             attributes: {
                 exclude: ["created_at", "updated_at", "id"],
-            }
+            },
         });
         const totalCount = await TypeContentDetailsModels.count({
             where,
@@ -509,7 +558,7 @@ export const getTypeContentDetails = async (req, res) => {
         const totalPages = Math.ceil(totalCount / limit);
         const responseData = typeContentDetailsData.map((item) => ({
             id: item.id,
-            name: item.name
+            name: item.name,
         }));
         return responseApi(res, {
             data: responseData,
@@ -567,7 +616,6 @@ export const createTags = async (req, res) => {
     }
 };
 
-
 /**
  * Fungsi untuk get data tags.
  * @param {*} req
@@ -576,9 +624,9 @@ export const createTags = async (req, res) => {
  */
 export const getTags = async (req, res) => {
     try {
-        const { page = 1, limit = 10, title = ""} = req.query;
+        const { page = 1, limit = 10, title = "" } = req.query;
         const offset = (page - 1) * limit;
-        const where  = {}
+        const where = {};
         if (title) {
             where.title = {
                 [Op.iLike]: `%${title}%`,
@@ -590,7 +638,7 @@ export const getTags = async (req, res) => {
             offset: parseInt(offset),
             attributes: {
                 exclude: ["created_at", "updated_at", "id"],
-            }
+            },
         });
         const totalCount = await TagsModels.count({
             where,
@@ -598,7 +646,7 @@ export const getTags = async (req, res) => {
         const totalPages = Math.ceil(totalCount / limit);
         const responseData = tagsData.map((item) => ({
             id: item.id,
-            title: item.title
+            title: item.title,
         }));
         return responseApi(res, {
             data: responseData,
@@ -659,7 +707,6 @@ export const createActress = async (req, res) => {
     }
 };
 
-
 /**
  * Fungsi untuk get data tags.
  * @param {*} req
@@ -668,9 +715,9 @@ export const createActress = async (req, res) => {
  */
 export const getActress = async (req, res) => {
     try {
-        const { page = 1, limit = 10, name = ""} = req.query;
+        const { page = 1, limit = 10, name = "" } = req.query;
         const offset = (page - 1) * limit;
-        const where  = {}
+        const where = {};
         if (name) {
             where.name = {
                 [Op.iLike]: `%${name}%`,
@@ -682,7 +729,7 @@ export const getActress = async (req, res) => {
             offset: parseInt(offset),
             attributes: {
                 exclude: ["created_at", "updated_at", "id"],
-            }
+            },
         });
         const totalCount = await ActressModels.count({
             where,
@@ -690,7 +737,7 @@ export const getActress = async (req, res) => {
         const totalPages = Math.ceil(totalCount / limit);
         const responseData = actressData.map((item) => ({
             id: item.id,
-            name: item.name
+            name: item.name,
         }));
         return responseApi(res, {
             data: responseData,
@@ -757,7 +804,7 @@ export const createContentDetails = async (req, res) => {
             is_trending,
             status,
             type_content_details_id,
-            created_at: makeEpocTime()
+            created_at: makeEpocTime(),
         });
 
         return responseApi(res, {
