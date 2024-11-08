@@ -13,6 +13,8 @@ import TypeContentDetailsModels from "../apps/models/TypeContentDetailsModels.js
 import TagsModels from "../apps/models/TagsModels.js";
 import ActressModels from "../apps/models/ActressModels.js";
 import ContentDetailsModels from "../apps/models/ContentDetailsModels.js";
+import ContentDetailActressModels from "../apps/models/contentDetailActressModels.js";
+import ContentDetailTagsModels from "../apps/models/ContentDetailTagsModels.js";
 
 // Menggunakan force: true akan membuat ulang tabel setiap kali dijalankan contoh => Example.sync({ force: true })
 async function syncDatabase() {
@@ -47,6 +49,10 @@ async function syncDatabase() {
         console.log("Table table Actress has been created.");
         await ContentDetailsModels.sync({ force: false });
         console.log("Table table Content Details has been created.");
+        await ContentDetailActressModels.sync({ force: false });
+        console.log("Table table Content Details actress has been created.");
+        await ContentDetailTagsModels.sync({ force: false });
+        console.log("Table table Content Details tags has been created.");
 
 
         await db.close();

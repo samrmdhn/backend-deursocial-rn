@@ -18,6 +18,12 @@ import TypeContentDetailsModels from "../models/TypeContentDetailsModels.js";
 import TagsModels from "../models/TagsModels.js";
 import ActressModels from "../models/ActressModels.js";
 import ContentDetailsModels from "../models/ContentDetailsModels.js";
+import ContentDetailTagsModels from "../models/ContentDetailTagsModels.js";
+import ContentDetailActressModels from "../models/ContentDetailActressModels.js";
+import VanuesModels from "../models/VanuesModels.js";
+import CitysModels from "../models/CitysModels.js";
+import ProvincesModels from "../models/ProvincesModels.js";
+import CountriesModels from "../models/CountriesModels.js";
 const Op = Sequelize.Op;
 
 export const homepage = async (req, res) => {
@@ -301,6 +307,73 @@ export const getContents = async (req, res) => {
             foreignKey: "event_organizers_id",
             targetKey: "id",
         });
+        ContentDetailsModels.belongsTo(VanuesModels, {
+            foreignKey: "vanues_id",
+            sourceKey: "id",
+        });
+        VanuesModels.hasMany(ContentDetailsModels, {
+            foreignKey: "vanues_id",
+            targetKey: "id",
+        });
+        VanuesModels.belongsTo(CitysModels, {
+            foreignKey: "citys_id",
+            sourceKey: "id",
+        });
+        CitysModels.hasMany(VanuesModels, {
+            foreignKey: "citys_id",
+            targetKey: "id",
+        });
+        CitysModels.belongsTo(ProvincesModels, {
+            foreignKey: "provinces_id",
+            sourceKey: "id",
+        });
+        ProvincesModels.hasMany(CitysModels, {
+            foreignKey: "provinces_id",
+            targetKey: "id",
+        });
+
+        ProvincesModels.belongsTo(CountriesModels, {
+            foreignKey: "countries_id",
+            sourceKey: "id",
+        });
+        CountriesModels.hasMany(ProvincesModels, {
+            foreignKey: "countries_id",
+            targetKey: "id",
+        });
+        // end
+        ContentDetailTagsModels.belongsTo(ContentDetailsModels, {
+            foreignKey: "content_details_id",
+            sourceKey: "id",
+        });
+        ContentDetailsModels.hasMany(ContentDetailTagsModels, {
+            foreignKey: "content_details_id",
+            targetKey: "id",
+        });
+        ContentDetailTagsModels.belongsTo(TagsModels, {
+            foreignKey: "tags_id",
+            sourceKey: "id",
+        });
+        TagsModels.hasMany(ContentDetailTagsModels, {
+            foreignKey: "tags_id",
+            targetKey: "id",
+        });
+        // end
+        ContentDetailActressModels.belongsTo(ContentDetailsModels, {
+            foreignKey: "content_details_id",
+            sourceKey: "id",
+        });
+        ContentDetailsModels.hasMany(ContentDetailActressModels, {
+            foreignKey: "content_details_id",
+            targetKey: "id",
+        });
+        ContentDetailActressModels.belongsTo(ActressModels, {
+            foreignKey: "actress_id",
+            sourceKey: "id",
+        });
+        ActressModels.hasMany(ContentDetailActressModels, {
+            foreignKey: "actress_id",
+            targetKey: "id",
+        });
         const { page = 1, limit = 10, title = "", status = 1 } = req.query;
         const offset = (page - 1) * limit;
         const where = {
@@ -331,6 +404,34 @@ export const getContents = async (req, res) => {
                         },
                         {
                             model: EventOrganizersModels,
+                        },
+                        {
+                            model: VanuesModels,
+                            include: {
+                                model: CitysModels,
+                                include: {
+                                    model: ProvincesModels,
+                                    include: {
+                                        model: CountriesModels,
+                                    },
+                                },
+                            },
+                        },
+                        {
+                            model: ContentDetailTagsModels,
+                            include: [
+                                {
+                                    model: TagsModels,
+                                },
+                            ],
+                        },
+                        {
+                            model: ContentDetailActressModels,
+                            include: [
+                                {
+                                    model: ActressModels,
+                                },
+                            ],
                         },
                     ],
                 },
@@ -379,6 +480,38 @@ export const getContents = async (req, res) => {
                         name: itemContentDetails?.ir_event_organizer?.name,
                         image: itemContentDetails?.ir_event_organizer?.image,
                     },
+                    tags: itemContentDetails?.ir_content_detail_tags?.map(
+                        (itemContentDetailTags) => ({
+                            id: itemContentDetailTags?.ir_tag?.id,
+                            title: itemContentDetailTags?.ir_tag?.title,
+                        })
+                    ),
+                    actress:
+                        itemContentDetails?.ir_content_detail_actresses?.map(
+                            (itemContentDetailTags) => ({
+                                id: itemContentDetailTags?.ir_actress?.id,
+                                name: itemContentDetailTags?.ir_actress?.name,
+                            })
+                        ),
+                    location: itemContentDetails?.ir_vanue
+                        ? {
+                              region: {
+                                  id: itemContentDetails?.ir_vanue?.ir_city
+                                      ?.ir_province?.ir_country?.id,
+                                  name: itemContentDetails?.ir_vanue?.ir_city
+                                      ?.ir_province?.ir_country?.titl
+                              },
+                              city: {
+                                  id: itemContentDetails?.ir_vanue?.ir_city?.id,
+                                  name: itemContentDetails?.ir_vanue?.ir_city
+                                      ?.title
+                              },
+                              venue: {
+                                  id: itemContentDetails?.ir_vanue?.id,
+                                  name: itemContentDetails?.ir_vanue?.title
+                              },
+                          }
+                        : null,
                 })
             ),
         }));
