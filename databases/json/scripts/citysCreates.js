@@ -29,4 +29,4 @@ const runnerForJsonCitys = async () => {
     }
 };
 
-export default runnerForJsonCitys;
+runnerForJsonCitys();

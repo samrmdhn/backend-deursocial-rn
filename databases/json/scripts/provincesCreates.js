@@ -28,4 +28,4 @@ const runnerForJsonProvinces = async () => {
         console.log("error :", error);
     }
 };
-export default runnerForJsonProvinces;
+runnerForJsonProvinces();

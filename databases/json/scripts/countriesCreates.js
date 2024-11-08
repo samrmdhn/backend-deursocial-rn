@@ -28,4 +28,4 @@ const runnerForJsonCountries = async () => {
         console.log("error :", error);
     }
 };
-export default runnerForJsonCountries
+runnerForJsonCountries()
