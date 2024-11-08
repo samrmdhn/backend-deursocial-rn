@@ -72,20 +72,7 @@ Table post_comments {
   updated_at bigint
 }
 
-Table content_detail_tags {
-  id bigint [increment, pk]
-  content_details_id bigint [ref: > content_details.id]
-  tags_id bigint [ref: > tags.id]
-  created_at bigint
-  updated_at bigint
-}
-Table content_detail_actress {
-  id bigint [increment, pk]
-  content_details_id bigint [ref: > content_details.id]
-  actress_id bigint [ref: > actress.id]
-  created_at bigint
-  updated_at bigint
-}
+
 
 Table groups {
   id bigint [increment, pk]
