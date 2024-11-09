@@ -794,7 +794,6 @@ export const createContentDetails = withTransaction(
  */
 export const getContentDetails = async (req, res) => {
     try {
-        // Mendapatkan query parameters dengan default value
         const { page = 1, title = "", slug = "" } = req.query;
         const limit = 10;
         const offset = (page - 1) * limit;
@@ -911,8 +910,22 @@ export const getContentDetails = async (req, res) => {
         const totalCount = totalCountResult[0].total_count;
         const totalPages = Math.ceil(totalCount / limit);
 
-        const responseData = contentDetailsData;
-        console.log(responseData)
+        let responseData = contentDetailsData;
+        if (contentDetailsData.length > 1) {
+            responseData = contentDetailsData;
+        } else {
+            responseData = contentDetailsData[0];
+            try {
+                const updatedImpressions = Number(responseData.impression) + 1;
+                const affectedRows = await ContentDetailsModels.update(
+                    { impression: Number(updatedImpressions) }, 
+                    { where: { slug: slug } }
+                );
+                console.log("affectedRows", {"a":affectedRows, "r": updatedImpressions})
+            } catch (error) {
+                throw error;
+            }
+        }
         return responseApi(
             res,
             responseData,

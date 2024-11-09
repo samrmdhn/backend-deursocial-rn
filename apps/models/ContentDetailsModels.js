@@ -3,7 +3,7 @@ import DataTypesCustom from "../../libs/DataTypesCustom.js";
 const { TYPES } = DataTypesCustom;
 
 const ContentDetailsModels = db.define(
-    "ir_content_details_bos",
+    "ir_content_details",
     {
         id: {
             type: TYPES.BIGINT,
