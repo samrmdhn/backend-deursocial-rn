@@ -647,7 +647,7 @@ export const createActress = async (req, res) => {
         const file = req.files.image_file;
         const fileDate = new Date();
         const filesNamed = fileDate.getTime() + getExtension(file.name);
-        const fileDestination = process.env.APP_LOCATION_FILE + filesNamed;
+        const fileDestination = process.env.APP_LOCATION_FILE + createNameFile(filesNamed);
         await uploadFile(file, fileDestination);
         const { name, gender, detail } = req.body;
         await ActressModels.create({
