@@ -3,7 +3,7 @@ import DataTypesCustom from "../../libs/DataTypesCustom.js";
 const { TYPES } = DataTypesCustom;
 
 const ContentDetailsModels = db.define(
-    "ir_content_details",
+    "ir_content_details_bos",
     {
         id: {
             type: TYPES.BIGINT,
@@ -16,7 +16,8 @@ const ContentDetailsModels = db.define(
         },
         slug: {
             type: TYPES.STRING(100),
-            allowNull: false, // Kolom title wajib (NOT NULL)
+            allowNull: false,
+            unique: true
         },
         schedule_start: {
             type: TYPES.BIGINT,
@@ -87,6 +88,11 @@ const ContentDetailsModels = db.define(
                 model: "ir_type_content_details", // Tabel yang dirujuk
                 key: "id", // Kolom yang dirujuk
             },
+        },
+        impression: {
+            type: TYPES.BIGINT,
+            allowNull: false,
+            defaultValue: 0
         },
         created_at: {
             type: TYPES.BIGINT,
