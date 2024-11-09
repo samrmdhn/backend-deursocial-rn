@@ -4,6 +4,7 @@ import http from 'http';
 import dotenv from 'dotenv';
 import cookieParser from "cookie-parser";
 import api from "./routes/api.js";
+import fileUpload from "express-fileupload";
 
 
 dotenv.config({
@@ -17,10 +18,12 @@ app.use(cors({
         "http://localhost:3000"
     ]
 }));
-app.use(cookieParser());
-// app.use(express.json());
-app.use(express.json({strict: false}));
 
+// app.use(express.json());
+
+app.use(express.json({strict: false}));
+app.use(cookieParser());
+app.use(fileUpload());
 app.use(api);
 
 const httpServer = http.createServer(app);

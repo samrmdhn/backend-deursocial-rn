@@ -57,3 +57,12 @@ export const withTransaction = (fn) => {
         }
     };
 };
+
+export const getExtension = (filename) => {
+    var i = filename.lastIndexOf(".");
+    return i < 0 ? "" : filename.substr(i);
+};
+
+export const createNameFile = (fileName) => {
+    return '/images/'+fileName
+}
