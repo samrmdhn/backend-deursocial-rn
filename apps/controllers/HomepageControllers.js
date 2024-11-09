@@ -1,7 +1,9 @@
 import {
     convertToSlug,
+    createNameFile,
     dateToEpochTime,
     epochToDateJakarta,
+    getExtension,
     makeEpocTime,
     withTransaction,
 } from "../../helpers/customHelpers.js";
@@ -18,6 +20,7 @@ import { buildWhereClause } from "../../helpers/queryBuilderHelpers.js";
 import { getPagination } from "../../helpers/paginationHelpers.js";
 import db from "../../configs/Database.js";
 import { Sequelize } from "sequelize";
+import { uploadFile } from "../../helpers/FileUpload.js";
 const Op = Sequelize.Op;
 
 export const homepage = async (req, res) => {
@@ -641,28 +644,23 @@ export const getTags = async (req, res) => {
  */
 export const createActress = async (req, res) => {
     try {
-        const { name, gender, detail, image } = req.body;
+        const file = req.files.image_file;
+        const fileDate = new Date();
+        const filesNamed = fileDate.getTime() + getExtension(file.name);
+        const fileDestination = process.env.APP_LOCATION_FILE + filesNamed;
+        await uploadFile(file, fileDestination);
+        const { name, gender, detail } = req.body;
         await ActressModels.create({
             name: name,
             gender: gender,
             detail: detail,
-            image: image,
+            image: createNameFile(filesNamed),
             created_at: makeEpocTime(),
         });
-        return responseApi(res, {
-            data: [],
-            status: {
-                code: 0,
-                message_client: "Data has been saved",
-            },
-        });
+        return responseApi(res, [], null, "Data Success Saved", 0);
     } catch (error) {
         console.log(error);
-        return responseApi(res, {
-            data: [],
-            message: "server error....",
-            status: 1,
-        });
+        return responseApi(res, [], null, "Server error....", 1);
     }
 };
 
@@ -918,10 +916,13 @@ export const getContentDetails = async (req, res) => {
             try {
                 const updatedImpressions = Number(responseData.impression) + 1;
                 const affectedRows = await ContentDetailsModels.update(
-                    { impression: Number(updatedImpressions) }, 
+                    { impression: Number(updatedImpressions) },
                     { where: { slug: slug } }
                 );
-                console.log("affectedRows", {"a":affectedRows, "r": updatedImpressions})
+                console.log("affectedRows", {
+                    a: affectedRows,
+                    r: updatedImpressions,
+                });
             } catch (error) {
                 throw error;
             }
