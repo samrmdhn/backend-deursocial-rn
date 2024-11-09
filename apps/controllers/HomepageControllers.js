@@ -278,6 +278,7 @@ export const getContents = async (req, res) => {
                     json_build_object(
                         'title', cd.title,
                         'slug', cd.slug,
+                        'impression', cd.impression,
                         'schedule_start', TO_CHAR(TO_TIMESTAMP(cd.schedule_start), 'YYYY-MM-DD HH24:MI:SS'),
                         'schedule_end', TO_CHAR(TO_TIMESTAMP(cd.schedule_end), 'YYYY-MM-DD HH24:MI:SS'),
                         'date_start', TO_CHAR(TO_TIMESTAMP(cd.date_start), 'YYYY-MM-DD HH24:MI:SS'),
@@ -447,7 +448,7 @@ export const getEventOrganizers = async (req, res) => {
             })
         );
 
-        const contentData = await EventOrganizersModels.findAll({
+        const eventOrganizersData = await EventOrganizersModels.findAll({
             where: buildWhereClause(where, "name", name),
             limit: limitPerPage,
             offset,
@@ -456,7 +457,7 @@ export const getEventOrganizers = async (req, res) => {
             },
         });
 
-        const responseData = contentData.map((item) => ({
+        const responseData = eventOrganizersData.map((item) => ({
             id: item.id,
             name: item.name,
         }));
@@ -793,72 +794,142 @@ export const createContentDetails = withTransaction(
  */
 export const getContentDetails = async (req, res) => {
     try {
-        const { page = 1, limit = 10, title = "", status = null } = req.query;
+        // Mendapatkan query parameters dengan default value
+        const { page = 1, title = "", slug = "" } = req.query;
+        const limit = 10;
         const offset = (page - 1) * limit;
-        const where = {};
 
-        // Filter by title if provided
+        let whereClause = "";
+        const replacements = {
+            limit: parseInt(limit, 10),
+            offset: parseInt(offset, 10),
+        };
+
         if (title) {
-            where.title = {
-                [Op.iLike]: `%${title}%`,
-            };
+            whereClause += ` WHERE cd.title ILIKE :title`;
+            replacements.title = `%${title}%`;
         }
 
-        // Filter by status if provided
-        if (status !== null) {
-            where.status = status;
+        if (slug) {
+            if (whereClause) {
+                whereClause += ` AND cd.slug = :slug`;
+            } else {
+                whereClause += ` WHERE cd.slug = :slug`;
+            }
+            replacements.slug = slug;
         }
 
-        const ContentDetailsData = await ContentDetailsModels.findAll({
-            where,
-            limit: parseInt(limit),
-            offset: parseInt(offset),
-            attributes: {
-                exclude: ["created_at", "updated_at"], // Exclude certain attributes
-            },
+        // Menyusun query utama
+        const query = `
+            SELECT 
+                cd.title,
+                cd.slug,
+                cd.impression,
+                TO_CHAR(TO_TIMESTAMP(cd.schedule_start), 'YYYY-MM-DD HH24:MI:SS') AS schedule_start,
+                TO_CHAR(TO_TIMESTAMP(cd.schedule_end), 'YYYY-MM-DD HH24:MI:SS') AS schedule_end,
+                TO_CHAR(TO_TIMESTAMP(cd.date_start), 'YYYY-MM-DD HH24:MI:SS') AS date_start,
+                TO_CHAR(TO_TIMESTAMP(cd.date_end), 'YYYY-MM-DD HH24:MI:SS') AS date_end,
+                cd.description,
+                cd.image,
+                CASE WHEN cd.is_trending = 1 THEN true ELSE false END AS is_trending,
+                CASE WHEN cd.is_trending = 0 THEN 'ended' 
+                    WHEN cd.is_trending = 1 THEN 'ongoing' 
+                    ELSE 'upcoming' END AS status,
+                json_build_object(
+                    'id', tcd.id,
+                    'name', tcd.name
+                ) AS type_content_details,
+                json_build_object(
+                    'id', eo.id,
+                    'name', eo.name,
+                    'image', eo.image
+                ) AS event_organizers,
+                (
+                    SELECT json_agg(
+                        json_build_object(
+                            'id', t.id,
+                            'title', t.title
+                        )
+                    )
+                    FROM ir_content_detail_tags cdt
+                    JOIN ir_tags t ON cdt.tags_id = t.id
+                    WHERE cdt.content_details_id = cd.id
+                ) AS tags,
+                (
+                    SELECT json_agg(
+                        json_build_object(
+                            'id', a.id,
+                            'name', a.name
+                        )
+                    )
+                    FROM ir_content_detail_actress cda
+                    JOIN ir_actress a ON cda.actress_id = a.id
+                    WHERE cda.content_details_id = cd.id
+                ) AS actress,
+                json_build_object(
+                    'region', json_build_object(
+                        'id', co.id,
+                        'name', co.title
+                    ),
+                    'city', json_build_object(
+                        'id', ci.id,
+                        'name', ci.title
+                    ),
+                    'venue', json_build_object(
+                        'id', v.id,
+                        'name', v.title
+                    )
+                ) AS location
+            FROM ir_content_details cd
+            LEFT JOIN ir_type_content_details tcd ON cd.type_content_details_id = tcd.id
+            LEFT JOIN ir_event_organizers eo ON cd.event_organizers_id = eo.id
+            LEFT JOIN ir_vanues v ON cd.vanues_id = v.id
+            LEFT JOIN ir_citys ci ON v.citys_id = ci.id
+            LEFT JOIN ir_provinces p ON v.provinces_id = p.id
+            LEFT JOIN ir_countries co ON v.countries_id = co.id
+            ${whereClause}
+            ORDER BY cd.id
+            LIMIT :limit OFFSET :offset;
+        `;
+
+        const contentDetailsData = await db.query(query, {
+            replacements,
+            type: db.QueryTypes.SELECT,
         });
 
-        const totalCount = await ContentDetailsModels.count({ where });
+        // Query untuk menghitung total data
+        const countQuery = `
+            SELECT COUNT(*) AS total_count
+            FROM ir_content_details cd
+            ${whereClause};
+        `;
+        const totalCountResult = await db.query(countQuery, {
+            replacements,
+            type: db.QueryTypes.SELECT,
+        });
+
+        const totalCount = totalCountResult[0].total_count;
         const totalPages = Math.ceil(totalCount / limit);
 
-        const responseData = ContentDetailsData.map((item) => ({
-            id: item.id,
-            title: item.title,
-            schedule_start: item.schedule_start,
-            schedule_end: item.schedule_end,
-            date_start: item.date_start,
-            date_end: item.date_end,
-            description: item.description,
-            image: item.image,
-            vanues_id: item.vanues_id,
-            contents_id: item.contents_id,
-            event_organizers_id: item.event_organizers_id,
-            is_trending: item.is_trending,
-            status: item.status,
-            type_content_details_id: item.type_content_details_id,
-        }));
-
-        return responseApi(res, {
-            data: responseData,
-            meta: {
+        const responseData = contentDetailsData;
+        console.log(responseData)
+        return responseApi(
+            res,
+            responseData,
+            {
+                assets_image_url: "https://google.com",
                 pagination: {
-                    current_page: parseInt(page),
-                    per_page: parseInt(limit),
+                    current_page: parseInt(page, 10),
+                    per_page: parseInt(limit, 10),
                     total: totalCount,
                     total_page: totalPages,
                 },
             },
-            status: {
-                code: 0,
-                message_client: "Data retrieved successfully",
-            },
-        });
+            "Data retrieved successfully",
+            0
+        );
     } catch (error) {
-        console.error("Error fetching content details:", error);
-        return responseApi(res, {
-            data: [],
-            message: "Server error....",
-            status: 1,
-        });
+        console.error("Error fetching content details:", error); // Penanganan error lebih spesifik
+        return responseApi(res, [], null, "Server error....", 1);
     }
 };
