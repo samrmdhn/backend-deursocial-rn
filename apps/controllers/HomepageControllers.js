@@ -126,7 +126,7 @@ export const getDisplayTypes = async (req, res) => {
         }));
 
         return responseApi(res, responseData, {
-            assets_image_url: "https://google.com",
+            assets_image_url: process.env.APP_BUCKET_IMAGE,
             pagination: {
                 current_page: currentPage,
                 per_page: limitPerPage,
@@ -343,7 +343,7 @@ export const getContents = async (req, res) => {
         }));
 
         return responseApi(res, responseData, {
-            assets_image_url: "https://google.com", // Contoh URL gambar
+            assets_image_url: process.env.APP_BUCKET_IMAGE, // Contoh URL gambar
             pagination: {
                 current_page: parseInt(page),
                 per_page: parseInt(limit),
@@ -411,7 +411,7 @@ export const getEventOrganizers = async (req, res) => {
         }));
 
         return responseApi(res, responseData, {
-            assets_image_url: "https://google.com",
+            assets_image_url: process.env.APP_BUCKET_IMAGE,
             pagination: {
                 current_page: currentPage,
                 per_page: limitPerPage,
@@ -479,7 +479,7 @@ export const getTypeContentDetails = async (req, res) => {
         }));
 
         return responseApi(res, responseData, {
-            assets_image_url: "https://google.com",
+            assets_image_url: process.env.APP_BUCKET_IMAGE,
             pagination: {
                 current_page: currentPage,
                 per_page: limitPerPage,
@@ -547,7 +547,7 @@ export const getTags = async (req, res) => {
         }));
 
         return responseApi(res, responseData, {
-            assets_image_url: "https://google.com",
+            assets_image_url: process.env.APP_BUCKET_IMAGE,
             pagination: {
                 current_page: currentPage,
                 per_page: limitPerPage,
@@ -622,7 +622,7 @@ export const getActress = async (req, res) => {
         }));
 
         return responseApi(res, responseData, {
-            assets_image_url: "https://google.com",
+            assets_image_url: process.env.APP_BUCKET_IMAGE,
             pagination: {
                 current_page: currentPage,
                 per_page: limitPerPage,
@@ -866,7 +866,7 @@ export const getContentDetails = async (req, res) => {
             res,
             responseData,
             {
-                assets_image_url: "https://google.com",
+                assets_image_url: process.env.APP_BUCKET_IMAGE,
                 pagination: {
                     current_page: parseInt(page, 10),
                     per_page: parseInt(limit, 10),
