@@ -1,1 +1,0 @@
-if you want use this rest-api you can install `https://marketplace.visualstudio.com/items?itemName=humao.rest-client`

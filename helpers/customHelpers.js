@@ -49,11 +49,7 @@ export const withTransaction = (fn) => {
         } catch (error) {
             await transaction.rollback();
             console.error("Transaction Rolled Back Due to Error:", error);
-            return responseApi(res, {
-                data: [],
-                message: "Server error occurred.",
-                status: 1,
-            });
+            return responseApi(res, [], null, "Server error....", 1);
         }
     };
 };
@@ -65,4 +61,16 @@ export const getExtension = (filename) => {
 
 export const createNameFile = (fileName) => {
     return '/images/'+fileName
+}
+
+export const makeRandomString = (length) => {
+    let result = '';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const charactersLength = characters.length;
+    let counter = 0;
+    while (counter < length) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+      counter += 1;
+    }
+    return result;
 }
