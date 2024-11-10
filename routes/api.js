@@ -1,6 +1,7 @@
 import express from "express";
 import * as SettingControllers from "../apps/index.js";
 import * as HomepageControllers from "../apps/index.js";
+import * as GroupsControllers from "../apps/index.js";
 import { verifyToken } from "../apps/middlewares/verifyToken.js";
 
 const api = express.Router();
@@ -9,7 +10,9 @@ api.get("/api/citys", verifyToken, SettingControllers.getCitys);
 api.post("/api/citys", verifyToken, SettingControllers.createCitys);
 api.get("/api/vanues", verifyToken, SettingControllers.getVanues);
 api.post("/api/vanues", verifyToken, SettingControllers.createVanues);
+api.post("/api/registers", verifyToken, SettingControllers.createUsers);
 
+api.post("/api/groups", verifyToken, GroupsControllers.createGroups);
 
 api.get("/api/homepages", HomepageControllers.homepage);
 api.post("/api/display/types", verifyToken, HomepageControllers.createDisplayTypes);

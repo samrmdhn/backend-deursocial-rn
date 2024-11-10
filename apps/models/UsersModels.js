@@ -30,6 +30,7 @@ const UsersModels = db.define(
         email: {
             type: TYPES.STRING(100),
             allowNull: false,
+            unique: true,
         },
         phone: {
             type: TYPES.STRING(100),
@@ -49,6 +50,9 @@ const UsersModels = db.define(
             type: TYPES.TINYINT,
             allowNull: true,
             description: "1: men, 2: women",
+            validate: {
+                isIn: [[1, 2]], // Hanya boleh 0, 1 (1: men, 2: women)
+            }
         },
         referal_code: {
             type: TYPES.STRING(5),
@@ -70,8 +74,11 @@ const UsersModels = db.define(
         },
         is_anonymous: {
             type: TYPES.TINYINT,
+            allowNull: true,
             defaultValue: 0,
-            description: "0: non active anonymous, 1: active anonymous",
+            validate: {
+                isIn: [[0, 1]], // Hanya boleh 0, 1 (0: non active anonymous, 1: active anonymous)
+            },
         },
         created_by: {
             type: TYPES.BIGINT,

@@ -184,3 +184,36 @@ export const createVanues = async (req, res) => {
         return responseApi(res, [], null, "Server error....", 1);
     }
 };
+
+/**
+ * Create data Users / Registers
+ * @param {*} req 
+ * @param {*} res 
+ * @returns 
+ */
+export const createUsers = async (req, res) => {
+    try {
+        const {
+            fullname,
+            description,
+            email,
+            phone,
+            username,
+            password,
+            gender,
+        } = req.body;
+        await UsersModels.create({
+            display_name: fullname,
+            description: description,
+            email: email,
+            phone: phone,
+            username: username,
+            password: password,
+            gender: gender,
+            created_at: makeEpocTime(),
+        });
+        return responseApi(res, [], null, "Data Success Saved", 0);
+    } catch (error) {
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+};
