@@ -1,27 +1,4 @@
-Table users {
-  id bigint [increment, pk]
-  display_name  string(100) [not null]
-  display_name_anonymous string(100) [null]
-  photo string(150) [not null]
-  description longtext
-  email string(100) [not null]
-  phone string(20) [not null]
-  username string(100) [not null]
-  password string(100) [not null]
-  gender tinyint[2] [note: '1: men, 2: women']
-  birth_of_day date [default: `now()`]
-  referal_code string(5) [not null]
-  coins integer [default: 0]
-  status tinyint[2] [note: '0: non active, 1: active', default: 1]
-  is_verified tinyint[2] [note: '0: non verified, 1: verified', default: 0]
-  is_anonymous tinyint[2] [note: '0: non active anonymous, 1: active anonymous', default: 0]
-  created_at bigint
-  updated_at bigint
-  Indexes {
-    (referal_code) [name: "referal_code"]
-    (username) [name: "username"]
-  }
-}
+
 Table users_admin {
   id bigint [increment, pk]
   roles_id bigint [ref: > roles.id, not null]
@@ -74,20 +51,7 @@ Table post_comments {
 
 
 
-Table groups {
-  id bigint [increment, pk]
-  title string(100)
-  users_id bigint [ref: > users.id]
-  description longtext
-  citys_id bigint [ref: > citys.id, not null]
-  gender tinyint[2] [note: '1: men, 2: women, 3: all']
-  content_details_id bigint [ref: > content_details.id]
-  is_anonymous tinyint[2] [note: '0: non active anonymous, 1: active anonymous', default: 0]
-  is_private tinyint(2) [note: "0: no private, 1: yes private"]
-  status tinyinteger(2) [note: "0. non active/closed, 1. active/opened"]
-  created_at bigint
-  updated_at bigint
-}
+
 Table group_members {
   id bigint [increment, pk]
   groups_id bigint [ref: > groups.id]
@@ -121,13 +85,6 @@ Table group_post_comments {
   updated_at bigint
 }
 
-Table vanues {
-  id bigint [increment, pk]
-  citys_id bigint [ref: > citys.id]
-  name string(100) [not null]
-  created_at bigint
-  updated_at bigint
-}
 
 Table content_detail_posts {
   id bigint [increment, pk]

@@ -11,7 +11,6 @@ export const verifyToken = (req, res, next) => {
 const validationToken = (req, res, next, token) => {
     const fullUrl = req.originalUrl;
     const agent = req.headers['user-agent'];
-    console.log("agent", agent);
 
     if (fullUrl === "/api/kadieu") {
         next();

@@ -22,5 +22,10 @@ export {
     getCitys,
     createCitys,
     getVanues,
-    createVanues
+    createVanues,
+    createUsers
 } from "./controllers/SettingControllers.js";
+
+export {
+    createGroups
+} from "./controllers/GroupsControllers.js";
