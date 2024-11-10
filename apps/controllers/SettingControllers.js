@@ -101,7 +101,7 @@ export const getCitys = async (req, res) => {
         }));
 
         return responseApi(res, responseData, {
-            assets_image_url: "https://google.com",
+            assets_image_url: process.env.APP_BUCKET_IMAGE,
             pagination: {
                 current_page: currentPage,
                 per_page: limitPerPage,
@@ -156,7 +156,7 @@ export const getVanues = async (req, res) => {
         }));
 
         return responseApi(res, responseData, {
-            assets_image_url: "https://google.com",
+            assets_image_url: process.env.APP_BUCKET_IMAGE,
             pagination: {
                 current_page: currentPage,
                 per_page: limitPerPage,
