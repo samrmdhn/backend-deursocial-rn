@@ -5,6 +5,7 @@ import {
     epochToDateJakarta,
     getExtension,
     makeEpocTime,
+    makeRandomString,
     withTransaction,
 } from "../../helpers/customHelpers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
@@ -15,6 +16,7 @@ import TypeContentDetailsModels from "../models/TypeContentDetailsModels.js";
 import TagsModels from "../models/TagsModels.js";
 import ActressModels from "../models/ActressModels.js";
 import ContentDetailActressModels from "../models/ContentDetailActressModels.js";
+import ContentDetailTagsModels from "../models/ContentDetailTagsModels.js";
 import ContentDetailsModels from "../models/ContentDetailsModels.js";
 import { buildWhereClause } from "../../helpers/queryBuilderHelpers.js";
 import { getPagination } from "../../helpers/paginationHelpers.js";
@@ -45,20 +47,9 @@ export const createDisplayTypes = async (req, res) => {
             status: status,
             created_at: makeEpocTime(),
         });
-        return responseApi(res, {
-            data: [],
-            status: {
-                code: 0,
-                message_client: "Data has been saved",
-            },
-        });
+        return responseApi(res, [], null, "Data Success Saved", 0);
     } catch (error) {
-        console.log(error);
-        return responseApi(res, {
-            data: [],
-            message: "server error....",
-            status: 1,
-        });
+        return responseApi(res, [], null, "Server error....", 1);
     }
 };
 
@@ -78,11 +69,7 @@ export const updateDisplayTypes = async (req, res) => {
         );
 
         if (!displayTypesData) {
-            return responseApi(res, {
-                data: [],
-                message: "data not found",
-                status: 2,
-            });
+            return responseApi(res, [], null, "Data Not Found", 2);
         }
 
         await displayTypesData.update(
@@ -96,21 +83,11 @@ export const updateDisplayTypes = async (req, res) => {
                 silent: true,
             }
         );
+        return responseApi(res, [], null, "Data Success Saved", 0);
 
-        return responseApi(res, {
-            data: [],
-            status: {
-                code: 0,
-                message_client: "Data has been updated",
-            },
-        });
     } catch (error) {
-        console.error("Error updating display type:", error);
-        return responseApi(res, {
-            data: [],
-            message: "server error....",
-            status: 1,
-        });
+        return responseApi(res, [], null, "Server error....", 1);
+
     }
 };
 
@@ -178,20 +155,11 @@ export const createContents = async (req, res) => {
             display_types_id: display_types_id,
             created_at: makeEpocTime(),
         });
-        return responseApi(res, {
-            data: [],
-            status: {
-                code: 0,
-                message_client: "Data has been saved",
-            },
-        });
+        return responseApi(res, [], null, "Data Success Saved", 0);
+
     } catch (error) {
-        console.log(error);
-        return responseApi(res, {
-            data: [],
-            message: "server error....",
-            status: 1,
-        });
+        return responseApi(res, [], null, "Server Error....", 1);
+
     }
 };
 
@@ -256,19 +224,17 @@ export const getContents = async (req, res) => {
     try {
         const { page = 1, title = "" } = req.query;
         const limit = 10;
-        const status = 1;
         const offset = (page - 1) * limit;
 
         // Construct where clause with parameterized values
-        let whereClause = `WHERE c.status = :status`;
+        let whereClause = ``;
         const replacements = {
-            status,
             limit: parseInt(limit),
             offset: parseInt(offset),
         };
 
         if (title) {
-            whereClause += ` AND c.title ILIKE :title`;
+            whereClause += ` WHERE c.title ILIKE :title`;
             replacements.title = `%${title}%`;
         }
 
@@ -376,29 +342,18 @@ export const getContents = async (req, res) => {
             content_details: item.content_details,
         }));
 
-        return responseApi(res, {
-            data: responseData,
-            meta: {
-                assets_image_url: "https://google.com", // Contoh URL gambar
-                pagination: {
-                    current_page: parseInt(page),
-                    per_page: parseInt(limit),
-                    total: totalCount,
-                    total_page: totalPages,
-                },
+        return responseApi(res, responseData, {
+            assets_image_url: "https://google.com", // Contoh URL gambar
+            pagination: {
+                current_page: parseInt(page),
+                per_page: parseInt(limit),
+                total: totalCount,
+                total_page: totalPages,
             },
-            status: {
-                code: 0,
-                message_client: "Data retrieved successfully",
-            },
-        });
+        }, "Data Success Saved", 0);
+
     } catch (error) {
-        console.error("Error fetching display types:", error);
-        return responseApi(res, {
-            data: [],
-            message: "Server error....",
-            status: 1,
-        });
+        return responseApi(res, [], null, "Server error....", 1);
     }
 };
 
@@ -416,20 +371,10 @@ export const createEventOrganizers = async (req, res) => {
             detail: detail,
             created_at: makeEpocTime(),
         });
-        return responseApi(res, {
-            data: [],
-            status: {
-                code: 0,
-                message_client: "Data has been saved",
-            },
-        });
+        return responseApi(res, [], null, "Data has been saved", 0);
+
     } catch (error) {
-        console.log(error);
-        return responseApi(res, {
-            data: [],
-            message: "server error....",
-            status: 1,
-        });
+        return responseApi(res, [], null, "Server error....", 1);
     }
 };
 
@@ -470,7 +415,7 @@ export const getEventOrganizers = async (req, res) => {
             pagination: {
                 current_page: currentPage,
                 per_page: limitPerPage,
-                total: contentData.length,
+                total: eventOrganizersData.length,
                 total_page: totalPages,
             },
         });
@@ -493,20 +438,11 @@ export const createTypeContentDetails = async (req, res) => {
             name: name,
             created_at: makeEpocTime(),
         });
-        return responseApi(res, {
-            data: [],
-            status: {
-                code: 0,
-                message_client: "Data has been saved",
-            },
-        });
+        return responseApi(res, [], null, "Data has been saved", 0);
+
     } catch (error) {
         console.log(error);
-        return responseApi(res, {
-            data: [],
-            message: "server error....",
-            status: 1,
-        });
+        return responseApi(res, [], null, "Server error....", 1);
     }
 };
 
@@ -570,20 +506,10 @@ export const createTags = async (req, res) => {
             title: title,
             created_at: makeEpocTime(),
         });
-        return responseApi(res, {
-            data: [],
-            status: {
-                code: 0,
-                message_client: "Data has been saved",
-            },
-        });
+        return responseApi(res, [], null, "Data has been saved", 0);
     } catch (error) {
         console.log(error);
-        return responseApi(res, {
-            data: [],
-            message: "server error....",
-            status: 1,
-        });
+        return responseApi(res, [], null, "Server error....", 1);
     }
 };
 
@@ -605,7 +531,6 @@ export const getTags = async (req, res) => {
                 where: buildWhereClause(where, "title", title),
             })
         );
-        console.log("masuk 2");
 
         const contentData = await TagsModels.findAll({
             where: buildWhereClause(where, "title", title),
@@ -726,7 +651,6 @@ export const createContentDetails = withTransaction(
             date_start,
             date_end,
             description,
-            image,
             vanues_id,
             contents_id,
             event_organizers_id,
@@ -736,31 +660,39 @@ export const createContentDetails = withTransaction(
             actress,
             tags,
         } = req.body;
+        const actressArray = Array.isArray(JSON.parse(actress)) ? JSON.parse(actress) : [];
+        const tagsArray = Array.isArray(JSON.parse(tags)) ? JSON.parse(tags) : [];
 
         try {
+            const file = req.files.image;
+            const fileDate = new Date();
+            const filesNamed = fileDate.getTime() + getExtension(file.name);
+            const fileDestination = process.env.APP_LOCATION_FILE + createNameFile(filesNamed);
+            await uploadFile(file, fileDestination);
+            const createdAt = makeEpocTime();
             // Membuat record di ContentDetailsModels
             let contentDetailData = await ContentDetailsModels.create(
                 {
                     title,
-                    slug: convertToSlug(title),
+                    slug: convertToSlug(title)+makeRandomString(3),
                     schedule_start: dateToEpochTime(schedule_start),
                     schedule_end: dateToEpochTime(schedule_end),
                     date_start: dateToEpochTime(date_start),
                     date_end: dateToEpochTime(date_end),
                     description,
-                    image,
+                    image: createNameFile(filesNamed),
                     vanues_id,
                     contents_id,
                     event_organizers_id,
                     is_trending,
                     status,
                     type_content_details_id,
-                    created_at: makeEpocTime(),
+                    created_at: createdAt,
                 },
                 { transaction }
             );
             await Promise.all(
-                actress.map(async (valActress) => {
+                actressArray.map(async (valActress) => {
                     await ContentDetailActressModels.create(
                         {
                             content_details_id: contentDetailData.id,
@@ -768,15 +700,18 @@ export const createContentDetails = withTransaction(
                         },
                         { transaction }
                     );
+                }),
+                tagsArray.map(async (valTags) => {
+                    await ContentDetailTagsModels.create(
+                        {
+                            content_details_id: contentDetailData.id,
+                            tags_id: valTags.id,
+                        },
+                        { transaction }
+                    );
                 })
             );
-            return responseApi(res, {
-                data: [],
-                status: {
-                    code: 0,
-                    message_client: "Data has been saved",
-                },
-            });
+            return responseApi(res, [], null, "Data has been saved", 1);
         } catch (error) {
             console.error("Error in createContentDetails:", error);
             throw error;

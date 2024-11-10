@@ -10,7 +10,6 @@ import { getPagination } from "../../helpers/paginationHelpers.js";
 import { buildWhereClause } from "../../helpers/queryBuilderHelpers.js";
 const Op = Sequelize.Op;
 
-
 export const visitorToken = async (req, res) => {
     try {
         var forwarded =
@@ -61,10 +60,15 @@ export const visitorToken = async (req, res) => {
             visitorToken = dataUser?.access_token;
         }
 
-        return responseApi(res, {
-            access_token: visitorToken,
-        }, null, "Data has been retrieved", 0);
-
+        return responseApi(
+            res,
+            {
+                access_token: visitorToken,
+            },
+            null,
+            "Data has been retrieved",
+            0
+        );
     } catch (error) {
         return responseApi(res, [], null, "Server error....", 1);
     }
@@ -78,12 +82,12 @@ export const getCitys = async (req, res) => {
             page,
             10,
             await CitysModels.count({
-                where: buildWhereClause(where, 'title', title),
+                where: buildWhereClause(where, "title", title),
             })
         );
 
         const contentData = await CitysModels.findAll({
-            where: buildWhereClause(where, 'title', title),
+            where: buildWhereClause(where, "title", title),
             limit: limitPerPage,
             offset,
             attributes: {
@@ -106,12 +110,10 @@ export const getCitys = async (req, res) => {
             },
         });
     } catch (error) {
-        console.log("errro", error)
+        console.log("errro", error);
         return responseApi(res, [], null, "Server error....", 1);
     }
 };
-
-
 
 export const createCitys = async (req, res) => {
     try {
@@ -121,25 +123,13 @@ export const createCitys = async (req, res) => {
             provinces_id: provinces_id,
             created_at: makeEpocTime(),
         });
-        return responseApi(res, {
-            data: [],
-            status: {
-                code: 0,
-                message_client: "Data has been saved",
-            },
-        });
+        return responseApi(res, [], null, "Data Success Saved", 0);
     } catch (error) {
-        console.log(error);
-        return responseApi(res, {
-            data: [],
-            message: "server error....",
-            status: 1,
-        });
+        return responseApi(res, [], null, "Server error....", 1);
     }
 };
 
 export const getVanues = async (req, res) => {
-
     try {
         const { page = 1, title = "", citys_id = 1 } = req.query;
         const where = { citys_id: citys_id };
@@ -147,12 +137,12 @@ export const getVanues = async (req, res) => {
             page,
             10,
             await VanuesModels.count({
-                where: buildWhereClause(where, 'title', title),
+                where: buildWhereClause(where, "title", title),
             })
         );
 
         const contentData = await VanuesModels.findAll({
-            where: buildWhereClause(where, 'title', title),
+            where: buildWhereClause(where, "title", title),
             limit: limitPerPage,
             offset,
             attributes: {
@@ -175,10 +165,9 @@ export const getVanues = async (req, res) => {
             },
         });
     } catch (error) {
-        console.log("errro", error)
+        console.log("errro", error);
         return responseApi(res, [], null, "Server error....", 1);
     }
-
 };
 export const createVanues = async (req, res) => {
     try {
@@ -190,19 +179,8 @@ export const createVanues = async (req, res) => {
             countries_id: countries_id,
             created_at: makeEpocTime(),
         });
-        return responseApi(res, {
-            data: [],
-            status: {
-                code: 0,
-                message_client: "Data has been saved",
-            },
-        });
+        return responseApi(res, [], null, "Data Success Saved", 0);
     } catch (error) {
-        console.log(error);
-        return responseApi(res, {
-            data: [],
-            message: "server error....",
-            status: 1,
-        });
+        return responseApi(res, [], null, "Server error....", 1);
     }
 };
