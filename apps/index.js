@@ -27,5 +27,7 @@ export {
 } from "./controllers/SettingControllers.js";
 
 export {
-    createGroups
+    createGroups,
+    joinMemberToGroups,
+    getGroups
 } from "./controllers/GroupsControllers.js";

@@ -17,6 +17,7 @@ import ContentDetailTagsModels from "../apps/models/ContentDetailTagsModels.js";
 import ContentDetailActressModels from "../apps/models/ContentDetailActressModels.js";
 import GroupsModels from "../apps/models/GroupsModels.js";
 import UsersModels from "../apps/models/UsersModels.js";
+import GroupMembersModels from "../apps/models/GroupMembersModels.js";
 
 // Menggunakan force: true akan membuat ulang tabel setiap kali dijalankan contoh => Example.sync({ force: true })
 async function syncDatabase() {
@@ -59,6 +60,8 @@ async function syncDatabase() {
         console.log("Table table Groups has been created.");
         await UsersModels.sync({ force: false });
         console.log("Table table Users has been created.");
+        await GroupMembersModels.sync({ force: false });
+        console.log("Table table group members has been created.");
 
 
         await db.close();

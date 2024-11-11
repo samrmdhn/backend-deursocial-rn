@@ -52,14 +52,7 @@ Table post_comments {
 
 
 
-Table group_members {
-  id bigint [increment, pk]
-  groups_id bigint [ref: > groups.id]
-  users_id bigint [ref: > users.id]
-  status tinyinteger(2) [note: "1: joined, 2: need approval, 3: blocked", default: 1]
-  created_at bigint
-  updated_at bigint
-}
+
 Table group_posts {
   id bigint [increment, pk]
   caption_post longtext
