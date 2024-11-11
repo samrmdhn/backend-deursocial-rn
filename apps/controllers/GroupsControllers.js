@@ -138,8 +138,7 @@ export const getGroups = async (req, res) => {
             replacements,
             type: db.QueryTypes.SELECT,
         });
-
-        // Query untuk menghitung total data
+        
         const countQuery = `
             SELECT COUNT(*) AS total_count
             FROM ir_groups g

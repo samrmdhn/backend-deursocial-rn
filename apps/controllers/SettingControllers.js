@@ -1,13 +1,15 @@
-import { makeEpocTime } from "../../helpers/customHelpers.js";
+import { makeEpocTime, withTransaction } from "../../helpers/customHelpers.js";
 import { signVisitorToken } from "../../libs/JwtHandlers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
 import CitysModels from "../models/CitysModels.js";
 import UsersAccessAppsModels from "../models/UsersAccessAppsModels.js";
 import UsersModels from "../models/UsersModels.js";
-import { Sequelize } from "sequelize";
+import { Sequelize, where } from "sequelize";
 import VanuesModels from "../models/VanuesModels.js";
 import { getPagination } from "../../helpers/paginationHelpers.js";
 import { buildWhereClause } from "../../helpers/queryBuilderHelpers.js";
+import db from "../../configs/Database.js";
+import BaseNameAnonymousUsagesModels from "../models/BaseNameAnonymousUsersModels.js";
 const Op = Sequelize.Op;
 
 export const visitorToken = async (req, res) => {
@@ -187,11 +189,11 @@ export const createVanues = async (req, res) => {
 
 /**
  * Create data Users / Registers
- * @param {*} req 
- * @param {*} res 
- * @returns 
+ * @param {*} req
+ * @param {*} res
+ * @returns
  */
-export const createUsers = async (req, res) => {
+export const createUsers = withTransaction(async (req, res, transaction) => {
     try {
         const {
             fullname,
@@ -202,18 +204,77 @@ export const createUsers = async (req, res) => {
             password,
             gender,
         } = req.body;
-        await UsersModels.create({
-            display_name: fullname,
-            description: description,
-            email: email,
-            phone: phone,
-            username: username,
-            password: password,
-            gender: gender,
-            created_at: makeEpocTime(),
+        const existingUser = await UsersModels.findOne({
+            where: {
+                [Op.or]: [
+                    { username: username },
+                    { email: email },
+                    { phone: phone },
+                ],
+            },
         });
+
+        if (existingUser) {
+            if (existingUser.username === username) {
+                return responseApi(res, [], null, "Username already exists", 2);
+            }
+            if (existingUser.email === email) {
+                return responseApi(res, [], null, "Email already exists", 2);
+            }
+
+            if (existingUser.phone === phone) {
+                return responseApi(res, [], null, "Phone already exists", 2);
+            }
+        }
+        const query = `SELECT 
+        CONCAT(
+            (SELECT name FROM ir_base_name_anonymous_users WHERE type = 1 ORDER BY RANDOM() LIMIT 1), 
+            ' ', 
+            (SELECT name FROM ir_base_name_anonymous_users WHERE type = 2 ORDER BY RANDOM() LIMIT 1), 
+            ' ', 
+            (SELECT name FROM ir_base_name_anonymous_users WHERE type = 3 ORDER BY RANDOM() LIMIT 1)
+        ) AS name;`;
+        const anonymousName = await db.query(query, {
+            type: db.QueryTypes.SELECT,
+        });
+        const anonName = anonymousName[0].name.trim();
+        const existingRecordName = await BaseNameAnonymousUsagesModels.findOne({
+            where: {
+                name: anonName,
+            },
+        });
+        if (existingRecordName) {
+            await BaseNameAnonymousUsagesModels.update(
+                { total: existingRecordName.total + 1 },
+                { where: { name: anonName } },
+                { transaction }
+            );
+        } else {
+            await BaseNameAnonymousUsagesModels.create(
+                {
+                    name: anonName,
+                    total: 1,
+                },
+                { transaction }
+            );
+        }
+        await UsersModels.create(
+            {
+                display_name: fullname,
+                display_name_anonymous: anonName,
+                description: description,
+                email: email,
+                phone: phone,
+                username: username,
+                password: password,
+                gender: gender,
+                created_at: makeEpocTime(),
+            },
+            { transaction }
+        );
         return responseApi(res, [], null, "Data Success Saved", 0);
     } catch (error) {
-        return responseApi(res, [], null, "Server error....", 1);
+        console.error("Error in createContentDetails:", error);
+        throw error;
     }
-};
+});
