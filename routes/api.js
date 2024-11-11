@@ -12,7 +12,9 @@ api.get("/api/vanues", verifyToken, SettingControllers.getVanues);
 api.post("/api/vanues", verifyToken, SettingControllers.createVanues);
 api.post("/api/registers", verifyToken, SettingControllers.createUsers);
 
+api.get("/api/groups", verifyToken, GroupsControllers.getGroups);
 api.post("/api/groups", verifyToken, GroupsControllers.createGroups);
+api.post("/api/join/groups", verifyToken, GroupsControllers.joinMemberToGroups);
 
 api.get("/api/homepages", HomepageControllers.homepage);
 api.post("/api/display/types", verifyToken, HomepageControllers.createDisplayTypes);
