@@ -226,21 +226,8 @@ Table report_posts {
   updated_at bigint
 }
 
-Table base_name_anonymous_users {
-  id bigint [increment, pk]
-  name varchar(100)
-  type tinyint(2) [note: "1: animal, 2: fnb, 3: characteristic"]
-  created_at bigint
-  updated_at bigint
-}
 
-Table base_name_anonymous_user_usages {
-  id bigint [increment, pk]
-  name varchar(100)
-  total integer
-  created_at bigint
-  updated_at bigint
-}
+
 
 Table finance {
   id bigint [increment, pk]
