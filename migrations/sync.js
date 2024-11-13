@@ -18,7 +18,7 @@ import ContentDetailActressModels from "../apps/models/ContentDetailActressModel
 import GroupsModels from "../apps/models/GroupsModels.js";
 import UsersModels from "../apps/models/UsersModels.js";
 import GroupMembersModels from "../apps/models/GroupMembersModels.js";
-import BaseNameAnonymousUsersModels from "../apps/models/BaseNameAnonymousUsagesModels.js";
+import BaseNameAnonymousUsersModels from "../apps/models/BaseNameAnonymousUsersModels.js";
 import BaseNameAnonymousUsagesModels from "../apps/models/BaseNameAnonymousUsagesModels.js";
 
 // Menggunakan force: true akan membuat ulang tabel setiap kali dijalankan contoh => Example.sync({ force: true })
