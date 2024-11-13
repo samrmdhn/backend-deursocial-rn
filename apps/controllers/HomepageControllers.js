@@ -673,20 +673,20 @@ export const createContentDetails = withTransaction(
             // Membuat record di ContentDetailsModels
             let contentDetailData = await ContentDetailsModels.create(
                 {
-                    title,
+                    title: title,
                     slug: convertToSlug(title)+makeRandomString(3),
                     schedule_start: dateToEpochTime(schedule_start),
                     schedule_end: dateToEpochTime(schedule_end),
                     date_start: dateToEpochTime(date_start),
                     date_end: dateToEpochTime(date_end),
-                    description,
+                    description: description,
                     image: createNameFile(filesNamed),
-                    vanues_id,
-                    contents_id,
-                    event_organizers_id,
-                    is_trending,
-                    status,
-                    type_content_details_id,
+                    vanues_id:vanues_id,
+                    contents_id: contents_id,
+                    event_organizers_id: event_organizers_id,
+                    is_trending: is_trending,
+                    status: status,
+                    type_content_details_id: type_content_details_id,
                     created_at: createdAt,
                 },
                 { transaction }
