@@ -2,7 +2,7 @@ import db from "../../configs/Database.js";
 import DataTypesCustom from "../../libs/DataTypesCustom.js";
 const { TYPES } = DataTypesCustom;
 
-const BaseNameAnonymousUsersModels = db.define("ir_base_name_anonymous_users", {
+const BaseNameAnonymousUsagesModels = db.define("ir_base_name_anonymous_user_usages", {
     id: {
         type: TYPES.BIGINT,
         primaryKey: true,
@@ -12,13 +12,8 @@ const BaseNameAnonymousUsersModels = db.define("ir_base_name_anonymous_users", {
         type: TYPES.STRING(100),
         allowNull: false,
     },
-    type: {
-        type: TYPES.TINYINT,
-        allowNull: true,
-        defaultValue: 1,
-        validate: {
-            isIn: [[1, 2, 3]], // Hanya boleh 1, 2, 3 ("1: animal, 2: fnb, 3: characteristic")
-        },
+    total: {
+        type: TYPES.INTEGER
     },
     created_at: {
         type: TYPES.BIGINT,
@@ -33,4 +28,4 @@ const BaseNameAnonymousUsersModels = db.define("ir_base_name_anonymous_users", {
     timestamps: false,
 });
 
-export default BaseNameAnonymousUsersModels;
+export default BaseNameAnonymousUsagesModels;
