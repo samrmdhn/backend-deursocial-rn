@@ -9,7 +9,7 @@ import VanuesModels from "../models/VanuesModels.js";
 import { getPagination } from "../../helpers/paginationHelpers.js";
 import { buildWhereClause } from "../../helpers/queryBuilderHelpers.js";
 import db from "../../configs/Database.js";
-import BaseNameAnonymousUsagesModels from "../models/BaseNameAnonymousUsersModels.js";
+import BaseNameAnonymousUsagesModels from "../models/BaseNameAnonymousUsagesModels.js";
 const Op = Sequelize.Op;
 
 export const visitorToken = async (req, res) => {
