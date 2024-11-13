@@ -58,10 +58,10 @@ async function syncDatabase() {
         console.log("Table table Content Details actress has been created.");
         await ContentDetailTagsModels.sync({ force: false });
         console.log("Table table Content Details tags has been created.");
-        await GroupsModels.sync({ force: false });
-        console.log("Table table Groups has been created.");
         await UsersModels.sync({ force: false });
         console.log("Table table Users has been created.");
+        await GroupsModels.sync({ force: false });
+        console.log("Table table Groups has been created.");
         await GroupMembersModels.sync({ force: false });
         console.log("Table table group members has been created.");
         await BaseNameAnonymousUsersModels.sync({ force: false });
