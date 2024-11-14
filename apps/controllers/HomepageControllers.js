@@ -84,10 +84,8 @@ export const updateDisplayTypes = async (req, res) => {
             }
         );
         return responseApi(res, [], null, "Data Success Saved", 0);
-
     } catch (error) {
         return responseApi(res, [], null, "Server error....", 1);
-
     }
 };
 
@@ -156,10 +154,8 @@ export const createContents = async (req, res) => {
             created_at: makeEpocTime(),
         });
         return responseApi(res, [], null, "Data Success Saved", 0);
-
     } catch (error) {
         return responseApi(res, [], null, "Server Error....", 1);
-
     }
 };
 
@@ -343,16 +339,21 @@ export const getContents = async (req, res) => {
             content_details: item.content_details,
         }));
 
-        return responseApi(res, responseData, {
-            assets_image_url: process.env.APP_BUCKET_IMAGE, // Contoh URL gambar
-            pagination: {
-                current_page: parseInt(page),
-                per_page: parseInt(limit),
-                total: totalCount,
-                total_page: totalPages,
+        return responseApi(
+            res,
+            responseData,
+            {
+                assets_image_url: process.env.APP_BUCKET_IMAGE, // Contoh URL gambar
+                pagination: {
+                    current_page: parseInt(page),
+                    per_page: parseInt(limit),
+                    total: totalCount,
+                    total_page: totalPages,
+                },
             },
-        }, "Data Success Saved", 0);
-
+            "Data Success Saved",
+            0
+        );
     } catch (error) {
         return responseApi(res, [], null, "Server error....", 1);
     }
@@ -373,7 +374,6 @@ export const createEventOrganizers = async (req, res) => {
             created_at: makeEpocTime(),
         });
         return responseApi(res, [], null, "Data has been saved", 0);
-
     } catch (error) {
         return responseApi(res, [], null, "Server error....", 1);
     }
@@ -440,7 +440,6 @@ export const createTypeContentDetails = async (req, res) => {
             created_at: makeEpocTime(),
         });
         return responseApi(res, [], null, "Data has been saved", 0);
-
     } catch (error) {
         console.log(error);
         return responseApi(res, [], null, "Server error....", 1);
@@ -573,7 +572,8 @@ export const createActress = async (req, res) => {
         const file = req.files.image_file;
         const fileDate = new Date();
         const filesNamed = fileDate.getTime() + getExtension(file.name);
-        const fileDestination = process.env.APP_LOCATION_FILE + createNameFile(filesNamed);
+        const fileDestination =
+            process.env.APP_LOCATION_FILE + createNameFile(filesNamed);
         await uploadFile(file, fileDestination);
         const { name, gender, detail } = req.body;
         await ActressModels.create({
@@ -661,28 +661,33 @@ export const createContentDetails = withTransaction(
             actress,
             tags,
         } = req.body;
-        const actressArray = Array.isArray(JSON.parse(actress)) ? JSON.parse(actress) : [];
-        const tagsArray = Array.isArray(JSON.parse(tags)) ? JSON.parse(tags) : [];
+        const actressArray = Array.isArray(JSON.parse(actress))
+            ? JSON.parse(actress)
+            : [];
+        const tagsArray = Array.isArray(JSON.parse(tags))
+            ? JSON.parse(tags)
+            : [];
 
         try {
             const file = req.files.image;
             const fileDate = new Date();
             const filesNamed = fileDate.getTime() + getExtension(file.name);
-            const fileDestination = process.env.APP_LOCATION_FILE + createNameFile(filesNamed);
+            const fileDestination =
+                process.env.APP_LOCATION_FILE + createNameFile(filesNamed);
             await uploadFile(file, fileDestination);
             const createdAt = makeEpocTime();
             // Membuat record di ContentDetailsModels
             let contentDetailData = await ContentDetailsModels.create(
                 {
                     title: title,
-                    slug: convertToSlug(title)+makeRandomString(3),
+                    slug: convertToSlug(title) + makeRandomString(3),
                     schedule_start: dateToEpochTime(schedule_start),
                     schedule_end: dateToEpochTime(schedule_end),
                     date_start: dateToEpochTime(date_start),
                     date_end: dateToEpochTime(date_end),
                     description: description,
                     image: createNameFile(filesNamed),
-                    vanues_id:vanues_id,
+                    vanues_id: vanues_id,
                     contents_id: contents_id,
                     event_organizers_id: event_organizers_id,
                     is_trending: is_trending,
@@ -728,28 +733,28 @@ export const createContentDetails = withTransaction(
  */
 export const getContentDetails = async (req, res) => {
     try {
+        const contentDetailsId = req.params.id;
+
         const { page = 1, title = "", slug = "" } = req.query;
         const limit = 10;
         const offset = (page - 1) * limit;
 
-        let whereClause = "";
         const replacements = {
             limit: parseInt(limit, 10),
             offset: parseInt(offset, 10),
         };
+        let whereClause = "WHERE cd.id = :contentDetailsId"; // Default condition for contentDetailsId
+        replacements.contentDetailsId = contentDetailsId; // Add contentDetailsId directly to replacements
 
+        // Build dynamic WHERE clause based on query params
         if (title) {
-            whereClause += ` WHERE cd.title ILIKE :title`;
-            replacements.title = `%${title}%`;
+            whereClause += ` AND cd.title ILIKE :title`;
+            replacements.title = `%${title}%`; // Add title to replacements
         }
 
         if (slug) {
-            if (whereClause) {
-                whereClause += ` AND cd.slug = :slug`;
-            } else {
-                whereClause += ` WHERE cd.slug = :slug`;
-            }
-            replacements.slug = slug;
+            whereClause += ` AND cd.slug = :slug`;
+            replacements.slug = slug; // Add slug to replacements
         }
 
         // Menyusun query utama
@@ -768,6 +773,29 @@ export const getContentDetails = async (req, res) => {
                 CASE WHEN cd.is_trending = 0 THEN 'ended' 
                     WHEN cd.is_trending = 1 THEN 'ongoing' 
                     ELSE 'upcoming' END AS status,
+                (
+                    SELECT json_build_object(
+                            'total_followers', COUNT(*),
+                            'users', json_agg(
+                                    json_build_object(
+                                            'id', u.id,
+                                            'display_name', u.display_name,
+                                            'image', u.photo
+                                    )
+                            )
+                    )
+                    FROM ir_content_detail_followers cdf
+                    JOIN ir_users u ON cdf.users_id = u.id
+                    WHERE cdf.content_details_id = cd.id
+                ) AS followers,
+                (
+                    SELECT COUNT(*) AS total_posts
+                    FROM ir_content_detail_posts cdp WHERE cdp.content_details_id = cd.id
+                ) AS total_posts,
+                (
+                    SELECT COUNT(*) AS total_groups
+                    FROM ir_groups g WHERE g.content_details_id = cd.id
+                ) AS total_groups,
                 json_build_object(
                     'id', tcd.id,
                     'name', tcd.name
