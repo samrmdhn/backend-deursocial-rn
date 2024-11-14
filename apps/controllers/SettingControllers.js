@@ -279,7 +279,7 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
                 display_name: fullname,
                 display_name_anonymous: anonName,
                 description: description,
-                photo: filesNamed !== '' ?? createNameFile(filesNamed),
+                photo: filesNamed !== '' ? createNameFile(filesNamed) : '',
                 email: email,
                 phone: phone,
                 username: username,

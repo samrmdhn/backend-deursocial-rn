@@ -270,7 +270,7 @@ export const getContents = async (req, res) => {
                                 json_build_object(
                                     'id', u.id,
                                     'display_name', u.display_name,
-									'photo', u.photo
+									'image', u.photo
                                 )
                             )
                             FROM ir_content_detail_followers cdf
