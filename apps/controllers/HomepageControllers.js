@@ -735,14 +735,9 @@ export const getContentDetails = async (req, res) => {
     try {
         const contentDetailsId = req.params.id;
 
-        const { page = 1, title = "", slug = "" } = req.query;
-        const limit = 10;
-        const offset = (page - 1) * limit;
+        const { title = "", slug = "" } = req.query;
 
-        const replacements = {
-            limit: parseInt(limit, 10),
-            offset: parseInt(offset, 10),
-        };
+        const replacements = {};
         let whereClause = "WHERE cd.id = :contentDetailsId"; // Default condition for contentDetailsId
         replacements.contentDetailsId = contentDetailsId; // Add contentDetailsId directly to replacements
 
@@ -849,8 +844,7 @@ export const getContentDetails = async (req, res) => {
             LEFT JOIN ir_provinces p ON v.provinces_id = p.id
             LEFT JOIN ir_countries co ON v.countries_id = co.id
             ${whereClause}
-            ORDER BY cd.id
-            LIMIT :limit OFFSET :offset;
+            ORDER BY cd.id;
         `;
 
         const contentDetailsData = await db.query(query, {
@@ -858,36 +852,17 @@ export const getContentDetails = async (req, res) => {
             type: db.QueryTypes.SELECT,
         });
 
-        // Query untuk menghitung total data
-        const countQuery = `
-            SELECT COUNT(*) AS total_count
-            FROM ir_content_details cd
-            ${whereClause};
-        `;
-        const totalCountResult = await db.query(countQuery, {
-            replacements,
-            type: db.QueryTypes.SELECT,
-        });
-
-        const totalCount = totalCountResult[0].total_count;
-        const totalPages = Math.ceil(totalCount / limit);
-
         let responseData = contentDetailsData;
-        if (contentDetailsData.length > 1) {
-            responseData = contentDetailsData;
-        } else {
+        if (contentDetailsData.length > 0) {
             responseData = contentDetailsData[0];
             try {
                 const updatedImpressions = Number(responseData.impression) + 1;
                 const affectedRows = await ContentDetailsModels.update(
                     { impression: Number(updatedImpressions) },
-                    { where: { slug: slug } }
+                    { where: { id: contentDetailsId }}
                 );
-                console.log("affectedRows", {
-                    a: affectedRows,
-                    r: updatedImpressions,
-                });
             } catch (error) {
+                console.error("Error updating impression:", error);
                 throw error;
             }
         }
@@ -896,12 +871,6 @@ export const getContentDetails = async (req, res) => {
             responseData,
             {
                 assets_image_url: process.env.APP_BUCKET_IMAGE,
-                pagination: {
-                    current_page: parseInt(page, 10),
-                    per_page: parseInt(limit, 10),
-                    total: totalCount,
-                    total_page: totalPages,
-                },
             },
             "Data retrieved successfully",
             0
