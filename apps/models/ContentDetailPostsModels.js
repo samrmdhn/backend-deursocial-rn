@@ -24,6 +24,14 @@ const ContentDetailPostsModels = db.define("ir_content_detail_posts", {
             key: "id",
         },
     },
+    groups_id: {
+        type: TYPES.BIGINT,
+        allowNull: false,
+        references: {
+            model: "ir_groups",
+            key: "id",
+        },
+    },
     users_id: {
         type: TYPES.BIGINT,
         allowNull: false,
