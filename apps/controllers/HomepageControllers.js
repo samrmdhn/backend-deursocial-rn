@@ -265,7 +265,7 @@ export const getContents = async (req, res) => {
                             'name', eo.name,
                             'image', eo.image
                         ),
-						'user_followed', (
+						'followers', (
                             SELECT json_agg(
                                 json_build_object(
                                     'id', u.id,
@@ -278,11 +278,11 @@ export const getContents = async (req, res) => {
                             WHERE cdf.content_details_id = cd.id
                         ),
                         'total_posts',(
-                            SELECT SUM(id) AS total_posts
+                            SELECT COUNT(*) AS total_posts
                             FROM ir_content_detail_posts cdp WHERE cdp.content_details_id = cd.id
                         ),
                         'total_groups',(
-                            SELECT SUM(id) AS total_groups
+                            SELECT COUNT(*) AS total_groups
                             FROM ir_groups g WHERE g.content_details_id = cd.id
                         ),
                         'location', json_build_object(
