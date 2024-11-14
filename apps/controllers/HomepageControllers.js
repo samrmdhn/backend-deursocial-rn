@@ -265,17 +265,20 @@ export const getContents = async (req, res) => {
                             'name', eo.name,
                             'image', eo.image
                         ),
-						'followers', (
-                            SELECT json_agg(
-                                json_build_object(
-                                    'id', u.id,
-                                    'display_name', u.display_name,
-									'image', u.photo
+                        'followers', (
+                                SELECT json_build_object(
+                                        'total_followers', COUNT(*),
+                                        'users', json_agg(
+                                                json_build_object(
+                                                        'id', u.id,
+                                                        'display_name', u.display_name,
+                                                        'image', u.photo
+                                                )
+                                        )
                                 )
-                            )
-                            FROM ir_content_detail_followers cdf
-                            JOIN ir_users u ON cdf.users_id = u.id
-                            WHERE cdf.content_details_id = cd.id
+                                FROM ir_content_detail_followers cdf
+                                JOIN ir_users u ON cdf.users_id = u.id
+                                WHERE cdf.content_details_id = cd.id
                         ),
                         'total_posts',(
                             SELECT COUNT(*) AS total_posts
