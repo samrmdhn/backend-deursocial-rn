@@ -61,7 +61,12 @@ export const visitorToken = async (req, res) => {
         } else {
             visitorToken = dataUser?.access_token;
         }
-
+        res.cookie("access_token", visitorToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "Strict",
+            maxAge: 60 * 60 * 1000,
+        });
         return responseApi(
             res,
             {

@@ -245,9 +245,9 @@ export const getContents = async (req, res) => {
                 dt.title AS display_type,
                 json_agg(
                     json_build_object(
+                        'id', cd.id,
                         'title', cd.title,
                         'slug', cd.slug,
-                        'impression', cd.impression,
                         'schedule_start', TO_CHAR(TO_TIMESTAMP(cd.schedule_start), 'YYYY-MM-DD HH24:MI:SS'),
                         'schedule_end', TO_CHAR(TO_TIMESTAMP(cd.schedule_end), 'YYYY-MM-DD HH24:MI:SS'),
                         'date_start', TO_CHAR(TO_TIMESTAMP(cd.date_start), 'YYYY-MM-DD HH24:MI:SS'),
@@ -265,27 +265,25 @@ export const getContents = async (req, res) => {
                             'name', eo.name,
                             'image', eo.image
                         ),
-                        'tags', (
+						'user_followed', (
                             SELECT json_agg(
                                 json_build_object(
-                                    'id', t.id,
-                                    'title', t.title
+                                    'id', u.id,
+                                    'display_name', u.display_name,
+									'photo', u.photo
                                 )
                             )
-                            FROM ir_content_detail_tags cdt
-                            JOIN ir_tags t ON cdt.tags_id = t.id
-                            WHERE cdt.content_details_id = cd.id
+                            FROM ir_content_detail_followers cdf
+                            JOIN ir_users u ON cdf.users_id = u.id
+                            WHERE cdf.content_details_id = cd.id
                         ),
-                        'actress', (
-                            SELECT json_agg(
-                                json_build_object(
-                                    'id', a.id,
-                                    'name', a.name
-                                )
-                            )
-                            FROM ir_content_detail_actress cda
-                            JOIN ir_actress a ON cda.actress_id = a.id
-                            WHERE cda.content_details_id = cd.id
+                        'total_posts',(
+                            SELECT SUM(id) AS total_posts
+                            FROM ir_content_detail_posts cdp WHERE cdp.content_details_id = cd.id
+                        ),
+                        'total_groups',(
+                            SELECT SUM(id) AS total_groups
+                            FROM ir_groups g WHERE g.content_details_id = cd.id
                         ),
                         'location', json_build_object(
                             'region', json_build_object(
