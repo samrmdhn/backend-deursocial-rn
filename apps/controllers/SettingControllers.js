@@ -214,11 +214,10 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
         let filesNamed = '';
         if (file) {
             const fileDate = new Date();
-            const filesNamed = fileDate.getTime() + getExtension(file.name);
+            filesNamed = fileDate.getTime() + getExtension(file.name);
             const fileDestination = process.env.APP_LOCATION_FILE + createNameFile(filesNamed);
             await uploadFile(file, fileDestination);
         }
-
 
         const existingUser = await UsersModels.findOne({
             where: {
