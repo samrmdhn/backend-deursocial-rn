@@ -1,4 +1,4 @@
-import { makeEpocTime, withTransaction } from "../../helpers/customHelpers.js";
+import { createNameFile, getExtension, makeEpocTime, withTransaction } from "../../helpers/customHelpers.js";
 import { signVisitorToken } from "../../libs/JwtHandlers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
 import CitysModels from "../models/CitysModels.js";
@@ -10,6 +10,7 @@ import { getPagination } from "../../helpers/paginationHelpers.js";
 import { buildWhereClause } from "../../helpers/queryBuilderHelpers.js";
 import db from "../../configs/Database.js";
 import BaseNameAnonymousUsagesModels from "../models/BaseNameAnonymousUsagesModels.js";
+import { uploadFile } from "../../helpers/FileUpload.js";
 const Op = Sequelize.Op;
 
 export const visitorToken = async (req, res) => {
@@ -209,6 +210,16 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
             password,
             gender,
         } = req.body;
+        const file = req.files.image;
+        let filesNamed = '';
+        if (file) {
+            const fileDate = new Date();
+            const filesNamed = fileDate.getTime() + getExtension(file.name);
+            const fileDestination = process.env.APP_LOCATION_FILE + createNameFile(filesNamed);
+            await uploadFile(file, fileDestination);
+        }
+
+
         const existingUser = await UsersModels.findOne({
             where: {
                 [Op.or]: [
@@ -268,6 +279,7 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
                 display_name: fullname,
                 display_name_anonymous: anonName,
                 description: description,
+                photo: filesNamed !== '' ?? createNameFile(filesNamed),
                 email: email,
                 phone: phone,
                 username: username,
