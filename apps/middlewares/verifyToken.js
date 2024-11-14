@@ -5,7 +5,7 @@ export const verifyToken = (req, res, next) => {
     if (!apiKey || apiKey !== validApiKey) {
         return res.status(403).json({ message: "Forbidden: Invalid API key" });
     }
-    const token = req.headers["authorization"]; 
+    let token = req.headers["authorization"] ?? req.cookies.access_token;
     validationToken(req, res, next, token);
 };
 const validationToken = (req, res, next, token) => {

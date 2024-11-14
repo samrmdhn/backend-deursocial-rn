@@ -79,16 +79,6 @@ Table group_post_comments {
 }
 
 
-Table content_detail_posts {
-  id bigint [increment, pk]
-  caption_post longtext
-  file string[255]
-  users_id bigint [ref: > users.id, not null]
-  content_details_id bigint [ref: > content_details.id, not null]
-  created_at bigint
-  updated_at bigint
-}
-
 Table content_detail_post_likes {
   id bigint [increment, pk]
   users_id bigint [ref: > users.id, not null]
@@ -105,13 +95,6 @@ Table content_detail_post_comments {
   updated_at bigint
 }
 
-Table content_detail_followers {
-  id bigint [increment, pk]
-  users_id bigint [ref: > users.id, not null]
-  content_details_id bigint [ref: > content_details.id, not null]
-  created_at bigint
-  updated_at bigint
-}
 
 
 
