@@ -21,7 +21,7 @@ import GroupMembersModels from "../apps/models/GroupMembersModels.js";
 import BaseNameAnonymousUsersModels from "../apps/models/BaseNameAnonymousUsersModels.js";
 import BaseNameAnonymousUsagesModels from "../apps/models/BaseNameAnonymousUsagesModels.js";
 import ContentDetailFollowersModels from "../apps/models/ContentDetailFollowersModels.js";
-import ContentDetailPostsModels from "../apps/models/ContentDetailPostsModels.js";
+import GroupsPostsModels from "../apps/models/GroupsPostsModels.js";
 
 // Menggunakan force: true akan membuat ulang tabel setiap kali dijalankan contoh => Example.sync({ force: true })
 async function syncDatabase() {
@@ -72,7 +72,7 @@ async function syncDatabase() {
         console.log("Table table Base Name Anonymous Usages has been created.");
         await ContentDetailFollowersModels.sync({ force: false });
         console.log("Table table Content Detail Followers has been created.");
-        await ContentDetailPostsModels.sync({ force: false });
+        await GroupsPostsModels.sync({ force: false });
         console.log("Table table Content Detail Post has been created.");
 
 
