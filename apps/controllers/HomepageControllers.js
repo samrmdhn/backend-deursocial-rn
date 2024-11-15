@@ -733,24 +733,11 @@ export const createContentDetails = withTransaction(
  */
 export const getContentDetails = async (req, res) => {
     try {
-        const contentDetailsId = req.params.id;
-
-        const { title = "", slug = "" } = req.query;
+        const contentDetailsSlug = req.params.slug;
 
         const replacements = {};
-        let whereClause = "WHERE cd.id = :contentDetailsId"; // Default condition for contentDetailsId
-        replacements.contentDetailsId = contentDetailsId; // Add contentDetailsId directly to replacements
-
-        // Build dynamic WHERE clause based on query params
-        if (title) {
-            whereClause += ` AND cd.title ILIKE :title`;
-            replacements.title = `%${title}%`; // Add title to replacements
-        }
-
-        if (slug) {
-            whereClause += ` AND cd.slug = :slug`;
-            replacements.slug = slug; // Add slug to replacements
-        }
+        let whereClause = "WHERE cd.slug = :contentDetailsSlug";
+        replacements.contentDetailsSlug = contentDetailsSlug;
 
         // Menyusun query utama
         const query = `
@@ -859,7 +846,7 @@ export const getContentDetails = async (req, res) => {
                 const updatedImpressions = Number(responseData.impression) + 1;
                 const affectedRows = await ContentDetailsModels.update(
                     { impression: Number(updatedImpressions) },
-                    { where: { id: contentDetailsId }}
+                    { where: { slug: contentDetailsSlug }}
                 );
             } catch (error) {
                 console.error("Error updating impression:", error);
