@@ -52,53 +52,6 @@ Table post_comments {
 
 
 
-
-Table group_posts {
-  id bigint [increment, pk]
-  caption_post longtext
-  file string[255]
-  groups_id bigint [ref: > groups.id]
-  users_id bigint [ref: > users.id]
-  created_at bigint
-  updated_at bigint
-}
-Table group_post_likes {
-  id bigint [increment, pk]
-  group_posts_id bigint [ref: > group_posts.id]
-  users_id bigint [ref: > users.id]
-  created_at bigint
-  updated_at bigint
-}
-Table group_post_comments {
-  id bigint [increment, pk]
-  comment_posts longtext
-  group_posts_id bigint [ref: > group_posts.id]
-  users_id bigint [ref: > users.id]
-  created_at bigint
-  updated_at bigint
-}
-
-
-Table content_detail_post_likes {
-  id bigint [increment, pk]
-  users_id bigint [ref: > users.id, not null]
-  content_detail_posts_id bigint [ref: > content_detail_posts.id, not null]
-  created_at bigint
-  updated_at bigint
-}
-Table content_detail_post_comments {
-  id bigint [increment, pk]
-  comment_posts longtext
-  users_id bigint [ref: > users.id, not null]
-  content_detail_posts_id bigint [ref: > content_detail_posts.id, not null]
-  created_at bigint
-  updated_at bigint
-}
-
-
-
-
-
 Table roles {
   id bigint [increment, pk]
   roles_name varchar(100) [not null, note: "0: user biasa, 1. user admin, 2. user eo"]
