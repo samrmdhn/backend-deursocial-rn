@@ -2,7 +2,7 @@ import db from "../../configs/Database.js";
 import DataTypesCustom from "../../libs/DataTypesCustom.js";
 const { TYPES } = DataTypesCustom;
 
-const ContentDetailPostsModels = db.define("ir_content_detail_posts", {
+const GroupsPostsModels = db.define("ir_groups_posts", {
     id: {
         type: TYPES.BIGINT,
         primaryKey: true,
@@ -53,4 +53,4 @@ const ContentDetailPostsModels = db.define("ir_content_detail_posts", {
     timestamps: false,
 });
 
-export default ContentDetailPostsModels;
+export default GroupsPostsModels;

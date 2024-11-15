@@ -278,7 +278,7 @@ export const getContents = async (req, res) => {
                         ),
                         'total_posts',(
                             SELECT COUNT(*) AS total_posts
-                            FROM ir_content_detail_posts cdp WHERE cdp.content_details_id = cd.id
+                            FROM ir_groups_posts gp WHERE gp.content_details_id = cd.id
                         ),
                         'total_groups',(
                             SELECT COUNT(*) AS total_groups
@@ -676,7 +676,7 @@ export const createContentDetails = withTransaction(
                 process.env.APP_LOCATION_FILE + createNameFile(filesNamed);
             await uploadFile(file, fileDestination);
             const createdAt = makeEpocTime();
-            // Membuat record di ContentDetailsModels
+
             let contentDetailData = await ContentDetailsModels.create(
                 {
                     title: title,
@@ -772,7 +772,7 @@ export const getContentDetails = async (req, res) => {
                 ) AS followers,
                 (
                     SELECT COUNT(*) AS total_posts
-                    FROM ir_content_detail_posts cdp WHERE cdp.content_details_id = cd.id
+                    FROM ir_groups_posts gp WHERE gp.content_details_id = cd.id
                 ) AS total_posts,
                 (
                     SELECT COUNT(*) AS total_groups
