@@ -776,16 +776,10 @@ export const getContentDetails = async (req, res) => {
                             'caption', gp.caption_post,
                             'image', gp.photo,
                             'created_at', gp.created_at,
-                            'users', (
-                                SELECT json_agg(
-                                    json_build_object(
-                                        'id', u.id,
-                                        'display_name', u.display_name,
-                                        'image', u.photo
-                                    )
-                                )
-                                FROM ir_users u
-                                WHERE u.id = gp.users_id
+                            'user', json_build_object(
+                                'id', u.id,
+                                'display_name', u.display_name,
+                                'image', u.photo
                             ),
                             'total_comments', (
                                 SELECT COUNT(DISTINCT gpcs.id)
@@ -800,10 +794,12 @@ export const getContentDetails = async (req, res) => {
                         )
                     )
                     FROM ir_groups_posts gp
+                    JOIN ir_users u ON gp.users_id = u.id
+                    LEFT JOIN ir_groups_posts_comments gpcs ON gp.id = gpcs.group_posts_id
+                    LEFT JOIN ir_groups_posts_likes gpls ON gp.id = gpls.group_posts_id
                     WHERE gp.content_details_id = cd.id
                     GROUP BY gp.id
                 ) AS posts,
-
                 (
                     SELECT COUNT(*) AS total_posts
                     FROM ir_groups_posts gp WHERE gp.content_details_id = cd.id
