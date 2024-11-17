@@ -29,5 +29,6 @@ export {
 export {
     createGroups,
     joinMemberToGroups,
-    getGroups
+    getGroups,
+    getGroupsDetail
 } from "./controllers/GroupsControllers.js";

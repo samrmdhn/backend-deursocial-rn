@@ -529,7 +529,6 @@ export const getTags = async (req, res) => {
     try {
         const { page = 1, title = "" } = req.query;
         const where = {};
-        console.log("masuk 1");
         const { limitPerPage, offset, totalPages, currentPage } = getPagination(
             page,
             10,
@@ -782,7 +781,7 @@ export const getContentDetails = async (req, res) => {
                         json_build_object(
                             'caption', gp.caption_post,
                             'image', gp.photo,
-                            'created_at', gp.created_at,
+                            'created_at', TO_CHAR(TO_TIMESTAMP(gp.created_at), 'YYYY-MM-DD HH24:MI:SS'),
                             'user', json_build_object(
                                 'id', u.id,
                                 'display_name', u.display_name,
