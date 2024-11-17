@@ -75,20 +75,24 @@ export const joinMemberToGroups = async (req, res) => {
 
 export const getGroups = async (req, res) => {
     try {
-        const { page = 1, title = "", slug = "" } = req.query;
+        const { page = 1, title = "" } = req.query;
         const limit = 10;
         const offset = (page - 1) * limit;
 
-        let whereClause = ` WHERE g.status = 1`;
+        let whereClause = ``;
         const replacements = {
             limit: parseInt(limit, 10),
             offset: parseInt(offset, 10),
         };
-
+        if (title) {
+            whereClause += ` WHERE g.title ILIKE :title`;
+            replacements.title = `%${title}%`;
+        }
 
         const query = `
             SELECT
                 g.id AS groups_id,
+                LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slugs,
                 g.title,
                 g.description,
                 json_build_object(
@@ -130,6 +134,7 @@ export const getGroups = async (req, res) => {
             LEFT JOIN ir_users u ON u.id = g.users_id
             LEFT JOIN ir_citys c ON c.id = g.citys_id
             LEFT JOIN ir_group_members gm ON gm.groups_id = g.id
+            ${whereClause}
             GROUP BY g.id, u.id, c.id
             LIMIT :limit OFFSET :offset;
         `;
@@ -164,6 +169,85 @@ export const getGroups = async (req, res) => {
                     total: totalCount,
                     total_page: totalPages,
                 },
+            },
+            "Data retrieved successfully",
+            0
+        );
+    } catch (error) {
+        console.log(error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+};
+
+export const getGroupsDetail = async (req, res) => {
+    try {
+        const groupSlugs = req.params.slugs;
+        const replacements = {};
+        let whereClause = "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs";
+        replacements.groupSlugs = groupSlugs;
+        const query = `
+            SELECT
+                LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slugs,
+                g.title,
+                g.description,
+                json_build_object(
+                    'is_gender', 
+                    CASE 
+                        WHEN g.is_gender = 1 THEN 'men'
+                        WHEN g.is_gender = 2 THEN 'women'
+                        ELSE 'unisex'
+                    END,
+                    'is_private', CASE 
+                        WHEN g.is_private = 0 THEN false
+                        ELSE true
+                    END,
+
+                    'is_anonymous_mode', CASE 
+                        WHEN g.is_anonymous = 0 THEN false
+                        ELSE true
+                    END
+                ) AS detail,
+                    json_build_object(
+                        'name', u.display_name,
+                        'image', u.photo
+                    )AS users,
+                c.title AS citys,
+                COUNT(gm.users_id) AS current_members,
+                    g.max_members as total_members,
+                (
+                    SELECT json_agg(
+                        json_build_object(
+                            'name', u.display_name,
+                            'image', u.photo
+                        )
+                    )
+                    FROM ir_group_members gm
+                    JOIN ir_users u ON u.id = gm.users_id
+                    WHERE gm.groups_id = g.id AND gm.status = 1
+                ) AS members
+            FROM ir_groups g
+            LEFT JOIN ir_users u ON u.id = g.users_id
+            LEFT JOIN ir_citys c ON c.id = g.citys_id
+            LEFT JOIN ir_group_members gm ON gm.groups_id = g.id
+            ${whereClause}
+            GROUP BY g.id, u.id, c.id;
+        `;
+
+        const groupsData = await db.query(query, {
+            replacements,
+            type: db.QueryTypes.SELECT,
+        });
+        
+
+        let responseData = {};
+        if (groupsData.length > 0) {
+            responseData = groupsData[0];
+        }
+        return responseApi(
+            res,
+            responseData,
+            {
+                assets_image_url: process.env.APP_BUCKET_IMAGE,
             },
             "Data retrieved successfully",
             0
