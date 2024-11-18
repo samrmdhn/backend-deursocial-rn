@@ -75,17 +75,19 @@ export const joinMemberToGroups = async (req, res) => {
 
 export const getGroups = async (req, res) => {
     try {
+        const contentDetailSlugs = req.params.contentDetailSlugs;
         const { page = 1, title = "" } = req.query;
         const limit = 10;
         const offset = (page - 1) * limit;
 
-        let whereClause = ``;
+        let whereClause = `WHERE cds.slug = :contentDetailSlugs`;
         const replacements = {
+            contentDetailSlugs: contentDetailSlugs,
             limit: parseInt(limit, 10),
             offset: parseInt(offset, 10),
         };
         if (title) {
-            whereClause += ` WHERE g.title ILIKE :title`;
+            whereClause += ` AND g.title ILIKE :title`;
             replacements.title = `%${title}%`;
         }
 
@@ -131,11 +133,12 @@ export const getGroups = async (req, res) => {
                     WHERE gm.groups_id = g.id AND gm.status = 1
                 ) AS members
             FROM ir_groups g
+            LEFT JOIN ir_content_details cds ON cds.id = g.content_details_id
             LEFT JOIN ir_users u ON u.id = g.users_id
             LEFT JOIN ir_citys c ON c.id = g.citys_id
             LEFT JOIN ir_group_members gm ON gm.groups_id = g.id
             ${whereClause}
-            GROUP BY g.id, u.id, c.id
+            GROUP BY g.id, u.id, c.id, cds.id
             LIMIT :limit OFFSET :offset;
         `;
 
@@ -147,6 +150,7 @@ export const getGroups = async (req, res) => {
         const countQuery = `
             SELECT COUNT(*) AS total_count
             FROM ir_groups g
+            LEFT JOIN ir_content_details cds ON cds.id = g.content_details_id
             ${whereClause};
         `;
         const totalCountResult = await db.query(countQuery, {
