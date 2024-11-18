@@ -48,7 +48,7 @@ export const joinMemberToGroups = async (req, res) => {
         });
         if (dataGroupMembers.length > 0) {
             if (dataGroupMembers[0].status === 3) {
-                return responseApi(res, [], null, "Sorry you cannot joined members", 2);
+                return responseApi(res, [], null, "Sorry you have been blocked from the group", 2);
             }
         }
         const dataGroups = await GroupsModels.findAll({

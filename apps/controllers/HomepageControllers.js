@@ -23,6 +23,7 @@ import { getPagination } from "../../helpers/paginationHelpers.js";
 import db from "../../configs/Database.js";
 import { Sequelize } from "sequelize";
 import { uploadFile } from "../../helpers/FileUpload.js";
+import ContentDetailFollowersModels from "../models/ContentDetailFollowersModels.js";
 const Op = Sequelize.Op;
 
 export const homepage = async (req, res) => {
@@ -883,7 +884,7 @@ export const getContentDetails = async (req, res) => {
                 const updatedImpressions = Number(responseData.impression) + 1;
                 const affectedRows = await ContentDetailsModels.update(
                     { impression: Number(updatedImpressions) },
-                    { where: { slug: contentDetailsSlug }}
+                    { where: { slug: contentDetailsSlug } }
                 );
             } catch (error) {
                 console.error("Error updating impression:", error);
@@ -901,6 +902,74 @@ export const getContentDetails = async (req, res) => {
         );
     } catch (error) {
         console.error("Error fetching content details:", error); // Penanganan error lebih spesifik
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+};
+
+/**
+ * function create new tags
+ * @param {*} req
+ * @param {*} res
+ * @returns {Object}
+ */
+export const followEvent = async (req, res) => {
+    try {
+        const { slug, users_id } = req.body;
+        const getContentDetail = await ContentDetailsModels.findOne({
+            where: { slug: slug },
+        });
+        if (!getContentDetail) {
+            return responseApi(
+                res,
+                [],
+                null,
+                "What event are you attending?",
+                2
+            );
+        }
+        const contentDetailsId = getContentDetail.id;
+        const contentDetailFollowersData =
+            await ContentDetailFollowersModels.findOne({
+                where: {
+                    [Op.and]: [
+                        { content_details_id: contentDetailsId },
+                        { users_id: users_id },
+                    ],
+                },
+            });
+
+        if (contentDetailFollowersData) {
+            await ContentDetailFollowersModels.destroy({
+                where: {
+                    [Op.and]: [
+                        { content_details_id: contentDetailsId },
+                        { users_id: users_id },
+                    ],
+                },
+            });
+            return responseApi(
+                res,
+                [],
+                null,
+                "You are not taking part in this event",
+                0
+            );
+        } else {
+            await ContentDetailFollowersModels.create({
+                content_details_id: contentDetailsId,
+                users_id: users_id,
+                created_at: makeEpocTime(),
+            });
+            return responseApi(
+                res,
+                [],
+                null,
+                "You have participated in this event",
+                0
+            );
+        }
+    } catch (error) {
+        console.log(error);
         return responseApi(res, [], null, "Server error....", 1);
     }
 };
