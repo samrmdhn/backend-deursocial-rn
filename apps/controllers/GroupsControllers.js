@@ -93,15 +93,15 @@ export const getGroups = async (req, res) => {
 
         const query = `
             SELECT
-                g.id AS groups_id,
-                LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slugs,
+                g.id AS id,
+                LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug,
                 g.title,
                 g.description,
                 json_build_object(
                     'is_gender', 
                     CASE 
-                        WHEN g.is_gender = 1 THEN 'men'
-                        WHEN g.is_gender = 2 THEN 'women'
+                        WHEN g.is_gender = 1 THEN 'male'
+                        WHEN g.is_gender = 2 THEN 'female'
                         ELSE 'unisex'
                     END,
                     'is_private', CASE 
@@ -113,14 +113,20 @@ export const getGroups = async (req, res) => {
                         WHEN g.is_anonymous = 0 THEN false
                         ELSE true
                     END
-                ) AS detail,
+                ) AS policies,
                     json_build_object(
                         'name', u.display_name,
-                        'image', u.photo
-                    )AS users,
-                c.title AS citys,
-                COUNT(gm.users_id) AS current_members,
-                    g.max_members as total_members,
+                        'image', u.photo,
+                        'username', u.username
+                    )AS user,
+                json_build_object(
+                    'city', json_build_object(
+                        'id', c.id,
+                        'name', c.title
+                    )
+                ) AS location,
+                CAST(COUNT(gm.users_id) AS INTEGER) AS current_members,
+                g.max_members as total_members,
                 (
                     SELECT json_agg(
                         json_build_object(
@@ -210,14 +216,21 @@ export const getGroupsDetail = async (req, res) => {
                         WHEN g.is_anonymous = 0 THEN false
                         ELSE true
                     END
-                ) AS detail,
-                    json_build_object(
-                        'name', u.display_name,
-                        'image', u.photo
-                    )AS users,
-                c.title AS citys,
-                COUNT(gm.users_id) AS current_members,
-                    g.max_members as total_members,
+                ) AS policies,
+                json_build_object(
+                    'name', u.display_name,
+                    'image', u.photo,
+                    'username', u.username
+                )AS user,
+                json_build_object(
+                    'city', json_build_object(
+                        'id', c.id,
+                        'name', c.title
+                    )
+                ) AS location,
+                CAST(COUNT(gm.users_id) AS INTEGER) AS current_members,
+                CAST(COUNT(gm.users_id) AS INTEGER) AS current_members,
+                g.max_members as total_members,
                 (
                     SELECT json_agg(
                         json_build_object(
