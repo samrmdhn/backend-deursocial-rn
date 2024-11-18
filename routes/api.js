@@ -14,7 +14,7 @@ api.post("/api/registers", verifyToken, SettingControllers.createUsers);
 
 api.get("/api/groups/:contentDetailSlugs", verifyToken, GroupsControllers.getGroups);
 api.get("/api/groups/detail/:slugs", verifyToken, GroupsControllers.getGroupsDetail);
-api.post("/api/groups", verifyToken, GroupsControllers.createGroups);
+api.post("/api/groups/:slug", verifyToken, GroupsControllers.createGroups);
 api.post("/api/join/groups", verifyToken, GroupsControllers.joinMemberToGroups);
 
 api.get("/api/homepages", HomepageControllers.homepage);

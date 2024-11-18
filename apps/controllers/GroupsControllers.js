@@ -2,6 +2,7 @@ import db from "../../configs/Database.js";
 import { makeEpocTime } from "../../helpers/customHelpers.js";
 import { getPagination } from "../../helpers/paginationHelpers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
+import ContentDetailsModels from "../models/ContentDetailsModels.js";
 import GroupMembersModels from "../models/GroupMembersModels.js";
 import GroupsModels from "../models/GroupsModels.js";
 import UsersModels from "../models/UsersModels.js";
@@ -19,15 +20,31 @@ export const createGroups = async (req, res) => {
             is_anonymous,
             is_private,
         } = req.body;
+        const slug = req.params.slug;
+
+        const getContentDetail = await ContentDetailsModels.findOne({
+            where: { slug: slug },
+        });
+        if (!getContentDetail) {
+            return responseApi(
+                res,
+                [],
+                null,
+                "Sorry you cannot be create groups",
+                2
+            );
+        }
+        const contentDetailsId = getContentDetail.id;
         await GroupsModels.create({
             title: title,
             users_id: users_id,
             description: description,
             citys_id: citys_id,
-            content_details_id: content_details_id,
+            content_details_id: contentDetailsId,
             max_members: max_members,
             is_gender: is_gender,
             is_private: is_private,
+            is_anonymous: is_anonymous,
             created_at: makeEpocTime(),
         });
         return responseApi(res, [], null, "Data Success Saved", 0);
