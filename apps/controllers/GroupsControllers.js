@@ -183,8 +183,15 @@ export const getGroups = async (req, res) => {
 
         const totalCount = totalCountResult[0].total_count;
         const totalPages = Math.ceil(totalCount / limit);
-
-        let responseData = groupsData;
+        const getContentDetail = await ContentDetailsModels.findOne({
+            where: {
+                slug: contentDetailSlugs
+            }
+        })
+        let responseData = {
+            title: getContentDetail.title,
+            list_groups: groupsData
+        };
         return responseApi(
             res,
             responseData,
