@@ -212,6 +212,9 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
         } = req.body;
         const file = req.files.image;
         let filesNamed = '';
+        if (!phone) {
+            return responseApi(res, [], null, "Please fill phone number", 422);
+        }
         if (file) {
             const fileDate = new Date();
             filesNamed = fileDate.getTime() + getExtension(file.name);
