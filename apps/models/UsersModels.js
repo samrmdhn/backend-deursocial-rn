@@ -34,7 +34,7 @@ const UsersModels = db.define(
         },
         phone: {
             type: TYPES.STRING(100),
-            allowNull: false,
+            allowNull: true,
             unique: true,
         },
         username: {
