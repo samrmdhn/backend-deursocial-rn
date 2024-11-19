@@ -60,17 +60,37 @@ export const getExtension = (filename) => {
 };
 
 export const createNameFile = (fileName) => {
-    return '/images/'+fileName
-}
+    return "/images/" + fileName;
+};
 
 export const makeRandomString = (length) => {
-    let result = '';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = "";
+    const characters =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     const charactersLength = characters.length;
     let counter = 0;
     while (counter < length) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-      counter += 1;
+        result += characters.charAt(
+            Math.floor(Math.random() * charactersLength)
+        );
+        counter += 1;
     }
     return result;
-}
+};
+
+export const makeDataJwt = (req, userId = 0) => {
+    var forwarded = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    var agent = req.headers["user-agent"];
+    const encryptData = {
+        tod: userId,
+        uip: forwarded,
+        uag: agent,
+    };
+    const datas = {
+        ...encryptData,
+        token: btoa(
+            JSON.stringify(encryptData) + process.env.APP_ACCESS_TOKEN_SECRET
+        ),
+    };
+    return { datas: datas, forwarded: forwarded, agent: agent };
+};
