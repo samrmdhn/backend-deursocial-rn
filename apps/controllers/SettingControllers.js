@@ -304,7 +304,6 @@ export const loginUsers = async (req, res) => {
             user = await UsersModels.findOne({ where: { username: username } });
         }
 
-        // Jika user tidak ditemukan
         if (!user) {
             return responseApi(res, [], null, "User not found", 1);
         }
@@ -316,11 +315,15 @@ export const loginUsers = async (req, res) => {
             return responseApi(res, [], null, "Invalid password", 1);
         }
 
-        // Jika login sukses, buat token
         let visitorToken = "";
         if (user) {
-            const datas = makeDataJwt(req, user.id);
-            visitorToken = signVisitorToken(datas);
+            const { datas } = makeDataJwt(req, user.id);
+            visitorToken = signVisitorToken({
+                ...datas,
+                anonymous: user.is_anonymous === 0 ? false : true,
+                username: user.username,
+                display_name: user.is_anonymous === 0 ? user.display_name : user.display_name_anonymous
+            });
         }
 
         return responseApi(
