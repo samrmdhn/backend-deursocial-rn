@@ -88,9 +88,6 @@ export const makeDataJwt = (req, userId = 0) => {
     };
     const datas = {
         ...encryptData,
-        token: btoa(
-            JSON.stringify(encryptData) + process.env.APP_ACCESS_TOKEN_SECRET
-        ),
     };
     return { datas: datas, forwarded: forwarded, agent: agent };
 };
