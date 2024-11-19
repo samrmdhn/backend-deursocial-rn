@@ -24,7 +24,8 @@ export {
     createCitys,
     getVanues,
     createVanues,
-    createUsers
+    createUsers,
+    loginUsers
 } from "./controllers/SettingControllers.js";
 
 export {

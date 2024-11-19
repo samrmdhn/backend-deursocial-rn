@@ -1,4 +1,9 @@
-import { createNameFile, getExtension, makeEpocTime, withTransaction } from "../../helpers/customHelpers.js";
+import {
+    createNameFile,
+    getExtension,
+    makeEpocTime,
+    withTransaction,
+} from "../../helpers/customHelpers.js";
 import { signVisitorToken } from "../../libs/JwtHandlers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
 import CitysModels from "../models/CitysModels.js";
@@ -11,6 +16,9 @@ import { buildWhereClause } from "../../helpers/queryBuilderHelpers.js";
 import db from "../../configs/Database.js";
 import BaseNameAnonymousUsagesModels from "../models/BaseNameAnonymousUsagesModels.js";
 import { uploadFile } from "../../helpers/FileUpload.js";
+import { validateUniqueField } from "../../helpers/validationSavedData.js";
+import bcrypt from 'bcryptjs';
+
 const Op = Sequelize.Op;
 
 export const visitorToken = async (req, res) => {
@@ -62,12 +70,12 @@ export const visitorToken = async (req, res) => {
         } else {
             visitorToken = dataUser?.access_token;
         }
-        res.cookie("access_token", visitorToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "Strict",
-            maxAge: 60 * 60 * 1000,
-        });
+        // res.cookie("access_token", visitorToken, {
+        //     httpOnly: true,
+        //     secure: true,
+        //     sameSite: "Strict",
+        //     maxAge: 60 * 60 * 1000,
+        // });
         return responseApi(
             res,
             {
@@ -211,38 +219,19 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
             gender,
         } = req.body;
         const file = req.files.image;
-        let filesNamed = '';
-        if (!phone) {
-            return responseApi(res, [], null, "Please fill phone number", 422);
-        }
+        let filesNamed = "";
         if (file) {
             const fileDate = new Date();
             filesNamed = fileDate.getTime() + getExtension(file.name);
-            const fileDestination = process.env.APP_LOCATION_FILE + createNameFile(filesNamed);
-            await uploadFile(file, fileDestination);
         }
-
-        const existingUser = await UsersModels.findOne({
-            where: {
-                [Op.or]: [
-                    { username: username },
-                    { email: email },
-                    { phone: phone },
-                ],
-            },
-        });
-
-        if (existingUser) {
-            if (existingUser.username === username) {
-                return responseApi(res, [], null, "Username already exists", 2);
-            }
-            if (existingUser.email === email) {
-                return responseApi(res, [], null, "Email already exists", 2);
-            }
-
-            if (existingUser.phone === phone) {
-                return responseApi(res, [], null, "Phone already exists", 2);
-            }
+        const { messageValidation, statusValidation } =
+            await validateUniqueField(
+                UsersModels,
+                ["username", "phone", "email"],
+                [username, phone, email]
+            );
+        if (statusValidation == 1) {
+            return responseApi(res, [], null, messageValidation, 422);
         }
         const query = `SELECT 
         CONCAT(
@@ -276,24 +265,72 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
                 { transaction }
             );
         }
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
         await UsersModels.create(
             {
                 display_name: fullname,
                 display_name_anonymous: anonName,
                 description: description,
-                photo: filesNamed !== '' ? createNameFile(filesNamed) : '',
+                photo: filesNamed !== "" ? createNameFile(filesNamed) : "",
                 email: email,
-                phone: phone,
+                phone: phone ?? null,
                 username: username,
-                password: password,
+                password: hashedPassword,
                 gender: gender,
                 created_at: makeEpocTime(),
             },
             { transaction }
         );
+        if (file) {
+            const fileDestination =
+                process.env.APP_LOCATION_FILE + createNameFile(filesNamed);
+            await uploadFile(file, fileDestination);
+        }
         return responseApi(res, [], null, "Data Success Saved", 0);
     } catch (error) {
-        console.error("Error in createContentDetails:", error);
+        console.error("Error in create users:", error);
         throw error;
     }
 });
+
+export const loginUsers = async (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        if (!username) {
+            return responseApi(
+                res,
+                [],
+                null,
+                "Username, phone, or email is required",
+                1
+            );
+        }
+
+        let user;
+        if (/\S+@\S+\.\S+/.test(username)) {
+            user = await UsersModels.findOne({ email: username });
+        } else if (/^\d+$/.test(username)) {
+            user = await UsersModels.findOne({ phone: username });
+        } else {
+            user = await UsersModels.findOne({ username: username });
+        }
+
+        if (!user) {
+            return responseApi(res, [], null, "User not found", 1);
+        }
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        // const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = await bcrypt.compare(password, hashedPassword);
+        if (!isMatch) {
+            return responseApi(res, [], null, "Invalid password", 1);
+        }
+
+        return responseApi(res, [user], null, "Login successful", 0);
+    } catch (error) {
+        console.log("Error login users", error);
+        return responseApi(res, [], null, "Server error", 1);
+    }
+};

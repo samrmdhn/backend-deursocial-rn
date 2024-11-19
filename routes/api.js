@@ -10,7 +10,8 @@ api.get("/api/citys", verifyToken, SettingControllers.getCitys);
 api.post("/api/citys", verifyToken, SettingControllers.createCitys);
 api.get("/api/vanues", verifyToken, SettingControllers.getVanues);
 api.post("/api/vanues", verifyToken, SettingControllers.createVanues);
-api.post("/api/registers", verifyToken, SettingControllers.createUsers);
+api.post("/api/registers", SettingControllers.createUsers);
+api.post("/api/login", SettingControllers.loginUsers);
 
 api.get("/api/groups/:contentDetailSlugs", verifyToken, GroupsControllers.getGroups);
 api.get("/api/groups/detail/:slugs", verifyToken, GroupsControllers.getGroupsDetail);
