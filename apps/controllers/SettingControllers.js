@@ -1,6 +1,7 @@
 import {
     createNameFile,
     getExtension,
+    makeDataJwt,
     makeEpocTime,
     withTransaction,
 } from "../../helpers/customHelpers.js";
@@ -17,27 +18,14 @@ import db from "../../configs/Database.js";
 import BaseNameAnonymousUsagesModels from "../models/BaseNameAnonymousUsagesModels.js";
 import { uploadFile } from "../../helpers/FileUpload.js";
 import { validateUniqueField } from "../../helpers/validationSavedData.js";
-import bcrypt from 'bcryptjs';
+import bcrypt from "bcrypt";
 
 const Op = Sequelize.Op;
 
 export const visitorToken = async (req, res) => {
     try {
-        var forwarded =
-            req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-        var agent = req.headers["user-agent"];
-        const encryptData = {
-            tod: 0,
-            uip: forwarded,
-            uag: agent,
-        };
-        const datas = {
-            ...encryptData,
-            token: btoa(
-                JSON.stringify(encryptData) +
-                    process.env.APP_ACCESS_TOKEN_SECRET
-            ),
-        };
+        const { datas, forwarded, agent } = makeDataJwt(req, 0);
+
         const sevenDaysAgo = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60; // Menghitung waktu 7 hari yang lalu
         const now = Math.floor(Date.now() / 1000); // Waktu saat ini
 
@@ -86,6 +74,7 @@ export const visitorToken = async (req, res) => {
             0
         );
     } catch (error) {
+        console.log("get visitor token", error);
         return responseApi(res, [], null, "Server error....", 1);
     }
 };
@@ -265,8 +254,7 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
                 { transaction }
             );
         }
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        const hashedPassword = await bcrypt.hash(password, 10);
         await UsersModels.create(
             {
                 display_name: fullname,
@@ -297,7 +285,6 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
 export const loginUsers = async (req, res) => {
     try {
         const { username, password } = req.body;
-
         if (!username) {
             return responseApi(
                 res,
@@ -310,25 +297,39 @@ export const loginUsers = async (req, res) => {
 
         let user;
         if (/\S+@\S+\.\S+/.test(username)) {
-            user = await UsersModels.findOne({ email: username });
+            user = await UsersModels.findOne({ where: { email: username } });
         } else if (/^\d+$/.test(username)) {
-            user = await UsersModels.findOne({ phone: username });
+            user = await UsersModels.findOne({ where: { phone: username } });
         } else {
-            user = await UsersModels.findOne({ username: username });
+            user = await UsersModels.findOne({ where: { username: username } });
         }
 
+        // Jika user tidak ditemukan
         if (!user) {
             return responseApi(res, [], null, "User not found", 1);
         }
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-        // const isMatch = await bcrypt.compare(password, user.password);
-        const isMatch = await bcrypt.compare(password, hashedPassword);
+
+        const trimmedPassword = password.trim();
+
+        const isMatch = await bcrypt.compare(trimmedPassword, user.password);
         if (!isMatch) {
             return responseApi(res, [], null, "Invalid password", 1);
         }
 
-        return responseApi(res, [user], null, "Login successful", 0);
+        // Jika login sukses, buat token
+        let visitorToken = "";
+        if (user) {
+            const datas = makeDataJwt(req, user.id);
+            visitorToken = signVisitorToken(datas);
+        }
+
+        return responseApi(
+            res,
+            { access_token: visitorToken },
+            null,
+            "Login successful",
+            0
+        );
     } catch (error) {
         console.log("Error login users", error);
         return responseApi(res, [], null, "Server error", 1);
