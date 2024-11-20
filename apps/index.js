@@ -26,7 +26,7 @@ export {
     createVanues,
     createUsers,
     loginUsers,
-    downloadImages
+    checkAuth
 } from "./controllers/SettingControllers.js";
 
 export {

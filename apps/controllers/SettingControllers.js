@@ -18,8 +18,12 @@ import { buildWhereClause } from "../../helpers/queryBuilderHelpers.js";
 import db from "../../configs/Database.js";
 import BaseNameAnonymousUsagesModels from "../models/BaseNameAnonymousUsagesModels.js";
 import { uploadFile } from "../../helpers/FileUpload.js";
-import { validateDataRequestBody, validateUniqueField } from "../../helpers/validationSavedData.js";
+import {
+    validateDataRequestBody,
+    validateUniqueField,
+} from "../../helpers/validationSavedData.js";
 import bcrypt from "bcrypt";
+import { OAuth2Client } from "google-auth-library";
 
 const Op = Sequelize.Op;
 
@@ -207,19 +211,17 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
             username,
             password,
             gender,
-            image
+            image,
         } = req.body;
         const file = req.files && req.files.image;
         let filesNamed = "";
         if (file) {
             const fileDate = new Date();
             filesNamed = fileDate.getTime() + getExtension(file.name);
-            filesNamed = createNameFile(filesNamed)
+            filesNamed = createNameFile(filesNamed);
         }
         const { messageValidationReqBody, statusValidationReqBody } =
-            validateDataRequestBody(
-                ["gender", "password"],
-            );
+            validateDataRequestBody(["gender", "password"]);
         if (statusValidationReqBody == 1) {
             return responseApi(res, [], null, messageValidationReqBody, 422);
         }
@@ -267,7 +269,7 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
         if (image) {
             const result = await downloadImage(image);
             if (result) {
-                filesNamed = result.image
+                filesNamed = result.image;
             }
         }
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -357,7 +359,7 @@ export const loginUsers = async (req, res) => {
                 username: user.username,
                 display_name: user.display_name,
                 display_name_anonymous: user.display_name_anonymous,
-                image: newUser.photo
+                image: newUser.photo,
             });
         }
 
@@ -374,8 +376,52 @@ export const loginUsers = async (req, res) => {
     }
 };
 
-export const downloadImages = async(req, res) => {
-    const { url } = req.body;
-    const result = await downloadImage(url);
-    return responseApi(res, result, null, "Server error", 1);
+const client = new OAuth2Client();
+
+export const checkAuth = async (req, res) => {
+    try {
+        const { token } = req.body;
+        if (!token) {
+            return res.status(401).json({ message: "Token is required" });
+        }
+
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: process.env.APP_GOOGLE_CLIENT_ID,
+        });
+
+        const payload = ticket.getPayload();
+        const getExistingUser = await UsersModels.findOne({
+            where: {
+                email: payload["email"],
+            },
+        });
+        let visitorToken = "";
+        let dataToken = {};
+        if (getExistingUser) {
+            const { datas } = makeDataJwt(req, getExistingUser.id);
+            visitorToken = signVisitorToken({
+                ...datas,
+                username: getExistingUser.username,
+                display_name: getExistingUser.display_name,
+                display_name_anonymous: getExistingUser.display_name_anonymous,
+                image: getExistingUser.photo,
+            });
+            dataToken = { access_token: visitorToken };
+        }
+        const textResponse =
+            visitorToken !== ""
+                ? "Data has been retrieved"
+                : "Please continue to complete the registration process. Thank you!";
+        return responseApi(
+            res,
+            visitorToken !== "" ? dataToken : [],
+            null,
+            textResponse,
+            0
+        );
+    } catch (error) {
+        console.error("Error verifying token:", error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
 };
