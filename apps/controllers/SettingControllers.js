@@ -378,7 +378,7 @@ export const loginUsers = async (req, res) => {
                 username: user.username,
                 display_name: user.display_name,
                 display_name_anonymous: user.display_name_anonymous,
-                image: newUser.photo,
+                image: user.photo,
             });
         }
 
