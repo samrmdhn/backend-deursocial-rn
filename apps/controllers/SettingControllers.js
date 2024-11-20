@@ -255,7 +255,7 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
             );
         }
         const hashedPassword = await bcrypt.hash(password, 10);
-        await UsersModels.create(
+        const newUser = await UsersModels.create(
             {
                 display_name: fullname,
                 display_name_anonymous: anonName,
@@ -270,12 +270,24 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
             },
             { transaction }
         );
+        let visitorToken = "";
+        if (newUser) {
+            const { datas } = makeDataJwt(req, newUser.id);
+            visitorToken = signVisitorToken({
+                ...datas,
+                anonymous: newUser.is_anonymous === 0 ? false : true,
+                username: newUser.username,
+                display_name: newUser.display_name,
+                display_name_anonymous: newUser.display_name_anonymous
+            });
+        }
+
         if (file) {
             const fileDestination =
                 process.env.APP_LOCATION_FILE + createNameFile(filesNamed);
             await uploadFile(file, fileDestination);
         }
-        return responseApi(res, [], null, "Data Success Saved", 0);
+        return responseApi(res, { access_token: visitorToken }, null, "Data Success Saved", 0);
     } catch (error) {
         console.error("Error in create users:", error);
         throw error;
@@ -320,9 +332,9 @@ export const loginUsers = async (req, res) => {
             const { datas } = makeDataJwt(req, user.id);
             visitorToken = signVisitorToken({
                 ...datas,
-                anonymous: user.is_anonymous === 0 ? false : true,
                 username: user.username,
-                display_name: user.is_anonymous === 0 ? user.display_name : user.display_name_anonymous
+                display_name: user.display_name,
+                display_name_anonymous: user.display_name_anonymous
             });
         }
 
@@ -338,3 +350,26 @@ export const loginUsers = async (req, res) => {
         return responseApi(res, [], null, "Server error", 1);
     }
 };
+
+
+export const downloadImage = async (req, res) => {
+    const { url, name_image } = req.body;
+    return responseApi(res, { url, name_image }, null, "Server error", 1);
+
+    // await fetch(url)
+    //     .then(response => response.blob()) // Mengubah respons menjadi Blob
+    //     .then(blob => {
+    //         const blobUrl = URL.createObjectURL(blob); // Membuat URL blob
+    //         const a = document.createElement('a'); // Membuat elemen <a>
+    //         a.href = blobUrl;
+    //         a.download = filename; // Menentukan nama file
+    //         document.body.appendChild(a); // Menambahkan elemen <a> ke dokumen
+    //         a.click(); // Memicu klik untuk mendownload
+    //         document.body.removeChild(a); // Menghapus elemen setelah download selesai
+    //     })
+    //     .catch(err => console.error('Error downloading image:', err));
+}
+
+// Contoh penggunaan
+// const imageUrl = "https://lh3.googleusercontent.com/a/ACg8ocLUcY6nKeJVS9v7f-sfQAEpP6sDIFEwMp1f1AhV7m_njvCmB5Vd=s96-c";
+// downloadImage(imageUrl, "downloaded-image.jpg");
