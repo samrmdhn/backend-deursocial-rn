@@ -18,7 +18,7 @@ import { buildWhereClause } from "../../helpers/queryBuilderHelpers.js";
 import db from "../../configs/Database.js";
 import BaseNameAnonymousUsagesModels from "../models/BaseNameAnonymousUsagesModels.js";
 import { uploadFile } from "../../helpers/FileUpload.js";
-import { validateUniqueField } from "../../helpers/validationSavedData.js";
+import { validateDataRequestBody, validateUniqueField } from "../../helpers/validationSavedData.js";
 import bcrypt from "bcrypt";
 
 const Op = Sequelize.Op;
@@ -215,6 +215,13 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
             const fileDate = new Date();
             filesNamed = fileDate.getTime() + getExtension(file.name);
             filesNamed = createNameFile(filesNamed)
+        }
+        const { messageValidationReqBody, statusValidationReqBody } =
+            validateDataRequestBody(
+                ["gender", "password"],
+            );
+        if (statusValidationReqBody == 1) {
+            return responseApi(res, [], null, messageValidationReqBody, 422);
         }
         const { messageValidation, statusValidation } =
             await validateUniqueField(
