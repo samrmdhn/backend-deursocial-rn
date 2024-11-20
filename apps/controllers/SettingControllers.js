@@ -18,12 +18,10 @@ import { buildWhereClause } from "../../helpers/queryBuilderHelpers.js";
 import db from "../../configs/Database.js";
 import BaseNameAnonymousUsagesModels from "../models/BaseNameAnonymousUsagesModels.js";
 import { uploadFile } from "../../helpers/FileUpload.js";
-import {
-    validateDataRequestBody,
-    validateUniqueField,
-} from "../../helpers/validationSavedData.js";
+import { validateUniqueField } from "../../helpers/validationSavedData.js";
 import bcrypt from "bcrypt";
 import { OAuth2Client } from "google-auth-library";
+import { validationRegisterUsers } from "../validators/usersValidators.js";
 
 const Op = Sequelize.Op;
 
@@ -220,19 +218,40 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
             filesNamed = fileDate.getTime() + getExtension(file.name);
             filesNamed = createNameFile(filesNamed);
         }
-        const { messageValidationReqBody, statusValidationReqBody } =
-            validateDataRequestBody(["gender", "password"]);
-        if (statusValidationReqBody == 1) {
-            return responseApi(res, [], null, messageValidationReqBody, 422);
+        const validationResult = validationRegisterUsers({
+            fullname,
+            description,
+            email,
+            phone,
+            username,
+            password,
+            gender,
+        });
+
+        if (!validationResult.valid) {
+            return res.status(422).json({
+                success: false,
+                errors: validationResult.errors,
+            });
         }
-        const { messageValidation, statusValidation } =
+
+        const { messageValidation, statusValidation, labelValidation } =
             await validateUniqueField(
                 UsersModels,
                 ["username", "phone", "email"],
                 [username, phone, email]
             );
         if (statusValidation == 1) {
-            return responseApi(res, [], null, messageValidation, 422);
+            return res.status(422).json({
+                success: false,
+                errors: [
+                    {
+                        message: messageValidation,
+                        label: labelValidation
+                    }
+                ],
+            });
+            // return responseApi(res, [], null, messageValidation, 422);
         }
         const query = `SELECT 
         CONCAT(
