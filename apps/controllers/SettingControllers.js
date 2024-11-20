@@ -19,6 +19,15 @@ import BaseNameAnonymousUsagesModels from "../models/BaseNameAnonymousUsagesMode
 import { uploadFile } from "../../helpers/FileUpload.js";
 import { validateUniqueField } from "../../helpers/validationSavedData.js";
 import bcrypt from "bcrypt";
+import fs from "fs";
+import path from "path";
+import https from "https";
+import http from "http";
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const Op = Sequelize.Op;
 
@@ -275,10 +284,9 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
             const { datas } = makeDataJwt(req, newUser.id);
             visitorToken = signVisitorToken({
                 ...datas,
-                anonymous: newUser.is_anonymous === 0 ? false : true,
                 username: newUser.username,
                 display_name: newUser.display_name,
-                display_name_anonymous: newUser.display_name_anonymous
+                display_name_anonymous: newUser.display_name_anonymous,
             });
         }
 
@@ -287,7 +295,13 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
                 process.env.APP_LOCATION_FILE + createNameFile(filesNamed);
             await uploadFile(file, fileDestination);
         }
-        return responseApi(res, { access_token: visitorToken }, null, "Data Success Saved", 0);
+        return responseApi(
+            res,
+            { access_token: visitorToken },
+            null,
+            "Data Success Saved",
+            0
+        );
     } catch (error) {
         console.error("Error in create users:", error);
         throw error;
@@ -334,7 +348,7 @@ export const loginUsers = async (req, res) => {
                 ...datas,
                 username: user.username,
                 display_name: user.display_name,
-                display_name_anonymous: user.display_name_anonymous
+                display_name_anonymous: user.display_name_anonymous,
             });
         }
 
@@ -351,24 +365,68 @@ export const loginUsers = async (req, res) => {
     }
 };
 
-
 export const downloadImage = async (req, res) => {
-    const { url, name_image } = req.body;
-    return responseApi(res, { url, name_image }, null, "Server error", 1);
+    try {
+        const { url, name_image } = req.body;
 
-    // await fetch(url)
-    //     .then(response => response.blob()) // Mengubah respons menjadi Blob
-    //     .then(blob => {
-    //         const blobUrl = URL.createObjectURL(blob); // Membuat URL blob
-    //         const a = document.createElement('a'); // Membuat elemen <a>
-    //         a.href = blobUrl;
-    //         a.download = filename; // Menentukan nama file
-    //         document.body.appendChild(a); // Menambahkan elemen <a> ke dokumen
-    //         a.click(); // Memicu klik untuk mendownload
-    //         document.body.removeChild(a); // Menghapus elemen setelah download selesai
-    //     })
-    //     .catch(err => console.error('Error downloading image:', err));
-}
+        if (!url || !name_image) {
+            return res.status(400).json({
+                message: "URL dan nama file harus disertakan",
+                success: false,
+            });
+        }
+
+        // Tentukan protokol (http/https)
+        const client = url.startsWith("https") ? https : http;
+
+        // Tentukan path untuk menyimpan file
+        const filePath = path.join(__dirname, process.env.APP_LOCATION_FILE, createNameFile(name_image));
+
+        // Membuat folder jika belum ada
+        if (!fs.existsSync(path.dirname(filePath))) {
+            fs.mkdirSync(path.dirname(filePath), { recursive: true });
+        }
+
+        // Ambil gambar dan simpan ke file
+        const file = fs.createWriteStream(filePath);
+        client
+            .get(url, (response) => {
+                if (response.statusCode !== 200) {
+                    return res.status(500).json({
+                        message: `Gagal mengunduh gambar, status: ${response.statusCode}`,
+                        success: false,
+                    });
+                }
+
+                response.pipe(file);
+
+                file.on("finish", () => {
+                    file.close(); // Menutup file stream
+                    return res.status(200).json({
+                        message: "Gambar berhasil diunduh",
+                        filePath,
+                        success: true,
+                    });
+                });
+            })
+            .on("error", (err) => {
+                fs.unlink(filePath, () => {}); // Hapus file jika terjadi kesalahan
+                console.error("Error downloading image:", err);
+                return res.status(500).json({
+                    message: "Terjadi kesalahan saat mengunduh gambar",
+                    error: err.message,
+                    success: false,
+                });
+            });
+    } catch (error) {
+        console.error("Error:", error);
+        return res.status(500).json({
+            message: "Terjadi kesalahan internal server",
+            error: error.message,
+            success: false,
+        });
+    }
+};
 
 // Contoh penggunaan
 // const imageUrl = "https://lh3.googleusercontent.com/a/ACg8ocLUcY6nKeJVS9v7f-sfQAEpP6sDIFEwMp1f1AhV7m_njvCmB5Vd=s96-c";
