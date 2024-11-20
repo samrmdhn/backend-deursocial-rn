@@ -23,12 +23,11 @@ export const validateUniqueField = async (Model, fields, values) => {
 
 
 export const validateDataRequestBody = (data) => {
-    // Menyaring hanya properti yang tidak undefined
     for (let key in data) {
         if (data[key] === undefined) {
             return {
                 messageValidation: `${key} cannot be undefined`,
-                statusValidation: 500
+                statusValidation: 1
             }; 
         }
     }
