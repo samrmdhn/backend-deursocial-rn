@@ -26,10 +26,10 @@ export const validateDataRequestBody = (data) => {
     for (let key in data) {
         if (data[key] === undefined) {
             return {
-                messageValidation: `${key} cannot be undefined`,
-                statusValidation: 1
+                messageValidationReqBody: `${key} cannot be undefined`,
+                statusValidationReqBody: 1
             }; 
         }
     }
-    return {messageValidation: '', statusValidation: 0};
+    return {messageValidationReqBody: '', statusValidationReqBody: 0};
 }
