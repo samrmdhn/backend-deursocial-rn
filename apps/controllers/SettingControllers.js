@@ -258,7 +258,7 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
             );
         }
         if (image) {
-            const result = await downloadImage(url);
+            const result = await downloadImage(image);
             if (result) {
                 filesNamed = result.filePath
             }
