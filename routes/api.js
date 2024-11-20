@@ -37,5 +37,5 @@ api.get("/api/actress", verifyToken, HomepageControllers.getActress);
 api.post("/api/actress", verifyToken, HomepageControllers.createActress);
 api.get("/api/content/details/:slug", verifyToken, HomepageControllers.getContentDetails);
 api.post("/api/content/details", verifyToken, HomepageControllers.createContentDetails);
-api.get("/api/download/image", verifyToken, HomepageControllers.downloadImages);
+api.post("/api/check/auth", verifyToken, HomepageControllers.checkAuth);
 export default api;
