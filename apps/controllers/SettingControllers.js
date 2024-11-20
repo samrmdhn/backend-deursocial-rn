@@ -376,50 +376,51 @@ export const downloadImage = async (req, res) => {
             });
         }
 
-        // Tentukan protokol (http/https)
-        const client = url.startsWith("https") ? https : http;
+        // Direktori target di luar repo
+        const targetDirectory = process.env.APP_LOCATION_FILE;
 
-        // Tentukan path untuk menyimpan file
-        const filePath = path.join(__dirname, process.env.APP_LOCATION_FILE, createNameFile(name_image));
+        // Tentukan path lengkap file
+        const filePath = path.join(targetDirectory, createNameFile(`${Date.now()}_${name_image.replace(/\s+/g, '_')}`));
 
         // Membuat folder jika belum ada
-        if (!fs.existsSync(path.dirname(filePath))) {
-            fs.mkdirSync(path.dirname(filePath), { recursive: true });
+        if (!fs.existsSync(targetDirectory)) {
+            fs.mkdirSync(targetDirectory, { recursive: true });
         }
 
-        // Ambil gambar dan simpan ke file
+        // Tentukan protokol
+        const client = url.startsWith('https') ? https : http;
+
+        // Unduh dan simpan file
         const file = fs.createWriteStream(filePath);
-        client
-            .get(url, (response) => {
-                if (response.statusCode !== 200) {
-                    return res.status(500).json({
-                        message: `Gagal mengunduh gambar, status: ${response.statusCode}`,
-                        success: false,
-                    });
-                }
-
-                response.pipe(file);
-
-                file.on("finish", () => {
-                    file.close(); // Menutup file stream
-                    return res.status(200).json({
-                        message: "Gambar berhasil diunduh",
-                        filePath,
-                        success: true,
-                    });
-                });
-            })
-            .on("error", (err) => {
-                fs.unlink(filePath, () => {}); // Hapus file jika terjadi kesalahan
-                console.error("Error downloading image:", err);
+        client.get(url, (response) => {
+            if (response.statusCode !== 200) {
                 return res.status(500).json({
-                    message: "Terjadi kesalahan saat mengunduh gambar",
-                    error: err.message,
+                    message: `Gagal mengunduh gambar, status: ${response.statusCode}`,
                     success: false,
                 });
+            }
+
+            response.pipe(file);
+
+            file.on('finish', () => {
+                file.close(); // Menutup file stream
+                return res.status(200).json({
+                    message: "Gambar berhasil diunduh",
+                    filePath,
+                    success: true,
+                });
             });
+        }).on('error', (err) => {
+            fs.unlink(filePath, () => {}); // Hapus file jika terjadi kesalahan
+            console.error('Error downloading image:', err);
+            return res.status(500).json({
+                message: "Terjadi kesalahan saat mengunduh gambar",
+                error: err.message,
+                success: false,
+            });
+        });
     } catch (error) {
-        console.error("Error:", error);
+        console.error('Error:', error);
         return res.status(500).json({
             message: "Terjadi kesalahan internal server",
             error: error.message,
@@ -427,7 +428,3 @@ export const downloadImage = async (req, res) => {
         });
     }
 };
-
-// Contoh penggunaan
-// const imageUrl = "https://lh3.googleusercontent.com/a/ACg8ocLUcY6nKeJVS9v7f-sfQAEpP6sDIFEwMp1f1AhV7m_njvCmB5Vd=s96-c";
-// downloadImage(imageUrl, "downloaded-image.jpg");
