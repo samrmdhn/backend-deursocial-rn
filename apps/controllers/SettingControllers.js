@@ -287,6 +287,7 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
                 username: newUser.username,
                 display_name: newUser.display_name,
                 display_name_anonymous: newUser.display_name_anonymous,
+                image: newUser.photo,
             });
         }
 
@@ -349,6 +350,7 @@ export const loginUsers = async (req, res) => {
                 username: user.username,
                 display_name: user.display_name,
                 display_name_anonymous: user.display_name_anonymous,
+                image: newUser.photo
             });
         }
 
