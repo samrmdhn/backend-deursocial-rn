@@ -1,5 +1,6 @@
 import {
     createNameFile,
+    downloadImage,
     getExtension,
     makeDataJwt,
     makeEpocTime,
@@ -19,15 +20,6 @@ import BaseNameAnonymousUsagesModels from "../models/BaseNameAnonymousUsagesMode
 import { uploadFile } from "../../helpers/FileUpload.js";
 import { validateUniqueField } from "../../helpers/validationSavedData.js";
 import bcrypt from "bcrypt";
-import fs from "fs";
-import path from "path";
-import https from "https";
-import http from "http";
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const Op = Sequelize.Op;
 
@@ -215,12 +207,14 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
             username,
             password,
             gender,
+            image
         } = req.body;
         const file = req.files && req.files.image;
         let filesNamed = "";
         if (file) {
             const fileDate = new Date();
             filesNamed = fileDate.getTime() + getExtension(file.name);
+            filesNamed = createNameFile(filesNamed)
         }
         const { messageValidation, statusValidation } =
             await validateUniqueField(
@@ -263,13 +257,19 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
                 { transaction }
             );
         }
+        if (image) {
+            const result = await downloadImage(url);
+            if (result) {
+                filesNamed = result.filePath
+            }
+        }
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = await UsersModels.create(
             {
                 display_name: fullname,
                 display_name_anonymous: anonName,
                 description: description,
-                photo: filesNamed !== "" ? createNameFile(filesNamed) : "",
+                photo: filesNamed !== "" ? filesNamed : "",
                 email: email,
                 phone: phone ?? null,
                 username: username,
@@ -365,66 +365,8 @@ export const loginUsers = async (req, res) => {
     }
 };
 
-export const downloadImage = async (req, res) => {
-    try {
-        const { url, name_image } = req.body;
-
-        if (!url || !name_image) {
-            return res.status(400).json({
-                message: "URL dan nama file harus disertakan",
-                success: false,
-            });
-        }
-
-        // Direktori target di luar repo
-        const targetDirectory = process.env.APP_LOCATION_FILE;
-
-        // Tentukan path lengkap file
-        const filePath = path.join(targetDirectory, createNameFile(`${Date.now()}_${name_image.replace(/\s+/g, '_')}`));
-
-        // Membuat folder jika belum ada
-        if (!fs.existsSync(targetDirectory)) {
-            fs.mkdirSync(targetDirectory, { recursive: true });
-        }
-
-        // Tentukan protokol
-        const client = url.startsWith('https') ? https : http;
-
-        // Unduh dan simpan file
-        const file = fs.createWriteStream(filePath);
-        client.get(url, (response) => {
-            if (response.statusCode !== 200) {
-                return res.status(500).json({
-                    message: `Gagal mengunduh gambar, status: ${response.statusCode}`,
-                    success: false,
-                });
-            }
-
-            response.pipe(file);
-
-            file.on('finish', () => {
-                file.close(); // Menutup file stream
-                return res.status(200).json({
-                    message: "Gambar berhasil diunduh",
-                    filePath,
-                    success: true,
-                });
-            });
-        }).on('error', (err) => {
-            fs.unlink(filePath, () => {}); // Hapus file jika terjadi kesalahan
-            console.error('Error downloading image:', err);
-            return res.status(500).json({
-                message: "Terjadi kesalahan saat mengunduh gambar",
-                error: err.message,
-                success: false,
-            });
-        });
-    } catch (error) {
-        console.error('Error:', error);
-        return res.status(500).json({
-            message: "Terjadi kesalahan internal server",
-            error: error.message,
-            success: false,
-        });
-    }
+export const downloadImages = async(req, res) => {
+    const { url } = req.body;
+    const result = await downloadImage(url);
+    return responseApi(res, result, null, "Server error", 1);
 };
