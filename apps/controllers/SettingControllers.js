@@ -207,7 +207,7 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
             password,
             gender,
         } = req.body;
-        const file = req.files.image;
+        const file = req.files && req.files.image;
         let filesNamed = "";
         if (file) {
             const fileDate = new Date();
