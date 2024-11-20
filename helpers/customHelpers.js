@@ -1,5 +1,14 @@
 import db from "../configs/Database.js";
 import { responseApi } from "../libs/RestApiHandler.js";
+import fs from "fs";
+import path from "path";
+import https from "https";
+import http from "http";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export const makeEpocTime = () => {
     const date = new Date();
@@ -90,4 +99,63 @@ export const makeDataJwt = (req, userId = 0) => {
         ...encryptData,
     };
     return { datas: datas, forwarded: forwarded, agent: agent };
+};
+
+export const downloadImage = (urlImage) => {
+    return new Promise((resolve, reject) => {
+        try {
+            if (!urlImage) {
+                return resolve({
+                    image: "",
+                    filePath: "",
+                });
+            }
+
+            const targetDirectory = process.env.APP_LOCATION_FILE;
+            const name = `${Date.now()}.jpg`;
+            const nameFile = createNameFile(name);
+
+            const filePath = path.join(targetDirectory, nameFile);
+
+            if (!fs.existsSync('images')) {
+                fs.mkdirSync('images', { recursive: true });
+            }
+
+            const client = urlImage.startsWith("https") ? https : http;
+
+            const file = fs.createWriteStream(filePath);
+            client.get(urlImage, (response) => {
+                    if (response.statusCode !== 200) {
+                        return resolve({
+                            image: "",
+                            filePath: "",
+                        });
+                    }
+
+                    response.pipe(file);
+
+                    file.on("finish", () => {
+                        file.close(); // Menutup file stream
+                        resolve({
+                            image: nameFile,
+                            filePath,
+                        });
+                    });
+                })
+                .on("error", (err) => {
+                    fs.unlink(filePath, () => {}); // Hapus file jika terjadi kesalahan
+                    console.error("Error downloading image:", err);
+                    resolve({
+                        image: "",
+                        filePath: "",
+                    });
+                });
+        } catch (error) {
+            console.error("Error:", error);
+            resolve({
+                image: "",
+                filePath: "",
+            });
+        }
+    });
 };
