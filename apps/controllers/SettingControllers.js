@@ -267,7 +267,7 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
         if (image) {
             const result = await downloadImage(image);
             if (result) {
-                filesNamed = result.filePath
+                filesNamed = result.image
             }
         }
         const hashedPassword = await bcrypt.hash(password, 10);
