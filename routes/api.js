@@ -39,5 +39,5 @@ api.post("/api/actress", verifyToken, HomepageControllers.createActress);
 api.get("/api/content/details/:slug", verifyToken, HomepageControllers.getContentDetails);
 api.post("/api/content/details", verifyToken, HomepageControllers.createContentDetails);
 api.post("/api/check/auth", HomepageControllers.checkAuth);
-api.post("/sendMessage", ChatGroupsControllers.sendMessageToGroup);
+api.post("/api/sendMessage", ChatGroupsControllers.sendMessageToGroup);
 export default api;
