@@ -6,11 +6,12 @@ let ioInstance;
 export const initializeSocket = (io) => {
     ioInstance = io;
     io.on("connection", (socket) => {
-        socket.on("joinGroup", async (groupsSlug) => {
+        socket.on("joinGroup", async (data) => {
+            const groupsSlug = data.slug
+            const users_id = data.usersId
             if (!groupsSlug) return;
 
             socket.join(groupsSlug);
-
             try {
                 const limit = 10;
                 const offset = 0;
@@ -21,7 +22,8 @@ export const initializeSocket = (io) => {
                 };
 
                 // Prepare WHERE clause to match the slug
-                let whereClause = "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupsSlug";
+                let whereClause =
+                    "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupsSlug";
                 replacements.groupsSlug = groupsSlug;
 
                 // Main query using the slug for fetching messages
@@ -32,7 +34,7 @@ export const initializeSocket = (io) => {
                         u.display_name_anonymous,
                         LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug,
                         CASE
-                            WHEN u.id = 3 THEN 'sender'
+                            WHEN u.id = ${users_id} THEN 'sender'
                             ELSE 'receiver' -- This can be customized as needed
                         END AS type_users
                     FROM
@@ -48,6 +50,8 @@ export const initializeSocket = (io) => {
                 });
 
                 const formattedMessages = messages.map((msg) => ({
+                    display_name: msg.display_name,
+                    display_name_anonymous: msg.display_name_anonymous,
                     type_users: msg.type_users,
                     groupSlug: msg.slug,
                     message: msg.messages,
@@ -59,11 +63,14 @@ export const initializeSocket = (io) => {
             }
         });
 
-        socket.on("fetchMoreMessages", async ({ groupsSlug, offset }) => {
+        socket.on("fetchMoreMessages", async (data) => {
+            const groupsSlug = data.slug
+            const users_id = data.usersId
+            const offset = data.offset
             if (!groupsSlug) return;
 
             try {
-                const limit = 20;  // number of messages to fetch
+                const limit = 20; // number of messages to fetch
                 const replacements = {
                     limit: limit,
                     offset: offset || 0,
@@ -78,7 +85,7 @@ export const initializeSocket = (io) => {
                         u.display_name_anonymous,
                         LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug,
                         CASE
-                            WHEN u.id = 3 THEN 'sender'
+                            WHEN u.id = ${users_id} THEN 'sender'
                             ELSE 'receiver' -- This can be customized as needed
                         END AS type_users
                     FROM
@@ -96,6 +103,8 @@ export const initializeSocket = (io) => {
                 });
 
                 const formattedMessages = messages.map((msg) => ({
+                    display_name: msg.display_name,
+                    display_name_anonymous: msg.display_name_anonymous,
                     type_users: msg.type_users,
                     slug: msg.slug,
                     message: msg.messages,
@@ -127,7 +136,7 @@ export const sendMessageToGroup = async (req, res) => {
             FROM ir_groups g
             WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupsSlug
         `;
-        
+
         const groupResult = await db.query(groupQuery, {
             replacements: { groupsSlug },
             type: db.QueryTypes.SELECT,
@@ -154,13 +163,13 @@ export const sendMessageToGroup = async (req, res) => {
         };
 
         // Prepare WHERE clause to match the slug
-        let whereClause = "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupsSlug";
+        let whereClause =
+            "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupsSlug";
         replacements.groupsSlug = groupsSlug;
-        if (chat.id) {
-            whereClause = "AND cg.id = :idCg";
-            replacements.idCg = chat.id;
-            
-        }
+        // if (chat.id) {
+        //     whereClause = "AND cg.id = :idCg";
+        //     replacements.idCg = chat.id;
+        // }
 
         // Main query using the slug for fetching messages
         const query = `
@@ -184,14 +193,15 @@ export const sendMessageToGroup = async (req, res) => {
             replacements,
             type: db.QueryTypes.SELECT,
         });
-
         const formattedMessages = messages.map((msg) => ({
+            display_name: msg.display_name,
+            display_name_anonymous: msg.display_name_anonymous,
             type_users: msg.type_users,
             groupSlug: msg.slug,
             message: msg.messages,
         }));
 
-        ioInstance.to(groupsSlug).emit("newMessage", formattedMessages[0]);
+        ioInstance.to(groupsSlug).emit("newMessage", formattedMessages);
 
         console.log(`Message sent to group ${groupsSlug}: ${message}`);
         return res.status(200).send("Message sent");
