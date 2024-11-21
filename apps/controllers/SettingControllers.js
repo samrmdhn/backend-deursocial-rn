@@ -20,8 +20,8 @@ import BaseNameAnonymousUsagesModels from "../models/BaseNameAnonymousUsagesMode
 import { uploadFile } from "../../helpers/FileUpload.js";
 import { validateUniqueField } from "../../helpers/validationSavedData.js";
 import bcrypt from "bcrypt";
-import { OAuth2Client } from "google-auth-library";
 import { validationRegisterUsers } from "../validators/usersValidators.js";
+import axios from "axios";
 
 const Op = Sequelize.Op;
 
@@ -404,15 +404,21 @@ export const checkAuth = async (req, res) => {
             return res.status(401).json({ message: "Token is required" });
         }
 
-        const ticket = await client.verifyIdToken({
-            idToken: token,
-            audience: process.env.APP_GOOGLE_CLIENT_ID,
-        });
 
-        const payload = ticket.getPayload();
+        const userResponse = await axios.get(
+            'https://www.googleapis.com/oauth2/v3/userinfo',
+            {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            }
+          );
+          const userDetails = userResponse.data;
+          console.log('User Details:', userDetails);
+
         const getExistingUser = await UsersModels.findOne({
             where: {
-                email: payload["email"],
+                email: userDetails.email,
             },
         });
         let visitorToken = "";
@@ -434,7 +440,7 @@ export const checkAuth = async (req, res) => {
                 : "Please continue to complete the registration process. Thank you!";
         return responseApi(
             res,
-            visitorToken !== "" ? dataToken : [],
+            visitorToken !== "" ? dataToken : userDetails,
             null,
             textResponse,
             0
