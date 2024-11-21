@@ -49,6 +49,16 @@ io.on('connection', (socket) => {
     });
 });
 
+app.post('/sendMessage', (req, res) => {
+    const { groupId, message } = req.body;
+
+    // Emit pesan ke grup
+    io.to(groupId).emit('newMessage', { groupId, message });
+    console.log(`Message sent to group ${groupId}: ${message}`);
+
+    res.status(200).send('Message sent');
+});
+
 httpServer.listen(process.env.APP_PORT, process.env.APP_HOST, function () {
     console.log("Started application on port %d", process.env.APP_PORT)
 });
