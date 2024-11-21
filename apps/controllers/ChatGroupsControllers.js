@@ -29,6 +29,7 @@ export const initializeSocket = (io) => {
                 // Main query using the slug for fetching messages
                 const query = `
                     SELECT
+                        u.id as user_id,
                         cg.messages,
                         u.display_name,
                         u.display_name_anonymous,
@@ -50,6 +51,7 @@ export const initializeSocket = (io) => {
                 });
 
                 const formattedMessages = messages.map((msg) => ({
+                    users_id: msg.user_id,
                     display_name: msg.display_name,
                     display_name_anonymous: msg.display_name_anonymous,
                     type_users: msg.type_users,
@@ -80,6 +82,7 @@ export const initializeSocket = (io) => {
                 // Raw SQL query for fetching more messages based on the slug
                 const query = `
                     SELECT
+                        u.id as user_id,
                         cg.messages,
                         u.display_name,
                         u.display_name_anonymous,
@@ -103,6 +106,7 @@ export const initializeSocket = (io) => {
                 });
 
                 const formattedMessages = messages.map((msg) => ({
+                    users_id: msg.user_id,
                     display_name: msg.display_name,
                     display_name_anonymous: msg.display_name_anonymous,
                     type_users: msg.type_users,
@@ -166,14 +170,15 @@ export const sendMessageToGroup = async (req, res) => {
         let whereClause =
             "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupsSlug";
         replacements.groupsSlug = groupsSlug;
-        // if (chat.id) {
-        //     whereClause = "AND cg.id = :idCg";
-        //     replacements.idCg = chat.id;
-        // }
+        if (chat.id) {
+            whereClause = "AND cg.id = :idCg";
+            replacements.idCg = chat.id;
+        }
 
         // Main query using the slug for fetching messages
         const query = `
             SELECT
+                u.id as user_id,
                 cg.messages,
                 u.display_name,
                 u.display_name_anonymous,
@@ -194,6 +199,7 @@ export const sendMessageToGroup = async (req, res) => {
             type: db.QueryTypes.SELECT,
         });
         const formattedMessages = messages.map((msg) => ({
+            users_id: msg.user_id,
             display_name: msg.display_name,
             display_name_anonymous: msg.display_name_anonymous,
             type_users: msg.type_users,
@@ -201,7 +207,7 @@ export const sendMessageToGroup = async (req, res) => {
             message: msg.messages,
         }));
 
-        ioInstance.to(groupsSlug).emit("newMessage", formattedMessages);
+        ioInstance.to(groupsSlug).emit("newMessage", formattedMessages[0]);
 
         console.log(`Message sent to group ${groupsSlug}: ${message}`);
         return res.status(200).send("Message sent");
