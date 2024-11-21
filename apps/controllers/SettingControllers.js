@@ -395,7 +395,6 @@ export const loginUsers = async (req, res) => {
     }
 };
 
-const client = new OAuth2Client();
 
 export const checkAuth = async (req, res) => {
     try {
