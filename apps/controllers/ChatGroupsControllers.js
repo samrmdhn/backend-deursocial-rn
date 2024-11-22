@@ -7,10 +7,9 @@ export const initializeSocket = (io) => {
     ioInstance = io;
     io.on("connection", (socket) => {
         const token = socket.handshake.headers.authorization;
-        console.log("ïni token", token)
+        // console.log("ïni token", token)
         socket.on("joinGroup", async (data) => {
             const groupsSlug = data.slug
-            const users_id = data.usersId
             if (!groupsSlug) return;
 
             socket.join(groupsSlug);
@@ -35,11 +34,7 @@ export const initializeSocket = (io) => {
                         cg.messages,
                         u.display_name,
                         u.display_name_anonymous,
-                        LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug,
-                        CASE
-                            WHEN u.id = ${users_id} THEN 'sender'
-                            ELSE 'receiver' -- This can be customized as needed
-                        END AS type_users
+                        LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
                     FROM
                         ir_chat_groups cg
                         INNER JOIN ir_users u ON u.id = cg.users_id
@@ -57,7 +52,6 @@ export const initializeSocket = (io) => {
                     users_id: msg.user_id,
                     display_name: msg.display_name,
                     display_name_anonymous: msg.display_name_anonymous,
-                    type_users: msg.type_users,
                     groupSlug: msg.slug,
                     message: msg.messages,
                 }));
@@ -70,7 +64,6 @@ export const initializeSocket = (io) => {
 
         socket.on("fetchMoreMessages", async (data) => {
             const groupsSlug = data.slug
-            const users_id = data.usersId
             const offset = data.offset
             if (!groupsSlug) return;
 
@@ -89,11 +82,7 @@ export const initializeSocket = (io) => {
                         cg.messages,
                         u.display_name,
                         u.display_name_anonymous,
-                        LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug,
-                        CASE
-                            WHEN u.id = ${users_id} THEN 'sender'
-                            ELSE 'receiver' -- This can be customized as needed
-                        END AS type_users
+                        LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
                     FROM
                         ir_chat_groups cg
                         INNER JOIN ir_users u ON u.id = cg.users_id
@@ -113,7 +102,6 @@ export const initializeSocket = (io) => {
                     users_id: msg.user_id,
                     display_name: msg.display_name,
                     display_name_anonymous: msg.display_name_anonymous,
-                    type_users: msg.type_users,
                     slug: msg.slug,
                     message: msg.messages,
                 }));
@@ -186,11 +174,7 @@ export const sendMessageToGroup = async (req, res) => {
                 cg.messages,
                 u.display_name,
                 u.display_name_anonymous,
-                LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug,
-                CASE
-                    WHEN u.id = ${users_id} THEN 'sender'
-                    ELSE 'receiver' -- This can be customized as needed
-                END AS type_users
+                LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
             FROM
                 ir_chat_groups cg
                 INNER JOIN ir_users u ON u.id = cg.users_id
@@ -207,7 +191,6 @@ export const sendMessageToGroup = async (req, res) => {
             users_id: msg.user_id,
             display_name: msg.display_name,
             display_name_anonymous: msg.display_name_anonymous,
-            type_users: msg.type_users,
             groupSlug: msg.slug,
             message: msg.messages,
         }));
