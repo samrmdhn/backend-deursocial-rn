@@ -193,8 +193,8 @@ export const sendMessageToGroup = async (req, res) => {
                 ir_chat_groups cg
                 INNER JOIN ir_users u ON u.id = cg.users_id
                 INNER JOIN ir_groups g ON g.id = cg.groups_id
-                ORDER cg.id ASC
                 ${whereClause}
+                ORDER BY cg.id ASC
             LIMIT :limit OFFSET :offset;
         `;
         const messages = await db.query(query, {
