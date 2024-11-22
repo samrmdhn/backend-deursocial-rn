@@ -43,7 +43,7 @@ export const initializeSocket = (io) => {
                         INNER JOIN ir_users u ON u.id = cg.users_id
                         INNER JOIN ir_groups g ON g.id = cg.groups_id
                         ${whereClause}
-                        ORDER BY cg.id ASC
+                        ORDER BY cg.id DESC
                     LIMIT :limit OFFSET :offset;
                 `;
                 const messages = await db.query(query, {
@@ -60,7 +60,7 @@ export const initializeSocket = (io) => {
                     message: msg.messages,
                 }));
 
-                socket.emit("initialMessages", formattedMessages);
+                socket.emit("initialMessages", formattedMessages.reverse());
             } catch (error) {
                 console.error("Error fetching initial messages:", error);
             }
@@ -116,7 +116,7 @@ export const initializeSocket = (io) => {
                     message: msg.messages,
                 }));
 
-                socket.emit("moreMessages", formattedMessages);
+                socket.emit("moreMessages", formattedMessages.reverse());
             } catch (error) {
                 console.error("Error fetching more messages:", error);
             }
@@ -194,7 +194,7 @@ export const sendMessageToGroup = async (req, res) => {
                 INNER JOIN ir_users u ON u.id = cg.users_id
                 INNER JOIN ir_groups g ON g.id = cg.groups_id
                 ${whereClause}
-                ORDER BY cg.id ASC
+                ORDER BY cg.id DESC
             LIMIT :limit OFFSET :offset;
         `;
         const messages = await db.query(query, {
