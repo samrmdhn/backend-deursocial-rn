@@ -43,6 +43,7 @@ export const initializeSocket = (io) => {
                         INNER JOIN ir_users u ON u.id = cg.users_id
                         INNER JOIN ir_groups g ON g.id = cg.groups_id
                         ${whereClause}
+                        ORDER BY cg.id DESC
                     LIMIT :limit OFFSET :offset;
                 `;
                 const messages = await db.query(query, {
@@ -97,6 +98,7 @@ export const initializeSocket = (io) => {
                         INNER JOIN ir_groups g ON g.id = cg.groups_id
                     WHERE
                         LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupsSlug
+                        ORDER BY cg.id DESC
                     LIMIT :limit OFFSET :offset;
                 `;
 
@@ -191,6 +193,7 @@ export const sendMessageToGroup = async (req, res) => {
                 ir_chat_groups cg
                 INNER JOIN ir_users u ON u.id = cg.users_id
                 INNER JOIN ir_groups g ON g.id = cg.groups_id
+                ORDER cg.id DESC
                 ${whereClause}
             LIMIT :limit OFFSET :offset;
         `;
