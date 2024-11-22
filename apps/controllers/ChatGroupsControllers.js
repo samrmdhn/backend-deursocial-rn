@@ -98,7 +98,7 @@ export const initializeSocket = (io) => {
                         INNER JOIN ir_groups g ON g.id = cg.groups_id
                     WHERE
                         LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupsSlug
-                        ORDER BY cg.id ASC
+                        ORDER BY cg.id DESC
                     LIMIT :limit OFFSET :offset;
                 `;
 
