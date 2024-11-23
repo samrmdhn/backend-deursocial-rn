@@ -9,7 +9,7 @@ export const initializeSocket = (io) => {
         const token = socket.handshake.headers.authorization;
         // console.log("ïni token", token)
         socket.on("joinGroup", async (data) => {
-            const groupsSlug = data.slug
+            const groupsSlug = data.slug;
             if (!groupsSlug) return;
 
             socket.join(groupsSlug);
@@ -31,6 +31,7 @@ export const initializeSocket = (io) => {
                 const query = `
                     SELECT
                         u.id as user_id,
+                        'created_at', TO_CHAR(TO_TIMESTAMP(cg.created_at), 'YYYY-MM-DD HH24:MI:SS'),
                         cg.messages,
                         u.display_name,
                         u.display_name_anonymous,
@@ -53,6 +54,7 @@ export const initializeSocket = (io) => {
                     display_name: msg.display_name,
                     display_name_anonymous: msg.display_name_anonymous,
                     groupSlug: msg.slug,
+                    created_at: msg.created_at,
                     message: msg.messages,
                 }));
 
@@ -63,8 +65,8 @@ export const initializeSocket = (io) => {
         });
 
         socket.on("fetchMoreMessages", async (data) => {
-            const groupsSlug = data.slug
-            const offset = data.offset
+            const groupsSlug = data.slug;
+            const offset = data.offset;
             if (!groupsSlug) return;
 
             try {
@@ -80,6 +82,7 @@ export const initializeSocket = (io) => {
                     SELECT
                         u.id as user_id,
                         cg.messages,
+                        'created_at', TO_CHAR(TO_TIMESTAMP(cg.created_at), 'YYYY-MM-DD HH24:MI:SS'),
                         u.display_name,
                         u.display_name_anonymous,
                         LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
@@ -101,6 +104,7 @@ export const initializeSocket = (io) => {
                 const formattedMessages = messages.map((msg) => ({
                     users_id: msg.user_id,
                     display_name: msg.display_name,
+                    created_at: msg.created_at,
                     display_name_anonymous: msg.display_name_anonymous,
                     slug: msg.slug,
                     message: msg.messages,
@@ -172,6 +176,7 @@ export const sendMessageToGroup = async (req, res) => {
             SELECT
                 u.id as user_id,
                 cg.messages,
+                'created_at', TO_CHAR(TO_TIMESTAMP(cg.created_at), 'YYYY-MM-DD HH24:MI:SS'),
                 u.display_name,
                 u.display_name_anonymous,
                 LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
@@ -190,6 +195,7 @@ export const sendMessageToGroup = async (req, res) => {
         const formattedMessages = messages.map((msg) => ({
             users_id: msg.user_id,
             display_name: msg.display_name,
+            created_at: msg.created_at,
             display_name_anonymous: msg.display_name_anonymous,
             groupSlug: msg.slug,
             message: msg.messages,
