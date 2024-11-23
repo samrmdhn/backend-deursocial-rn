@@ -14,7 +14,7 @@ export const initializeSocket = (io) => {
 
             socket.join(groupsSlug);
             try {
-                const limit = 10;
+                const limit = 20;
                 const offset = 0;
 
                 const replacements = {
@@ -150,7 +150,7 @@ export const sendMessageToGroup = async (req, res) => {
             users_id: users_id,
         });
 
-        const limit = 10;
+        const limit = 20;
         const offset = 0;
 
         const replacements = {
