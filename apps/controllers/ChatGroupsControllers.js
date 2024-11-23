@@ -31,7 +31,7 @@ export const initializeSocket = (io) => {
                 const query = `
                     SELECT
                         u.id as user_id,
-                        'created_at', TO_CHAR(TO_TIMESTAMP(cg.created_at), 'YYYY-MM-DD HH24:MI:SS'),
+                        TO_CHAR(TO_TIMESTAMP(cg.created_at), 'YYYY-MM-DD HH24:MI:SS') as created_at,
                         cg.messages,
                         u.display_name,
                         u.display_name_anonymous,
@@ -82,7 +82,7 @@ export const initializeSocket = (io) => {
                     SELECT
                         u.id as user_id,
                         cg.messages,
-                        'created_at', TO_CHAR(TO_TIMESTAMP(cg.created_at), 'YYYY-MM-DD HH24:MI:SS'),
+                        TO_CHAR(TO_TIMESTAMP(cg.created_at), 'YYYY-MM-DD HH24:MI:SS') as created_at,
                         u.display_name,
                         u.display_name_anonymous,
                         LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
@@ -176,7 +176,7 @@ export const sendMessageToGroup = async (req, res) => {
             SELECT
                 u.id as user_id,
                 cg.messages,
-                'created_at', TO_CHAR(TO_TIMESTAMP(cg.created_at), 'YYYY-MM-DD HH24:MI:SS'),
+                TO_CHAR(TO_TIMESTAMP(cg.created_at), 'YYYY-MM-DD HH24:MI:SS') as created_at,
                 u.display_name,
                 u.display_name_anonymous,
                 LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
