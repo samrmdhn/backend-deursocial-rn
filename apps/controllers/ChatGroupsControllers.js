@@ -1,5 +1,5 @@
 import db from "../../configs/Database.js";
-import { makeEpocTime } from "../../helpers/customHelpers.js";
+import { dateToEpochTime } from "../../helpers/customHelpers.js";
 import ChatGroupsModels from "../models/ChatGroupsModels.js";
 import { jwtDecode } from "jwt-decode";
 
@@ -164,7 +164,7 @@ export const sendMessageToGroup = async (req, res) => {
             groups_id: groupId,
             messages: messages,
             users_id: users_id,
-            created_at: makeEpocTime(created_at),
+            created_at: dateToEpochTime(created_at),
         });
 
         const limit = 20;
