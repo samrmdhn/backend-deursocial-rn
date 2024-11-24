@@ -92,7 +92,7 @@ export const joinMemberToGroups = async (req, res) => {
 
 export const getGroups = async (req, res) => {
     try {
-        const getToken = getDataUserUsingToken(req);
+        const getToken = getDataUserUsingToken(req, res);
         const contentDetailSlugs = req.params.contentDetailSlugs;
         const { page = 1, title = "" } = req.query;
         const limit = 10;
