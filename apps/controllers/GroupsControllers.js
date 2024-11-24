@@ -56,7 +56,10 @@ export const createGroups = async (req, res) => {
 
 export const joinMemberToGroups = async (req, res) => {
     try {
-        const { groups_id, users_id } = req.body;
+        const getToken = getDataUserUsingToken(req, res);
+
+        const { groups_id } = req.body;
+        let users_id = getToken.tod;
         const dataGroupMembers = await GroupMembersModels.findAll({
             where: {
                 groups_id: groups_id,
