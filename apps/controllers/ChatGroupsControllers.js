@@ -1,8 +1,7 @@
 import db from "../../configs/Database.js";
-import {
-    makeEpocTime,
-} from "../../helpers/customHelpers.js";
+import { makeEpocTime } from "../../helpers/customHelpers.js";
 import ChatGroupsModels from "../models/ChatGroupsModels.js";
+import { jwtDecode } from "jwt-decode";
 
 let ioInstance;
 
@@ -122,7 +121,16 @@ export const initializeSocket = (io) => {
 };
 
 export const sendMessageToGroup = async (req, res) => {
-    const { messages, users_id, created_at } = req.body;
+    const { messages, created_at } = req.body;
+    let token = req.headers["authorization"];
+    let users_id;
+    if (token && token.startsWith("Bearer ")) {
+        usersToken = jwtDecode(token.slice(7));
+        users_id = tod;
+        if (Number(users_id) === 0) {
+            return res.status(400).send("You cannot joined that");
+        }
+    }
     const groupSlugs = req.params.groupSlugs;
 
     if (!messages || !users_id) {
