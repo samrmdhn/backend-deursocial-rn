@@ -10,13 +10,14 @@ import { dirname } from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export const makeEpocTime = () => {
-    const date = new Date();
-    const options = { timeZone: "Asia/Jakarta" };
+export const makeEpocTime = (inputDate='') => {
+    const date = inputDate !== '' ? new Date(inputDate) : new Date();
+    const options = { timeZone: "Asia/Jakarta", hour12: false };
     const jakartaDate = new Intl.DateTimeFormat("en-US", options).format(date);
     const epochTimeJakarta = new Date(jakartaDate).getTime() / 1000;
     return epochTimeJakarta;
 };
+
 
 export const epochToDateJakarta = (epochTime) => {
     const milliseconds = epochTime * 1000;
