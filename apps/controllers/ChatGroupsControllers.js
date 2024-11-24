@@ -33,6 +33,7 @@ export const initializeSocket = (io) => {
                 const query = `
                     SELECT
                         u.id as user_id,
+                        u.photo as image,
                         TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                         cg.messages,
                         u.display_name,
@@ -54,6 +55,7 @@ export const initializeSocket = (io) => {
                 const formattedMessages = messages.map((msg) => ({
                     users_id: msg.user_id,
                     display_name: msg.display_name,
+                    image: msg.image,
                     display_name_anonymous: msg.display_name_anonymous,
                     groupSlug: msg.slug,
                     created_at: msg.created_at,
@@ -83,6 +85,7 @@ export const initializeSocket = (io) => {
                 const query = `
                     SELECT
                         u.id as user_id,
+                        u.photo as image,
                         cg.messages,
                         TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                         u.display_name,
@@ -106,6 +109,7 @@ export const initializeSocket = (io) => {
                 const formattedMessages = messages.map((msg) => ({
                     users_id: msg.user_id,
                     display_name: msg.display_name,
+                    image: msg.image,
                     created_at: msg.created_at,
                     display_name_anonymous: msg.display_name_anonymous,
                     slug: msg.slug,
@@ -188,6 +192,7 @@ export const sendMessageToGroup = async (req, res) => {
         const query = `
             SELECT
                 u.id as user_id,
+                u.photo as image,
                 cg.messages,
                 TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                 u.display_name,
@@ -208,6 +213,7 @@ export const sendMessageToGroup = async (req, res) => {
         const formattedMessages = dataMessages.map((msg) => ({
             users_id: msg.user_id,
             display_name: msg.display_name,
+            image: msg.image,
             created_at: msg.created_at,
             display_name_anonymous: msg.display_name_anonymous,
             groupSlug: msg.slug,
