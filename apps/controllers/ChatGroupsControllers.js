@@ -1,4 +1,7 @@
 import db from "../../configs/Database.js";
+import {
+    makeEpocTime,
+} from "../../helpers/customHelpers.js";
 import ChatGroupsModels from "../models/ChatGroupsModels.js";
 
 let ioInstance;
@@ -31,7 +34,7 @@ export const initializeSocket = (io) => {
                 const query = `
                     SELECT
                         u.id as user_id,
-                        TO_CHAR(TO_TIMESTAMP(cg.created_at), 'YYYY-MM-DD HH24:MI:SS') as created_at,
+                        TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                         cg.messages,
                         u.display_name,
                         u.display_name_anonymous,
@@ -82,7 +85,7 @@ export const initializeSocket = (io) => {
                     SELECT
                         u.id as user_id,
                         cg.messages,
-                        TO_CHAR(TO_TIMESTAMP(cg.created_at), 'YYYY-MM-DD HH24:MI:SS') as created_at,
+                        TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                         u.display_name,
                         u.display_name_anonymous,
                         LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
@@ -119,9 +122,10 @@ export const initializeSocket = (io) => {
 };
 
 export const sendMessageToGroup = async (req, res) => {
-    const { groupsSlug, message, users_id } = req.body;
+    const { messages, users_id, created_at } = req.body;
+    const groupSlugs = req.params.groupSlugs;
 
-    if (!groupsSlug || !message || !users_id) {
+    if (!messages || !users_id) {
         return res.status(400).send("Invalid request payload");
     }
 
@@ -134,11 +138,11 @@ export const sendMessageToGroup = async (req, res) => {
         const groupQuery = `
             SELECT g.id
             FROM ir_groups g
-            WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupsSlug
+            WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs
         `;
 
         const groupResult = await db.query(groupQuery, {
-            replacements: { groupsSlug },
+            replacements: { groupSlugs },
             type: db.QueryTypes.SELECT,
         });
 
@@ -150,8 +154,9 @@ export const sendMessageToGroup = async (req, res) => {
 
         const chat = await ChatGroupsModels.create({
             groups_id: groupId,
-            messages: message,
+            messages: messages,
             users_id: users_id,
+            created_at: makeEpocTime(created_at),
         });
 
         const limit = 20;
@@ -164,8 +169,8 @@ export const sendMessageToGroup = async (req, res) => {
 
         // Prepare WHERE clause to match the slug
         let whereClause =
-            "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupsSlug";
-        replacements.groupsSlug = groupsSlug;
+            "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs";
+        replacements.groupSlugs = groupSlugs;
         if (chat.id) {
             whereClause = "AND cg.id = :idCg";
             replacements.idCg = chat.id;
@@ -176,7 +181,7 @@ export const sendMessageToGroup = async (req, res) => {
             SELECT
                 u.id as user_id,
                 cg.messages,
-                TO_CHAR(TO_TIMESTAMP(cg.created_at), 'YYYY-MM-DD HH24:MI:SS') as created_at,
+                TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                 u.display_name,
                 u.display_name_anonymous,
                 LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
@@ -188,11 +193,11 @@ export const sendMessageToGroup = async (req, res) => {
                 ORDER BY cg.id DESC
             LIMIT :limit OFFSET :offset;
         `;
-        const messages = await db.query(query, {
+        const dataMessages = await db.query(query, {
             replacements,
             type: db.QueryTypes.SELECT,
         });
-        const formattedMessages = messages.map((msg) => ({
+        const formattedMessages = dataMessages.map((msg) => ({
             users_id: msg.user_id,
             display_name: msg.display_name,
             created_at: msg.created_at,
@@ -201,10 +206,12 @@ export const sendMessageToGroup = async (req, res) => {
             message: msg.messages,
         }));
 
-        ioInstance.to(groupsSlug).emit("newMessage", formattedMessages[0]);
+        ioInstance.to(groupSlugs).emit("newMessage", formattedMessages[0]);
 
-        console.log(`Message sent to group ${groupsSlug}: ${message}`);
-        return res.status(200).send("Message sent");
+        console.log(`Message sent to group ${groupSlugs}: ${messages}`);
+        return res
+            .status(200)
+            .send({ message: "Message sent", data: formattedMessages });
     } catch (error) {
         console.error("Error sending message:", error);
         return res.status(500).send("Internal server error");
