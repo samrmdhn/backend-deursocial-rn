@@ -55,7 +55,7 @@ export const initializeSocket = (io) => {
                 const formattedMessages = messages.map((msg) => ({
                     users_id: msg.user_id,
                     display_name: msg.display_name,
-                    image: msg.image,
+                    image: process.env.APP_BUCKET_IMAGE + "/" + msg.image,
                     display_name_anonymous: msg.display_name_anonymous,
                     groupSlug: msg.slug,
                     created_at: msg.created_at,
@@ -109,7 +109,7 @@ export const initializeSocket = (io) => {
                 const formattedMessages = messages.map((msg) => ({
                     users_id: msg.user_id,
                     display_name: msg.display_name,
-                    image: msg.image,
+                    image: process.env.APP_BUCKET_IMAGE + "/" + msg.image,
                     created_at: msg.created_at,
                     display_name_anonymous: msg.display_name_anonymous,
                     slug: msg.slug,
@@ -213,7 +213,7 @@ export const sendMessageToGroup = async (req, res) => {
         const formattedMessages = dataMessages.map((msg) => ({
             users_id: msg.user_id,
             display_name: msg.display_name,
-            image: msg.image,
+            image: process.env.APP_BUCKET_IMAGE + "/" + msg.image,
             created_at: msg.created_at,
             display_name_anonymous: msg.display_name_anonymous,
             groupSlug: msg.slug,
