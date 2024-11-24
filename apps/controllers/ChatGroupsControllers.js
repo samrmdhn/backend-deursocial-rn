@@ -125,8 +125,8 @@ export const sendMessageToGroup = async (req, res) => {
     let token = req.headers["authorization"];
     let users_id;
     if (token && token.startsWith("Bearer ")) {
-        usersToken = jwtDecode(token.slice(7));
-        users_id = tod;
+        const usersToken = jwtDecode(token.slice(7));
+        users_id = usersToken.tod;
         if (Number(users_id) === 0) {
             return res.status(400).send("You cannot joined that");
         }
