@@ -1,5 +1,5 @@
 import db from "../../configs/Database.js";
-import { makeEpocTime } from "../../helpers/customHelpers.js";
+import { getDataUserUsingToken, makeEpocTime } from "../../helpers/customHelpers.js";
 import { getPagination } from "../../helpers/paginationHelpers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
 import ContentDetailsModels from "../models/ContentDetailsModels.js";
@@ -92,6 +92,7 @@ export const joinMemberToGroups = async (req, res) => {
 
 export const getGroups = async (req, res) => {
     try {
+        const getToken = getDataUserUsingToken(req);
         const contentDetailSlugs = req.params.contentDetailSlugs;
         const { page = 1, title = "" } = req.query;
         const limit = 10;
@@ -115,7 +116,7 @@ export const getGroups = async (req, res) => {
                     WHEN EXISTS (
                         SELECT 1
                         FROM ir_group_members gm
-                        WHERE gm.groups_id = g.id AND gm.status = 1 AND gm.users_id = 1
+                        WHERE gm.groups_id = g.id AND gm.status = 1 AND gm.users_id = ${getToken.tod}
                     ) THEN 'true' 
                     ELSE 'false' 
                 END AS is_joined,
