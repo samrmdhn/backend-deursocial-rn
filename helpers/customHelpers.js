@@ -162,7 +162,7 @@ export const downloadImage = (urlImage) => {
     });
 };
 
-export const getDataUserUsingToken = (req) => {
+export const getDataUserUsingToken = (req, res) => {
     let token = req.headers["authorization"];
     if (token && token.startsWith("Bearer ")) {
         const dataToken = jwtDecode(token.slice(7));
