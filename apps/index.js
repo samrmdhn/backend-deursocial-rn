@@ -16,7 +16,8 @@ export {
     getActress,
     createContentDetails,
     getContentDetails,
-    followEvent
+    followEvent,
+    getDetailUser
 } from "./controllers/HomepageControllers.js";
 export {
     visitorToken,

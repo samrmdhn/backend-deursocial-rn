@@ -5,7 +5,6 @@ import { responseApi } from "../../libs/RestApiHandler.js";
 import ContentDetailsModels from "../models/ContentDetailsModels.js";
 import GroupMembersModels from "../models/GroupMembersModels.js";
 import GroupsModels from "../models/GroupsModels.js";
-import UsersModels from "../models/UsersModels.js";
 
 export const createGroups = async (req, res) => {
     try {
