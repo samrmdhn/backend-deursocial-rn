@@ -3,6 +3,7 @@ import {
     createNameFile,
     dateToEpochTime,
     epochToDateJakarta,
+    getDataUserUsingToken,
     getExtension,
     makeEpocTime,
     makeRandomString,
@@ -24,6 +25,8 @@ import db from "../../configs/Database.js";
 import { Sequelize } from "sequelize";
 import { uploadFile } from "../../helpers/FileUpload.js";
 import ContentDetailFollowersModels from "../models/ContentDetailFollowersModels.js";
+import UsersModels from "../models/UsersModels.js";
+
 const Op = Sequelize.Op;
 
 export const homepage = async (req, res) => {
@@ -968,6 +971,33 @@ export const followEvent = async (req, res) => {
                 0
             );
         }
+    } catch (error) {
+        console.log(error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+};
+
+export const getDetailUser = async (req, res) => {
+    try {
+        const dataToken = getDataUserUsingToken(req, res);
+        const dataUsers = await UsersModels.findOne({
+            where: {
+                id: Number(dataToken.tod),
+            },
+        });
+        const response = {
+            display_name: dataUsers.display_name,
+            username: dataUsers.username,
+            description: dataUsers.description,
+            image: process.env.APP_BUCKET_IMAGE + dataUsers.photo,
+        };
+        return responseApi(
+            res,
+            response,
+            null,
+            "You have participated in this event",
+            0
+        );
     } catch (error) {
         console.log(error);
         return responseApi(res, [], null, "Server error....", 1);

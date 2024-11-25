@@ -11,6 +11,7 @@ api.get("/api/citys", verifyToken, SettingControllers.getCitys);
 api.post("/api/citys", verifyToken, SettingControllers.createCitys);
 api.get("/api/vanues", verifyToken, SettingControllers.getVanues);
 api.post("/api/vanues", verifyToken, SettingControllers.createVanues);
+api.get("/api/user/detail", SettingControllers.getDetailUser);
 api.post("/api/register", SettingControllers.createUsers);
 api.post("/api/login", SettingControllers.loginUsers);
 
