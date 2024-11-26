@@ -2,7 +2,9 @@ import jwt from "jsonwebtoken";
 
 const validateApiKey = (req, res, next) => {
     const apiKey = req.headers["x-api-key"];
+    console.log(req.headers)
     const validApiKey = process.env.APP_KEY;
+    console.log({apiKey, validApiKey})
     if (!apiKey || apiKey !== validApiKey) {
         return res.status(403).json({ message: "Forbidden: Invalid API key" });
     }
@@ -28,7 +30,6 @@ const validateToken = (req, res, next) => {
 };
 
 export const verifyToken = (req, res, next) => {
-    delete req.headers["x-api-key"];
     const excludedUrls = ["/api/kadieu"];
     if (excludedUrls.includes(req.originalUrl)) {
         return next();
