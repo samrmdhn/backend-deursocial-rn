@@ -3,6 +3,7 @@ import * as SettingControllers from "../apps/index.js";
 import * as HomepageControllers from "../apps/index.js";
 import * as GroupsControllers from "../apps/index.js";
 import * as ChatGroupsControllers from "../apps/index.js";
+import * as UsersControllers from "../apps/index.js";
 import { verifyToken } from "../apps/middlewares/verifyToken.js";
 
 const api = express.Router();
@@ -11,7 +12,6 @@ api.get("/api/citys", verifyToken, SettingControllers.getCitys);
 api.post("/api/citys", verifyToken, SettingControllers.createCitys);
 api.get("/api/vanues", verifyToken, SettingControllers.getVanues);
 api.post("/api/vanues", verifyToken, SettingControllers.createVanues);
-api.get("/api/user/detail", SettingControllers.getDetailUser);
 api.post("/api/register", SettingControllers.createUsers);
 api.post("/api/login", SettingControllers.loginUsers);
 
@@ -41,4 +41,8 @@ api.get("/api/content/details/:slug", verifyToken, HomepageControllers.getConten
 api.post("/api/content/details", verifyToken, HomepageControllers.createContentDetails);
 api.post("/api/check/auth", HomepageControllers.checkAuth);
 api.post("/api/sendMessage/:groupSlugs", ChatGroupsControllers.sendMessageToGroup);
+
+api.get("/api/user/detail/:username", UsersControllers.getDetailUser);
+api.post("/api/follow/:username", UsersControllers.followUser);
+
 export default api;
