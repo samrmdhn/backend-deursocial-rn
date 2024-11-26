@@ -977,29 +977,4 @@ export const followEvent = async (req, res) => {
     }
 };
 
-export const getDetailUser = async (req, res) => {
-    try {
-        const dataToken = getDataUserUsingToken(req, res);
-        const dataUsers = await UsersModels.findOne({
-            where: {
-                id: Number(dataToken.tod),
-            },
-        });
-        const response = {
-            display_name: dataUsers.display_name,
-            username: dataUsers.username,
-            description: dataUsers.description,
-            image: process.env.APP_BUCKET_IMAGE + dataUsers.photo,
-        };
-        return responseApi(
-            res,
-            response,
-            null,
-            "You have participated in this event",
-            0
-        );
-    } catch (error) {
-        console.log(error);
-        return responseApi(res, [], null, "Server error....", 1);
-    }
-};
+

@@ -21,10 +21,16 @@ app.use(
 );
 
 // app.use(express.json());
+app.disable("x-powered-by");
+app.disable("date");
 
 app.use(express.json({ strict: false }));
 app.use(cookieParser());
 app.use(fileUpload());
+app.use((req, res, next) => {
+    res.removeHeader("Date");
+    next();
+});
 app.use(api);
 
 const httpServer = http.createServer(app);

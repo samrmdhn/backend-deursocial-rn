@@ -17,7 +17,6 @@ export {
     createContentDetails,
     getContentDetails,
     followEvent,
-    getDetailUser
 } from "./controllers/HomepageControllers.js";
 export {
     visitorToken,
@@ -27,16 +26,16 @@ export {
     createVanues,
     createUsers,
     loginUsers,
-    checkAuth
+    checkAuth,
 } from "./controllers/SettingControllers.js";
 
 export {
     createGroups,
     joinMemberToGroups,
     getGroups,
-    getGroupsDetail
+    getGroupsDetail,
 } from "./controllers/GroupsControllers.js";
 
-export {
-    sendMessageToGroup
-} from "./controllers/ChatGroupsControllers.js";
+export { sendMessageToGroup } from "./controllers/ChatGroupsControllers.js";
+
+export { getDetailUser, followUser } from "./controllers/UsersControllers.js";

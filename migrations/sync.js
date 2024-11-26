@@ -25,6 +25,7 @@ import GroupsPostsModels from "../apps/models/GroupsPostsModels.js";
 import GroupsPostsCommentsModels from "../apps/models/GroupsPostsCommentsModels.js";
 import GroupsPostsLikesModels from "../apps/models/GroupsPostsLikesModels.js";
 import ChatGroupsModels from "../apps/models/ChatGroupsModels.js";
+import FollowerUsersModels from "../apps/models/FollowerUsersModels.js";
 
 // Menggunakan force: true akan membuat ulang tabel setiap kali dijalankan contoh => Example.sync({ force: true })
 async function syncDatabase() {
@@ -83,6 +84,8 @@ async function syncDatabase() {
         console.log("Table table Groups Post Like has been created.");
         await ChatGroupsModels.sync({ force: false });
         console.log("Table table Chat Groups has been created.");
+        await FollowerUsersModels.sync({ force: false });
+        console.log("Table table Follower Users has been created.");
 
 
         await db.close();

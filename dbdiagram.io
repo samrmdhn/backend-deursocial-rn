@@ -16,13 +16,6 @@ Table referal_users {
   updated_at bigint
 }
 
-Table followers {
-  id bigint [increment, pk]
-  follower_id bigint [ref: > users.id, not null]
-  following_id bigint [ref: > users.id, not null]
-  created_at bigint
-  updated_at bigint
-}
 
 Table posts {
   id bigint [increment, pk]
