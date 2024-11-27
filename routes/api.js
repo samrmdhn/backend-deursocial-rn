@@ -43,6 +43,7 @@ api.post("/api/check/auth", HomepageControllers.checkAuth);
 api.post("/api/sendMessage/:groupSlugs", ChatGroupsControllers.sendMessageToGroup);
 
 api.get("/api/user/detail/:username", UsersControllers.getDetailUser);
+api.post("/api/user", UsersControllers.updateDataUser);
 api.post("/api/follow/:username", UsersControllers.followUser);
 
 export default api;
