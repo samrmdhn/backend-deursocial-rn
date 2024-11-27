@@ -10,15 +10,46 @@ import db from "../../configs/Database.js";
 
 const Op = Sequelize.Op;
 export const getDetailUser = async (req, res) => {
+    const getToken = await getDataUserUsingToken(req, res);
     try {
         const usernameUser = req.params.username;
-        const replacements = {
-            usernameUser: usernameUser,
-        };
+        const replacements = { usernameUser };
+        const userData = await UsersModels.findOne({
+            where: { username: usernameUser },
+        });
+
+        if (!userData) {
+            return responseApi(res, [], null, "User not found", 1);
+        }
+
+        let queryFollowedUser = `(
+            CASE 
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM ir_follower_users ifs
+                    WHERE ifs.following_id = u.id
+                ) THEN true
+                ELSE false
+            END
+        ) AS followed_user`;
+
+        if (userData.id !== Number(getToken.tod)) {
+            queryFollowedUser = `(
+                CASE 
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM ir_follower_users ifs
+                        WHERE ifs.following_id = u.id
+                        AND ifs.follower_id = ${getToken.tod}
+                    ) THEN true
+                    ELSE false
+                END
+            ) AS followed_user`;
+        }
+
         const query = `
             SELECT
                 u.username,
-                u.display_name,
                 u.display_name,
                 u.description,
                 u.photo,
@@ -27,16 +58,7 @@ export const getDetailUser = async (req, res) => {
                     FROM ir_follower_users f
                     WHERE f.following_id = u.id
                 ) AS total_followers,
-                (
-                    CASE 
-                        WHEN EXISTS (
-                            SELECT 1
-                            FROM ir_follower_users ifs
-                            WHERE ifs.following_id = u.id
-                        ) THEN true
-                        ELSE false
-                    END
-                ) AS followed_user,
+                ${queryFollowedUser},
                 (
                     SELECT json_agg(
                         json_build_object(
@@ -58,19 +80,21 @@ export const getDetailUser = async (req, res) => {
             type: db.QueryTypes.SELECT,
             plain: true,
         });
+
         const response = {
             display_name: queryUser.display_name,
             username: queryUser.username,
             description: queryUser.description,
             image: process.env.APP_BUCKET_IMAGE + queryUser.photo,
-            followers: queryUser.followers,
+            followers: queryUser.followers || [],
             total_followers: queryUser.total_followers,
             followed_user: queryUser.followed_user,
         };
+
         return responseApi(res, response, null, "Data has been retrieved", 0);
     } catch (error) {
-        console.log(error);
-        return responseApi(res, [], null, "Server error....", 1);
+        console.error("Error:", error);
+        return responseApi(res, [], null, "Server error", 1);
     }
 };
 
