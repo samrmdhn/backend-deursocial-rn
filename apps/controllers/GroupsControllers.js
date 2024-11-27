@@ -225,6 +225,7 @@ export const getGroups = async (req, res) => {
 };
 
 export const getGroupsDetail = async (req, res) => {
+    const getToken = getDataUserUsingToken(req, res);
     try {
         const groupSlugs = req.params.slugs;
         const replacements = {};
@@ -234,6 +235,14 @@ export const getGroupsDetail = async (req, res) => {
             SELECT
                 LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slugs,
                 g.title,
+                CASE 
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM ir_group_members gm
+                        WHERE gm.groups_id = g.id AND gm.status = 1 AND gm.users_id = ${getToken.tod}
+                    ) THEN true
+                    ELSE false 
+                END AS is_joined,
                 g.description,
                 json_build_object(
                     'is_gender', 
