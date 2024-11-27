@@ -70,14 +70,14 @@ export const getDetailUser = async (req, res) => {
                 FROM ir_follower_users f
                 INNER JOIN ir_users u_f ON u_f.id = f.follower_id
                 WHERE f.following_id = u.id
-                AND ifs.follower_id = ${getToken.tod}
+                AND f.follower_id = ${getToken.tod}
                 LIMIT 5
             ) AS followers,
             (
                 SELECT COUNT(*)
                 FROM ir_follower_users f
                 WHERE f.following_id = u.id
-                AND ifs.follower_id = ${getToken.tod}
+                AND f.follower_id = ${getToken.tod}
             ) AS total_followers`;
         }
 
