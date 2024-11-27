@@ -11,6 +11,7 @@ import db from "../../configs/Database.js";
 const Op = Sequelize.Op;
 export const getDetailUser = async (req, res) => {
     const getToken = await getDataUserUsingToken(req, res);
+    console.log("getToken", getToken);
     try {
         const usernameUser = req.params.username;
         const replacements = { usernameUser };
@@ -22,64 +23,47 @@ export const getDetailUser = async (req, res) => {
             return responseApi(res, [], null, "User not found", 1);
         }
 
-        let queryFollowedUser = `(
-            CASE 
-                WHEN EXISTS (
-                    SELECT 1
-                    FROM ir_follower_users ifs
-                    WHERE ifs.following_id = u.id
-                ) THEN true
-                ELSE false
-            END
-        ) AS followed_user,
-        (
-            SELECT json_agg(
-                json_build_object(
-                    'username', u_f.username
-                )
-            )
-            FROM ir_follower_users f
-            INNER JOIN ir_users u_f ON u_f.id = f.follower_id
-            WHERE f.following_id = u.id
-            LIMIT 5
-        ) AS followers,
-        (
-            SELECT COUNT(*)
-            FROM ir_follower_users f
-            WHERE f.following_id = u.id
-        ) AS total_followers`;
-
-        if (userData.id !== Number(getToken.tod)) {
-            queryFollowedUser = `(
+        const isOwner = Number(userData.id) === Number(getToken.tod);
+        const queryFollowedUser = `
+(
                 CASE 
                     WHEN EXISTS (
                         SELECT 1
                         FROM ir_follower_users ifs
                         WHERE ifs.following_id = u.id
-                        AND ifs.follower_id = ${getToken.tod}
+                        ${
+                            !isOwner
+                                ? `AND ifs.follower_id = ${getToken.tod}`
+                                : ""
+                        }
                     ) THEN true
                     ELSE false
                 END
-            ) AS followed_user, 
+            ) AS followed_user,
             (
-                SELECT json_agg(
+                SELECT COALESCE(json_agg(
                     json_build_object(
                         'username', u_f.username
                     )
-                )
+                ), '[]')
                 FROM ir_follower_users f
                 INNER JOIN ir_users u_f ON u_f.id = f.follower_id
-                WHERE f.following_id = u.id
-                AND f.follower_id = ${getToken.tod}
+                ${
+                    !isOwner
+                        ? `WHERE f.following_id = u.id AND f.follower_id = ${getToken.tod}`
+                        : `WHERE f.following_id = ${getToken.tod}`
+                }
                 LIMIT 5
             ) AS followers,
             (
                 SELECT COUNT(*)
                 FROM ir_follower_users f
-                WHERE f.following_id = u.id
-                AND f.follower_id = ${getToken.tod}
+                ${
+                    !isOwner
+                        ? `WHERE f.following_id = u.id AND f.follower_id = ${getToken.tod}`
+                        : `WHERE f.following_id = ${getToken.tod}`
+                }
             ) AS total_followers`;
-        }
 
         const query = `
             SELECT
@@ -105,8 +89,8 @@ export const getDetailUser = async (req, res) => {
             description: queryUser.description,
             image: process.env.APP_BUCKET_IMAGE + queryUser.photo,
             followers: queryUser.followers || [],
-            total_followers: queryUser.total_followers,
-            followed_user: queryUser.followed_user,
+            total_followers: queryUser.total_followers || 0,
+            followed_user: !isOwner ? queryUser.followed_user : false,
         };
 
         return responseApi(res, response, null, "Data has been retrieved", 0);

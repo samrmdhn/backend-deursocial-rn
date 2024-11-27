@@ -345,7 +345,7 @@ export const loginUsers = async (req, res) => {
                 res,
                 [],
                 null,
-                "Username, phone, or email is required",
+                "Username is required",
                 1
             );
         }
