@@ -125,7 +125,7 @@ export const initializeSocket = (io) => {
 };
 
 export const sendMessageToGroup = async (req, res) => {
-    const { messages, created_at } = req.body;
+    const { messages } = req.body;
     let token = req.headers["authorization"];
     let users_id;
     if (token && token.startsWith("Bearer ")) {
@@ -168,7 +168,7 @@ export const sendMessageToGroup = async (req, res) => {
             groups_id: groupId,
             messages: messages,
             users_id: users_id,
-            created_at: dateToEpochTime(created_at),
+            created_at: dateToEpochTime(req.headers["x-date-for"]),
         });
 
         const limit = 20;

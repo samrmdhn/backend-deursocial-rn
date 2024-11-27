@@ -43,9 +43,9 @@ api.post("/api/content/details", verifyToken, HomepageControllers.createContentD
 api.post("/api/check/auth", HomepageControllers.checkAuth);
 api.post("/api/sendMessage/:groupSlugs", ChatGroupsControllers.sendMessageToGroup);
 
-api.post("/api/user/existing/:type", UsersControllers.checkExistingDataUser);
-api.get("/api/user/detail/:username", UsersControllers.getDetailUser);
-api.post("/api/user", UsersControllers.updateDataUser);
-api.post("/api/follow/:username", UsersControllers.followUser);
+api.post("/api/user/existing/:type", verifyToken,UsersControllers.checkExistingDataUser);
+api.get("/api/user/detail/:username", verifyToken, UsersControllers.getDetailUser);
+api.post("/api/user", verifyToken, UsersControllers.updateDataUser);
+api.post("/api/follow/:username", verifyToken, UsersControllers.followUser);
 
 export default api;
