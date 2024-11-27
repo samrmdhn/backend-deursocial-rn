@@ -2,9 +2,7 @@ import jwt from "jsonwebtoken";
 
 const validateApiKey = (req, res, next) => {
     const apiKey = req.headers["x-api-key"];
-    console.log(req.headers)
     const validApiKey = process.env.APP_KEY;
-    console.log({apiKey, validApiKey})
     if (!apiKey || apiKey !== validApiKey) {
         return res.status(403).json({ message: "Forbidden: Invalid API key" });
     }
