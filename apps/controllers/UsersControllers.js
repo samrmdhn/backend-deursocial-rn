@@ -172,7 +172,38 @@ export const updateDataUser = async (req, res) => {
         if (!userFind) {
             return responseApi(res, [], null, "Sorry data not found", 1);
         }
+        const emailExist = await UsersModels.findOne({
+            where: {
+                email: email,
+            },
+        });
+        if (emailExist) {
+            return responseApi(res, [], null, "Email is already in use", 1);
+        }
 
+        const usernameExist = await UsersModels.findOne({
+            where: {
+                username: username,
+            },
+        });
+        if (usernameExist) {
+            return responseApi(res, [], null, "Username is already in use", 1);
+        }
+
+        const phoneExist = await UsersModels.findOne({
+            where: {
+                phone: phone,
+            },
+        });
+        if (phoneExist) {
+            return responseApi(
+                res,
+                [],
+                null,
+                "Phone number is already in use",
+                1
+            );
+        }
         await UsersModels.update(
             {
                 display_name: display_name,
@@ -249,21 +280,22 @@ export const checkExistingDataUser = async (req, res) => {
         } else {
             return responseApi(res, [], null, "Server error ......!", 1);
         }
-        console.log(queryResult?.id)
         if (queryResult) {
-            return Number(queryResult?.id) !== Number(dataTokenUser.tod) ? responseApi(
-                res,
-                [check_string],
-                null,
-                `${check_string} is already taken`,
-                0
-            ) : responseApi(
-                res,
-                [check_string],
-                null,
-                `${check_string} is your data`,
-                0
-            );
+            return Number(queryResult?.id) !== Number(dataTokenUser.tod)
+                ? responseApi(
+                      res,
+                      [check_string],
+                      null,
+                      `${check_string} is already taken`,
+                      0
+                  )
+                : responseApi(
+                      res,
+                      [check_string],
+                      null,
+                      `${check_string} is your data`,
+                      0
+                  );
         }
 
         // Jika data tidak ditemukan
