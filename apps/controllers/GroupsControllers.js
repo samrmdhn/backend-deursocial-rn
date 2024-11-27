@@ -119,8 +119,8 @@ export const getGroups = async (req, res) => {
                         SELECT 1
                         FROM ir_group_members gm
                         WHERE gm.groups_id = g.id AND gm.status = 1 AND gm.users_id = ${getToken.tod}
-                    ) THEN 'true' 
-                    ELSE 'false' 
+                    ) THEN true
+                    ELSE false 
                 END AS is_joined,
                 LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug,
                 g.title,

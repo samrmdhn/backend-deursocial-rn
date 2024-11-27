@@ -38,4 +38,8 @@ export {
 
 export { sendMessageToGroup } from "./controllers/ChatGroupsControllers.js";
 
-export { getDetailUser, followUser } from "./controllers/UsersControllers.js";
+export {
+    getDetailUser,
+    followUser,
+    updateDataUser,
+} from "./controllers/UsersControllers.js";

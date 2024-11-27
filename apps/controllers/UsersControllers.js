@@ -4,14 +4,15 @@ import UsersModels from "../models/UsersModels.js";
 import {
     dateToEpochTime,
     getDataUserUsingToken,
+    makeDataJwt,
 } from "../../helpers/customHelpers.js";
 import FollowerUsersModels from "../models/FollowerUsersModels.js";
 import db from "../../configs/Database.js";
+import { signVisitorToken } from "../../libs/JwtHandlers.js";
 
 const Op = Sequelize.Op;
 export const getDetailUser = async (req, res) => {
     const getToken = await getDataUserUsingToken(req, res);
-    console.log("getToken", getToken);
     try {
         const usernameUser = req.params.username;
         const replacements = { usernameUser };
@@ -25,7 +26,7 @@ export const getDetailUser = async (req, res) => {
 
         const isOwner = Number(userData.id) === Number(getToken.tod);
         const queryFollowedUser = `
-(
+            (
                 CASE 
                     WHEN EXISTS (
                         SELECT 1
@@ -69,8 +70,17 @@ export const getDetailUser = async (req, res) => {
             SELECT
                 u.username,
                 u.display_name,
+                u.email,
                 u.description,
                 u.photo,
+                u.phone,
+                (
+                    CASE 
+                        WHEN u.gender = 1 THEN 'male'
+                        WHEN u.gender = 2 THEN 'female'
+                        ELSE 'unisex'
+                    END
+                ) as gender,
                 ${queryFollowedUser}
             FROM ir_users u
             WHERE username = :usernameUser
@@ -84,6 +94,9 @@ export const getDetailUser = async (req, res) => {
         });
 
         const response = {
+            email: queryUser.email,
+            phone: queryUser.phone,
+            gender: queryUser.gender,
             display_name: queryUser.display_name,
             username: queryUser.username,
             description: queryUser.description,
@@ -133,6 +146,69 @@ export const followUser = async (req, res) => {
             "Data has been retrieved",
             0
         );
+    } catch (error) {
+        console.log(error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+};
+
+export const updateDataUser = async (req, res) => {
+    try {
+        const {
+            display_name,
+            description,
+            email,
+            photo,
+            username,
+            gender,
+            phone,
+        } = req.body;
+
+        const getToken = await getDataUserUsingToken(req, res);
+        const userFind = await UsersModels.findOne({
+            where: { id: getToken.tod },
+        });
+
+        if (!userFind) {
+            return responseApi(res, [], null, "Sorry data not found", 1);
+        }
+
+        await UsersModels.update(
+            {
+                display_name: display_name,
+                description: description,
+                email: email,
+                photo: photo,
+                username: username,
+                gender: gender,
+                phone: phone,
+            },
+            {
+                where: {
+                    id: getToken.tod,
+                },
+            }
+        );
+        let visitorToken = "";
+        if (userFind) {
+            const { datas } = makeDataJwt(req, Number(userFind.id));
+            visitorToken = signVisitorToken({
+                ...datas,
+                username: userFind.username,
+                display_name: userFind.display_name,
+                display_name_anonymous: userFind.display_name_anonymous,
+                image: userFind.photo,
+            });
+        }
+
+        res.clearCookie('ACCESS_TOKEN'); 
+        res.cookie("ACCESS_TOKEN", visitorToken, {
+            httpOnly: true,
+            secure: true,
+            maxAge: 3600000,
+            path: '/'
+        });
+        return responseApi(res, [], null, "Data has been updated", 0);
     } catch (error) {
         console.log(error);
         return responseApi(res, [], null, "Server error....", 1);
