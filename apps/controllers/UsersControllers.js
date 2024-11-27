@@ -172,10 +172,24 @@ export const updateDataUser = async (req, res) => {
         if (!userFind) {
             return responseApi(res, [], null, "Sorry data not found", 1);
         }
+        if (
+            !email ||
+            email.trim() === "" ||
+            !username ||
+            username.trim() === ""
+        ) {
+            return responseApi(
+                res,
+                [],
+                null,
+                "Email and Username cannot be null, empty, or just spaces",
+                1
+            );
+        }
         const emailExist = await UsersModels.findOne({
             where: {
                 email: email,
-                id: { [Op.ne]: getToken.tod }, 
+                id: { [Op.ne]: getToken.tod },
             },
         });
         if (emailExist) {
@@ -185,28 +199,31 @@ export const updateDataUser = async (req, res) => {
         const usernameExist = await UsersModels.findOne({
             where: {
                 username: username,
-                id: { [Op.ne]: getToken.tod }, 
+                id: { [Op.ne]: getToken.tod },
             },
         });
         if (usernameExist) {
             return responseApi(res, [], null, "Username is already in use", 1);
         }
 
-        const phoneExist = await UsersModels.findOne({
-            where: {
-                phone: phone,
-                id: { [Op.ne]: getToken.tod }, 
-            },
-        });
-        if (phoneExist) {
-            return responseApi(
-                res,
-                [],
-                null,
-                "Phone number is already in use",
-                1
-            );
+        if (phone) {
+            const phoneExist = await UsersModels.findOne({
+                where: {
+                    phone: phone,
+                    id: { [Op.ne]: getToken.tod }, // Tidak memeriksa pengguna yang sama
+                },
+            });
+            if (phoneExist) {
+                return responseApi(
+                    res,
+                    [],
+                    null,
+                    "Phone number is already in use",
+                    1
+                );
+            }
         }
+
         await UsersModels.update(
             {
                 display_name: display_name,
