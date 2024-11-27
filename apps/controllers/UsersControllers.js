@@ -175,6 +175,7 @@ export const updateDataUser = async (req, res) => {
         const emailExist = await UsersModels.findOne({
             where: {
                 email: email,
+                id: { [Op.ne]: getToken.tod }, 
             },
         });
         if (emailExist) {
@@ -184,6 +185,7 @@ export const updateDataUser = async (req, res) => {
         const usernameExist = await UsersModels.findOne({
             where: {
                 username: username,
+                id: { [Op.ne]: getToken.tod }, 
             },
         });
         if (usernameExist) {
@@ -193,6 +195,7 @@ export const updateDataUser = async (req, res) => {
         const phoneExist = await UsersModels.findOne({
             where: {
                 phone: phone,
+                id: { [Op.ne]: getToken.tod }, 
             },
         });
         if (phoneExist) {
