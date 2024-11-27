@@ -1,5 +1,5 @@
 import db from "../../configs/Database.js";
-import { dateToEpochTime } from "../../helpers/customHelpers.js";
+import { dateToEpochTime, getDataUserUsingToken } from "../../helpers/customHelpers.js";
 import ChatGroupsModels from "../models/ChatGroupsModels.js";
 import { jwtDecode } from "jwt-decode";
 
@@ -125,19 +125,17 @@ export const initializeSocket = (io) => {
 };
 
 export const sendMessageToGroup = async (req, res) => {
-    const { messages } = req.body;
-    let token = req.headers["authorization"];
+    const { message } = req.body;
     let users_id;
-    if (token && token.startsWith("Bearer ")) {
-        const usersToken = jwtDecode(token.slice(7));
-        users_id = usersToken.tod;
-        if (Number(users_id) === 0) {
-            return res.status(400).send("You cannot joined that");
-        }
+    const usersToken = getDataUserUsingToken(req, res);
+    users_id = usersToken.tod;
+    if (Number(users_id) === 0) {
+        return res.status(400).send("You cannot joined that");
     }
+
     const groupSlugs = req.params.groupSlugs;
 
-    if (!messages || !users_id) {
+    if (!message || !users_id) {
         return res.status(400).send("Invalid request payload");
     }
 
@@ -166,7 +164,7 @@ export const sendMessageToGroup = async (req, res) => {
 
         const chat = await ChatGroupsModels.create({
             groups_id: groupId,
-            messages: messages,
+            messages: message,
             users_id: users_id,
             created_at: dateToEpochTime(req.headers["x-date-for"]),
         });
@@ -222,7 +220,7 @@ export const sendMessageToGroup = async (req, res) => {
 
         ioInstance.to(groupSlugs).emit("newMessage", formattedMessages[0]);
 
-        console.log(`Message sent to group ${groupSlugs}: ${messages}`);
+        console.log(`Message sent to group ${groupSlugs}: ${message}`);
         return res
             .status(200)
             .send({ message: "Message sent", data: formattedMessages });
