@@ -1,5 +1,8 @@
 import db from "../../configs/Database.js";
-import { getDataUserUsingToken, makeEpocTime } from "../../helpers/customHelpers.js";
+import {
+    getDataUserUsingToken,
+    makeEpocTime,
+} from "../../helpers/customHelpers.js";
 import { getPagination } from "../../helpers/paginationHelpers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
 import ContentDetailsModels from "../models/ContentDetailsModels.js";
@@ -55,29 +58,71 @@ export const createGroups = async (req, res) => {
 
 export const joinMemberToGroups = async (req, res) => {
     try {
-        const getToken = getDataUserUsingToken(req, res);
+        const getToken = await getDataUserUsingToken(req, res); // Menambahkan await di sini
+        const groupSlugs = req.params.slug;
+        const replacements = {
+            groupSlugs: groupSlugs,
+        };
 
-        const { groups_id } = req.body;
-        let users_id = getToken.tod;
+        let whereClause =
+            "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs";
+
+        const query = `
+            SELECT
+                LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slugs,
+                g.title,
+                g.id
+            FROM ir_groups g
+            ${whereClause}
+        `;
+
+        const groupsData = await db.query(query, {
+            replacements,
+            type: db.QueryTypes.SELECT,
+            plain: true,
+        });
+
+        if (!groupsData) {
+            return responseApi(res, [], null, "Group not found", 1);
+        }
+
+        const groups_id = groupsData.id;
+        const users_id = getToken.tod;
+
         const dataGroupMembers = await GroupMembersModels.findAll({
             where: {
                 groups_id: groups_id,
                 users_id: users_id,
             },
         });
+
         if (dataGroupMembers.length > 0) {
             if (dataGroupMembers[0].status === 3) {
-                return responseApi(res, [], null, "Sorry you have been blocked from the group", 2);
+                return responseApi(
+                    res,
+                    [],
+                    null,
+                    "Sorry you have been blocked from the group",
+                    2
+                );
             }
         }
+
         const dataGroups = await GroupsModels.findAll({
             where: {
                 id: groups_id,
-                users_id: users_id
-            }
+                users_id: users_id,
+            },
         });
+
         if (dataGroups.length > 0) {
-            return responseApi(res, [], null, "Sorry you cannot joined members", 2);
+            return responseApi(
+                res,
+                [],
+                null,
+                "Sorry you cannot join members",
+                2
+            );
         }
 
         await GroupMembersModels.create({
@@ -85,6 +130,7 @@ export const joinMemberToGroups = async (req, res) => {
             groups_id: groups_id,
             created_at: makeEpocTime(),
         });
+
         return responseApi(res, [], null, "Data Success Saved", 0);
     } catch (error) {
         console.log(error);
@@ -180,7 +226,7 @@ export const getGroups = async (req, res) => {
             replacements,
             type: db.QueryTypes.SELECT,
         });
-        
+
         const countQuery = `
             SELECT COUNT(*) AS total_count
             FROM ir_groups g
@@ -196,12 +242,12 @@ export const getGroups = async (req, res) => {
         const totalPages = Math.ceil(totalCount / limit);
         const getContentDetail = await ContentDetailsModels.findOne({
             where: {
-                slug: contentDetailSlugs
-            }
-        })
+                slug: contentDetailSlugs,
+            },
+        });
         let responseData = {
             title: getContentDetail.title,
-            list_groups: groupsData
+            list_groups: groupsData,
         };
         return responseApi(
             res,
@@ -229,7 +275,8 @@ export const getGroupsDetail = async (req, res) => {
     try {
         const groupSlugs = req.params.slugs;
         const replacements = {};
-        let whereClause = "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs";
+        let whereClause =
+            "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs";
         replacements.groupSlugs = groupSlugs;
         const query = `
             SELECT
@@ -298,7 +345,6 @@ export const getGroupsDetail = async (req, res) => {
             replacements,
             type: db.QueryTypes.SELECT,
         });
-        
 
         let responseData = {};
         if (groupsData.length > 0) {
