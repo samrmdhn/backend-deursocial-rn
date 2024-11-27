@@ -191,24 +191,89 @@ export const updateDataUser = async (req, res) => {
         );
         let visitorToken = "";
         if (userFind) {
-            const { datas } = makeDataJwt(req, Number(userFind.id));
+            const userUpdated = await UsersModels.findOne({
+                where: { id: getToken.tod },
+            });
+            const { datas } = makeDataJwt(req, Number(userUpdated.id));
             visitorToken = signVisitorToken({
                 ...datas,
-                username: userFind.username,
-                display_name: userFind.display_name,
-                display_name_anonymous: userFind.display_name_anonymous,
-                image: userFind.photo,
+                username: userUpdated.username,
+                display_name: userUpdated.display_name,
+                display_name_anonymous: userUpdated.display_name_anonymous,
+                image: userUpdated.photo,
             });
         }
 
-        res.clearCookie('ACCESS_TOKEN'); 
-        res.cookie("ACCESS_TOKEN", visitorToken, {
-            httpOnly: true,
-            secure: true,
-            maxAge: 3600000,
-            path: '/'
-        });
-        return responseApi(res, [], null, "Data has been updated", 0);
+        return responseApi(
+            res,
+            {
+                access_token: visitorToken,
+            },
+            null,
+            "Data has been updated",
+            0
+        );
+    } catch (error) {
+        console.log(error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+};
+
+export const checkExistingDataUser = async (req, res) => {
+    try {
+        const dataTokenUser = getDataUserUsingToken(req, res);
+
+        const type = req.params.type;
+        const { check_string } = req.body;
+
+        let queryResult;
+
+        if (type === "phone") {
+            queryResult = await UsersModels.findOne({
+                where: {
+                    phone: check_string,
+                },
+            });
+        } else if (type === "email") {
+            queryResult = await UsersModels.findOne({
+                where: {
+                    email: check_string,
+                },
+            });
+        } else if (type === "username") {
+            queryResult = await UsersModels.findOne({
+                where: {
+                    username: check_string,
+                },
+            });
+        } else {
+            return responseApi(res, [], null, "Server error ......!", 1);
+        }
+        console.log(queryResult?.id)
+        if (queryResult) {
+            return Number(queryResult?.id) !== Number(dataTokenUser.tod) ? responseApi(
+                res,
+                [check_string],
+                null,
+                `${check_string} is already taken`,
+                0
+            ) : responseApi(
+                res,
+                [check_string],
+                null,
+                `${check_string} is your data`,
+                0
+            );
+        }
+
+        // Jika data tidak ditemukan
+        return responseApi(
+            res,
+            [check_string],
+            null,
+            "You can use this option",
+            0
+        );
     } catch (error) {
         console.log(error);
         return responseApi(res, [], null, "Server error....", 1);
