@@ -42,4 +42,5 @@ export {
     getDetailUser,
     followUser,
     updateDataUser,
+    checkExistingDataUser
 } from "./controllers/UsersControllers.js";
