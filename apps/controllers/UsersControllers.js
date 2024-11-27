@@ -31,7 +31,23 @@ export const getDetailUser = async (req, res) => {
                 ) THEN true
                 ELSE false
             END
-        ) AS followed_user`;
+        ) AS followed_user,
+        (
+            SELECT json_agg(
+                json_build_object(
+                    'username', u_f.username
+                )
+            )
+            FROM ir_follower_users f
+            INNER JOIN ir_users u_f ON u_f.id = f.follower_id
+            WHERE f.following_id = u.id
+            LIMIT 5
+        ) AS followers,
+        (
+            SELECT COUNT(*)
+            FROM ir_follower_users f
+            WHERE f.following_id = u.id
+        ) AS total_followers`;
 
         if (userData.id !== Number(getToken.tod)) {
             queryFollowedUser = `(
@@ -44,7 +60,25 @@ export const getDetailUser = async (req, res) => {
                     ) THEN true
                     ELSE false
                 END
-            ) AS followed_user`;
+            ) AS followed_user, 
+            (
+                SELECT json_agg(
+                    json_build_object(
+                        'username', u_f.username
+                    )
+                )
+                FROM ir_follower_users f
+                INNER JOIN ir_users u_f ON u_f.id = f.follower_id
+                WHERE f.following_id = u.id
+                AND ifs.follower_id = ${getToken.tod}
+                LIMIT 5
+            ) AS followers,
+            (
+                SELECT COUNT(*)
+                FROM ir_follower_users f
+                WHERE f.following_id = u.id
+                AND ifs.follower_id = ${getToken.tod}
+            ) AS total_followers`;
         }
 
         const query = `
@@ -53,23 +87,7 @@ export const getDetailUser = async (req, res) => {
                 u.display_name,
                 u.description,
                 u.photo,
-                (
-                    SELECT COUNT(*)
-                    FROM ir_follower_users f
-                    WHERE f.following_id = u.id
-                ) AS total_followers,
-                ${queryFollowedUser},
-                (
-                    SELECT json_agg(
-                        json_build_object(
-                            'username', u_f.username
-                        )
-                    )
-                    FROM ir_follower_users f
-                    INNER JOIN ir_users u_f ON u_f.id = f.follower_id
-                    WHERE f.following_id = u.id
-                    LIMIT 5
-                ) AS followers
+                ${queryFollowedUser}
             FROM ir_users u
             WHERE username = :usernameUser
             GROUP BY u.id;
