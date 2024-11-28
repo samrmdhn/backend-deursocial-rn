@@ -279,7 +279,7 @@ export const getGroupsDetail = async (req, res) => {
             "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs";
         replacements.groupSlugs = groupSlugs;
         const query = `
-           SELECT
+            SELECT
                 LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slugs,
                 g.title,
                 CASE
@@ -330,7 +330,20 @@ export const getGroupsDetail = async (req, res) => {
                         'name', c.title
                     )
                 ) AS location,
-                CAST(COUNT(gm.users_id) AS INTEGER) AS current_members,
+                (
+                    SELECT COUNT(*)
+                    FROM (
+                        SELECT DISTINCT gm.users_id
+                        FROM ir_group_members gm
+                        WHERE gm.groups_id = g.id AND gm.status = 1
+
+                        UNION ALL
+
+                        SELECT DISTINCT g.users_id
+                        FROM ir_groups g_inner
+                        WHERE g_inner.id = g.id
+                    ) AS all_members
+                ) AS current_members,
                 g.max_members AS total_members,
                 (
                     SELECT json_agg(
@@ -359,21 +372,21 @@ export const getGroupsDetail = async (req, res) => {
                         WHERE creator.id = g.users_id
                     ) AS member
                 ) AS members,
-                     CASE
-                WHEN g.users_id = ${getToken.tod} THEN (
-                    SELECT json_agg(
-                        json_build_object(
-                            'name', u.display_name,
-                            'image', u.photo,
-                            'username', u.username
+                CASE
+                    WHEN g.users_id = ${getToken.tod} THEN (
+                        SELECT json_agg(
+                            json_build_object(
+                                'name', u.display_name,
+                                'image', u.photo,
+                                'username', u.username
+                            )
                         )
+                        FROM ir_group_members gm
+                        JOIN ir_users u ON u.id = gm.users_id
+                        WHERE gm.groups_id = g.id AND gm.status = 2
                     )
-                    FROM ir_group_members gm
-                    JOIN ir_users u ON u.id = gm.users_id
-                    WHERE gm.groups_id = g.id AND gm.status = 2
-                )
-                ELSE NULL
-            END AS members_need_approval
+                    ELSE NULL
+                END AS members_need_approval
             FROM ir_groups g
             LEFT JOIN ir_users u ON u.id = g.users_id
             LEFT JOIN ir_citys c ON c.id = g.citys_id
