@@ -160,13 +160,23 @@ export const getGroups = async (req, res) => {
         const query = `
             SELECT
                 g.id AS id,
-                CASE 
+                CASE
                     WHEN EXISTS (
                         SELECT 1
                         FROM ir_group_members gm
                         WHERE gm.groups_id = g.id AND gm.status = 1 AND gm.users_id = ${getToken.tod}
-                    ) THEN true
-                    ELSE false 
+                    ) THEN 'joined'
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM ir_group_members gm
+                        WHERE gm.groups_id = g.id AND gm.status = 3 AND gm.users_id = ${getToken.tod}
+                    ) THEN 'rejected'
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM ir_group_members gm
+                        WHERE gm.groups_id = g.id AND gm.status = 2 AND gm.users_id = ${getToken.tod}
+                    ) THEN 'waiting approval'
+                    ELSE 'not joined'
                 END AS is_joined,
                 LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug,
                 g.title,
@@ -199,18 +209,47 @@ export const getGroups = async (req, res) => {
                         'name', c.title
                     )
                 ) AS location,
-                CAST(COUNT(gm.users_id) AS INTEGER) AS current_members,
+                (
+                    SELECT COUNT(*)
+                    FROM (
+                        SELECT DISTINCT gm.users_id
+                        FROM ir_group_members gm
+                        WHERE gm.groups_id = g.id AND gm.status = 1
+
+                        UNION ALL
+
+                        SELECT DISTINCT g.users_id
+                        FROM ir_groups g_inner
+                        WHERE g_inner.id = g.id
+                    ) AS all_members
+                ) AS current_members,
                 g.max_members as total_members,
                 (
                     SELECT json_agg(
                         json_build_object(
-                            'name', u.display_name,
-                            'image', u.photo
+                            'name', member.display_name,
+                            'image', member.photo,
+                            'role', member.role
                         )
                     )
-                    FROM ir_group_members gm
-                    JOIN ir_users u ON u.id = gm.users_id
-                    WHERE gm.groups_id = g.id AND gm.status = 1
+                    FROM (
+                        SELECT DISTINCT
+                            u.display_name,
+                            u.photo,
+                            'member' AS role
+                        FROM ir_group_members gm
+                        JOIN ir_users u ON u.id = gm.users_id
+                        WHERE gm.groups_id = g.id AND gm.status = 1
+
+                        UNION ALL
+
+                        SELECT DISTINCT
+                            creator.display_name,
+                            creator.photo,
+                            'creator' AS role
+                        FROM ir_users creator
+                        WHERE creator.id = g.users_id
+                    ) AS member
                 ) AS members
             FROM ir_groups g
             LEFT JOIN ir_content_details cds ON cds.id = g.content_details_id
@@ -282,6 +321,8 @@ export const getGroupsDetail = async (req, res) => {
             SELECT
                 LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slugs,
                 g.title,
+                cds.title AS event_title,
+                cds.slug AS event_slug,
                 CASE
                     WHEN EXISTS (
                         SELECT 1
@@ -391,8 +432,9 @@ export const getGroupsDetail = async (req, res) => {
             LEFT JOIN ir_users u ON u.id = g.users_id
             LEFT JOIN ir_citys c ON c.id = g.citys_id
             LEFT JOIN ir_group_members gm ON gm.groups_id = g.id
+            LEFT JOIN ir_content_details cds ON g.content_details_id = cds.id
             ${whereClause}
-            GROUP BY g.id, u.id, c.id;
+            GROUP BY g.id, u.id, c.id, cds.id;
         `;
 
         const groupsData = await db.query(query, {
