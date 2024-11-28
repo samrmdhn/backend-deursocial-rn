@@ -279,31 +279,42 @@ export const getGroupsDetail = async (req, res) => {
             "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs";
         replacements.groupSlugs = groupSlugs;
         const query = `
-            SELECT
+           SELECT
                 LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slugs,
                 g.title,
-                CASE 
+                CASE
                     WHEN EXISTS (
                         SELECT 1
                         FROM ir_group_members gm
                         WHERE gm.groups_id = g.id AND gm.status = 1 AND gm.users_id = ${getToken.tod}
-                    ) THEN true
-                    ELSE false 
+                    ) THEN 'joined'
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM ir_group_members gm
+                        WHERE gm.groups_id = g.id AND gm.status = 3 AND gm.users_id = ${getToken.tod}
+                    ) THEN 'rejected'
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM ir_group_members gm
+                        WHERE gm.groups_id = g.id AND gm.status = 2 AND gm.users_id = ${getToken.tod}
+                    ) THEN 'waiting approval'
+                    ELSE 'not joined'
                 END AS is_joined,
                 g.description,
                 json_build_object(
                     'is_gender', 
                     CASE 
-                        WHEN g.is_gender = 1 THEN 'men'
-                        WHEN g.is_gender = 2 THEN 'women'
+                        WHEN g.is_gender = 1 THEN 'male'
+                        WHEN g.is_gender = 2 THEN 'female'
                         ELSE 'unisex'
                     END,
-                    'is_private', CASE 
+                    'is_private', 
+                    CASE 
                         WHEN g.is_private = 0 THEN false
                         ELSE true
                     END,
-
-                    'is_anonymous_mode', CASE 
+                    'is_anonymous_mode', 
+                    CASE 
                         WHEN g.is_anonymous = 0 THEN false
                         ELSE true
                     END
@@ -312,7 +323,7 @@ export const getGroupsDetail = async (req, res) => {
                     'name', u.display_name,
                     'image', u.photo,
                     'username', u.username
-                )AS user,
+                ) AS user,
                 json_build_object(
                     'city', json_build_object(
                         'id', c.id,
@@ -320,19 +331,49 @@ export const getGroupsDetail = async (req, res) => {
                     )
                 ) AS location,
                 CAST(COUNT(gm.users_id) AS INTEGER) AS current_members,
-                CAST(COUNT(gm.users_id) AS INTEGER) AS current_members,
-                g.max_members as total_members,
+                g.max_members AS total_members,
                 (
                     SELECT json_agg(
                         json_build_object(
+                            'name', member.display_name,
+                            'image', member.photo,
+                            'role', member.role
+                        )
+                    )
+                    FROM (
+                        SELECT DISTINCT
+                            u.display_name,
+                            u.photo,
+                            'member' AS role
+                        FROM ir_group_members gm
+                        JOIN ir_users u ON u.id = gm.users_id
+                        WHERE gm.groups_id = g.id AND gm.status = 1
+
+                        UNION ALL
+
+                        SELECT DISTINCT
+                            creator.display_name,
+                            creator.photo,
+                            'creator' AS role
+                        FROM ir_users creator
+                        WHERE creator.id = g.users_id
+                    ) AS member
+                ) AS members,
+                     CASE
+                WHEN g.users_id = ${getToken.tod} THEN (
+                    SELECT json_agg(
+                        json_build_object(
                             'name', u.display_name,
-                            'image', u.photo
+                            'image', u.photo,
+                            'username', u.username
                         )
                     )
                     FROM ir_group_members gm
                     JOIN ir_users u ON u.id = gm.users_id
-                    WHERE gm.groups_id = g.id AND gm.status = 1
-                ) AS members
+                    WHERE gm.groups_id = g.id AND gm.status = 2
+                )
+                ELSE NULL
+            END AS members_need_approval
             FROM ir_groups g
             LEFT JOIN ir_users u ON u.id = g.users_id
             LEFT JOIN ir_citys c ON c.id = g.citys_id
