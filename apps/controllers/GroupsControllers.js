@@ -1,3 +1,4 @@
+import { Where } from "sequelize/lib/utils";
 import db from "../../configs/Database.js";
 import {
     getDataUserUsingToken,
@@ -161,6 +162,7 @@ export const getGroups = async (req, res) => {
             SELECT
                 g.id AS id,
                 CASE
+                    WHEN g.users_id = ${getToken.tod} THEN 'joined' 
                     WHEN EXISTS (
                         SELECT 1
                         FROM ir_group_members gm
@@ -317,6 +319,39 @@ export const getGroupsDetail = async (req, res) => {
         let whereClause =
             "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs";
         replacements.groupSlugs = groupSlugs;
+        const queryValidation = `
+            SELECT
+			gm.status
+            FROM ir_groups g
+            LEFT JOIN ir_group_members gm ON gm.groups_id = g.id
+            ${whereClause}
+            GROUP BY g.id, gm.id;
+        `;
+        const validationGroupsData = await db.query(queryValidation, {
+            replacements,
+            type: db.QueryTypes.SELECT,
+            plain: true,
+        });
+        if (typeof validationGroupsData?.status === "undefined") {
+            return responseApi(
+                res,
+                {},
+                {},
+                "Data retrieved successfully undefined",
+                1
+            );
+        } else {
+            if (validationGroupsData?.status === 3) {
+                return responseApi(
+                    res,
+                    {},
+                    {},
+                    "Data retrieved successfully 3",
+                    1
+                );
+            }
+        }
+
         const query = `
             SELECT
                 LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slugs,
@@ -324,6 +359,7 @@ export const getGroupsDetail = async (req, res) => {
                 cds.title AS event_title,
                 cds.slug AS event_slug,
                 CASE
+                    WHEN g.users_id = ${getToken.tod} THEN 'joined' 
                     WHEN EXISTS (
                         SELECT 1
                         FROM ir_group_members gm
@@ -449,6 +485,78 @@ export const getGroupsDetail = async (req, res) => {
         return responseApi(
             res,
             responseData,
+            {
+                assets_image_url: process.env.APP_BUCKET_IMAGE,
+            },
+            "Data retrieved successfully",
+            0
+        );
+    } catch (error) {
+        console.log(error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+};
+
+export const approveMember = async (req, res) => {
+    try {
+        const { username } = req.body;
+        const getToken = getDataUserUsingToken(req, res);
+
+        const groupSlugs = req.params.slug;
+        const replacements = {};
+        let whereClause = `WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs 
+            AND g.users_id = :userToken AND u.username = :username`;
+        replacements.groupSlugs = groupSlugs;
+        replacements.userToken = getToken.tod;
+        replacements.username = username;
+        const queryValidation = `
+            SELECT
+			gm.status,
+            gm.id
+            FROM ir_groups g
+            LEFT JOIN ir_group_members gm ON gm.groups_id = g.id
+            LEFT JOIN ir_users u ON u.id = gm.users_id
+            ${whereClause}
+            GROUP BY g.id, gm.id, u.id;
+        `;
+        const validationGroupsData = await db.query(queryValidation, {
+            replacements,
+            type: db.QueryTypes.SELECT,
+            plain: true,
+        });
+        if (typeof validationGroupsData?.status === "undefined") {
+            return responseApi(
+                res,
+                {},
+                {},
+                "Data retrieved successfully undefined",
+                1
+            );
+        } else {
+            if (validationGroupsData?.status === 3) {
+                return responseApi(
+                    res,
+                    {},
+                    {},
+                    "Data retrieved successfully 3",
+                    1
+                );
+            }
+        }
+        await GroupMembersModels.update(
+            {
+                status: 1,
+            },
+            {
+                where: {
+                    id: validationGroupsData?.id,
+                }
+            }
+        );
+
+        return responseApi(
+            res,
+            [],
             {
                 assets_image_url: process.env.APP_BUCKET_IMAGE,
             },
