@@ -356,6 +356,7 @@ export const getGroupsDetail = async (req, res) => {
             SELECT
                 LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slugs,
                 g.title,
+                TO_CHAR(TO_TIMESTAMP(g.created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_group,
                 cds.title AS event_title,
                 cds.slug AS event_slug,
                 CASE
@@ -455,7 +456,8 @@ export const getGroupsDetail = async (req, res) => {
                             json_build_object(
                                 'name', u.display_name,
                                 'image', u.photo,
-                                'username', u.username
+                                'username', u.username,
+                                'joined_date', TO_CHAR(TO_TIMESTAMP(gm.created_at), 'YYYY-MM-DD HH24:MI:SS')
                             )
                         )
                         FROM ir_group_members gm
@@ -550,7 +552,7 @@ export const approveMember = async (req, res) => {
             {
                 where: {
                     id: validationGroupsData?.id,
-                }
+                },
             }
         );
 
