@@ -1,7 +1,15 @@
 import db from "../../configs/Database.js";
-import { dateToEpochTime, getDataUserUsingToken } from "../../helpers/customHelpers.js";
+import {
+    dateToEpochTime,
+    getDataUserUsingToken,
+    isValidJwt,
+} from "../../helpers/customHelpers.js";
 import ChatGroupsModels from "../models/ChatGroupsModels.js";
 import { jwtDecode } from "jwt-decode";
+import { Sequelize } from "sequelize";
+import ChatStatusGroupsModels from "../models/ChatStatusGroupsModels.js";
+import GroupMembersModels from "../models/GroupMembersModels.js";
+const Op = Sequelize.Op;
 
 let ioInstance;
 
@@ -9,12 +17,11 @@ export const initializeSocket = (io) => {
     ioInstance = io;
     io.on("connection", (socket) => {
         const token = socket.handshake.headers.authorization;
-        // console.log("ïni token", token)
         socket.on("joinGroup", async (data) => {
             const groupsSlug = data.slug;
+            const dataToken = isValidJwt(token)
             if (!groupsSlug) return;
 
-            socket.join(groupsSlug);
             try {
                 const limit = 20;
                 const offset = 0;
@@ -29,9 +36,9 @@ export const initializeSocket = (io) => {
                     "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupsSlug";
                 replacements.groupsSlug = groupsSlug;
 
-                // Main query using the slug for fetching messages
                 const query = `
                     SELECT
+                        cg.id as chat_groups_id,
                         u.id as user_id,
                         u.photo as image,
                         TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
@@ -63,6 +70,18 @@ export const initializeSocket = (io) => {
                 }));
 
                 socket.emit("initialMessages", formattedMessages.reverse());
+
+                const conditions = messages.map((item) => ({
+                    [Op.and]: [
+                        { chat_groups_id: item.chat_groups_id },
+                        { users_id: dataToken.tod },
+                    ],
+                }));
+                const result = await ChatStatusGroupsModels.destroy({
+                    where: {
+                        [Op.or]: conditions,
+                    },
+                });
             } catch (error) {
                 console.error("Error fetching initial messages:", error);
             }
@@ -129,6 +148,10 @@ export const sendMessageToGroup = async (req, res) => {
     let users_id;
     const usersToken = getDataUserUsingToken(req, res);
     users_id = usersToken.tod;
+    const usersIdToken = usersToken.tod;
+    if (message.length > 100) {
+        return res.status(400).send("Message too long");
+    }
     if (Number(users_id) === 0) {
         return res.status(400).send("You cannot joined that");
     }
@@ -146,7 +169,7 @@ export const sendMessageToGroup = async (req, res) => {
     try {
         // Assuming you need to map the slug to group ID
         const groupQuery = `
-            SELECT g.id
+            SELECT g.id, g.users_id
             FROM ir_groups g
             WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs
         `;
@@ -161,13 +184,51 @@ export const sendMessageToGroup = async (req, res) => {
         }
 
         const groupId = groupResult[0].id;
-
+        const getUserInGroup = await GroupMembersModels.findAll({
+            where: {
+                groups_id: groupId,
+                users_id: {
+                    [Op.ne]: users_id,
+                },
+            },
+            attributes: [
+                Sequelize.fn("DISTINCT", Sequelize.col("users_id")),
+                "users_id",
+            ],
+        });
         const chat = await ChatGroupsModels.create({
             groups_id: groupId,
             messages: message,
             users_id: users_id,
             created_at: dateToEpochTime(req.headers["x-date-for"]),
         });
+        let dataToInsert = [];
+        if (getUserInGroup.length > 0) {
+            const userIds = getUserInGroup.map((user) => user.users_id);
+            dataToInsert = userIds.map((userId) => ({
+                users_id: userId,
+                chat_groups_id: chat.id,
+                created_at: dateToEpochTime(req.headers["x-date-for"]),
+            }));
+        }
+        if (groupResult[0].users_id !== usersIdToken) {
+            dataToInsert = [
+                ...dataToInsert,
+                {
+                    users_id: groupResult[0].users_id,
+                    chat_groups_id: chat.id,
+                    created_at: dateToEpochTime(req.headers["x-date-for"]),
+                },
+            ];
+        }
+
+        await ChatStatusGroupsModels.bulkCreate(dataToInsert)
+            .then(() => {
+                console.log("Data berhasil disimpan di ChatStatusGroupsModels");
+            })
+            .catch((error) => {
+                console.error("Gagal menyimpan data:", error);
+            });
 
         const limit = 20;
         const offset = 0;

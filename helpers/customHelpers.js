@@ -7,18 +7,18 @@ import http from "http";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { jwtDecode } from "jwt-decode";
+import jwt from "jsonwebtoken";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export const makeEpocTime = (inputDate='') => {
-    const date = inputDate !== '' ? new Date(inputDate) : new Date();
+export const makeEpocTime = (inputDate = "") => {
+    const date = inputDate !== "" ? new Date(inputDate) : new Date();
     const options = { timeZone: "Asia/Jakarta", hour12: false };
     const jakartaDate = new Intl.DateTimeFormat("en-US", options).format(date);
     const epochTimeJakarta = new Date(jakartaDate).getTime() / 1000;
     return epochTimeJakarta;
 };
-
 
 export const epochToDateJakarta = (epochTime) => {
     const milliseconds = epochTime * 1000;
@@ -119,14 +119,15 @@ export const downloadImage = (urlImage) => {
 
             const filePath = path.join(targetDirectory, nameFile);
 
-            if (!fs.existsSync('images')) {
-                fs.mkdirSync('images', { recursive: true });
+            if (!fs.existsSync("images")) {
+                fs.mkdirSync("images", { recursive: true });
             }
 
             const client = urlImage.startsWith("https") ? https : http;
 
             const file = fs.createWriteStream(filePath);
-            client.get(urlImage, (response) => {
+            client
+                .get(urlImage, (response) => {
                     if (response.statusCode !== 200) {
                         return resolve({
                             image: "",
@@ -171,4 +172,26 @@ export const getDataUserUsingToken = (req, res) => {
         }
         return dataToken;
     }
-}
+};
+
+export const isValidJwt = (tokenUser) => {
+    const token = tokenUser?.split(" ")[1];
+    return jwt.verify(
+        token,
+        process.env.APP_ACCESS_TOKEN_SECRET,
+        (err, decoded) => {
+            if (err) {
+                console.error("JWT Error:", err.message);
+                return {status: 1};
+            }
+            let token = tokenUser;
+            if (token && token.startsWith("Bearer ")) {
+                const dataToken = jwtDecode(token.slice(7));
+                if (Number(dataToken.tod) === 0) {
+                    return false;
+                }
+                return {...dataToken, status: 0};
+            }
+        }
+    );
+};
