@@ -36,13 +36,15 @@ api.post("/api/type/content/detail", verifyToken, HomepageControllers.createType
 api.get("/api/tags", verifyToken, HomepageControllers.getTags);
 api.post("/api/tags", verifyToken, HomepageControllers.createTags);
 api.post("/api/follow/event", verifyToken, HomepageControllers.followEvent);
-
 api.get("/api/actress", verifyToken, HomepageControllers.getActress);
 api.post("/api/actress", verifyToken, HomepageControllers.createActress);
 api.get("/api/content/details/:slug", verifyToken, HomepageControllers.getContentDetails);
 api.post("/api/content/details", verifyToken, HomepageControllers.createContentDetails);
 api.post("/api/check/auth", HomepageControllers.checkAuth);
+
 api.post("/api/sendMessage/:groupSlugs", ChatGroupsControllers.sendMessageToGroup);
+api.get("/api/group/messages", verifyToken, ChatGroupsControllers.getGroupsMessages);
+
 
 api.post("/api/user/existing/:type", verifyToken,UsersControllers.checkExistingDataUser);
 api.get("/api/user/detail/:username", verifyToken, UsersControllers.getDetailUser);
