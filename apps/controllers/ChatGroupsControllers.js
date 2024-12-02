@@ -19,7 +19,7 @@ export const initializeSocket = (io) => {
     io.on("connection", (socket) => {
         socket.on("joinGroup", async (data) => {
             const groupsSlug = data.slug;
-            const usersIdToken = data.user_id;
+            const usersIdToken = data.userId;
             if (!groupsSlug) return;
 
             try {
