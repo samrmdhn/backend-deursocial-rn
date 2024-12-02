@@ -21,7 +21,7 @@ export const initializeSocket = (io) => {
         // const token = socket.handshake.query.token;
         socket.on("joinGroup", async (data) => {
             const groupsSlug = data.slug;
-            const usersIdToken = data.users_id;
+            const usersIdToken = data.user_id;
             if (!groupsSlug) return;
 
             try {
