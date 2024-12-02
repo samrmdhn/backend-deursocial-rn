@@ -85,7 +85,7 @@ export const initializeSocket = (io) => {
                         INNER JOIN ir_users u ON u.id = cg.users_id
                         INNER JOIN ir_groups g ON g.id = cg.groups_id
                         ${whereClause}
-                        ORDER BY cg.id DESC;
+                        ORDER BY u.id, cg.id DESC;
                 `;
                 const messagesDeletedUser = await db.query(queryDeletedUser, {
                     replacements,
