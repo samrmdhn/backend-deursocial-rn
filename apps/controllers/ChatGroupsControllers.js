@@ -450,7 +450,7 @@ export const getGroupsMessages = async (req, res) => {
                             FROM ir_chat_groups cg
                             LEFT JOIN ir_users u2 ON cg.users_id = u2.id
                             LEFT JOIN ir_chat_groups_status cgs ON cg.id = cgs.chat_groups_id
-                            WHERE cg.groups_id = g.id AND cg.users_id = :userToken
+                            WHERE cg.groups_id = g.id AND cgs.users_id = :userToken
                             ORDER BY cg.created_at DESC
                             LIMIT 1
                         )
