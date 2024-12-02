@@ -71,7 +71,7 @@ export const initializeSocket = (io) => {
 
                 socket.emit("initialMessages", formattedMessages.reverse());
                 const queryDeletedUser = `
-                    SELECT
+                    SELECT DISTINCT ON (u.id)
                         cg.id as chat_groups_id,
                         u.id as user_id,
                         u.photo as image,
@@ -91,7 +91,7 @@ export const initializeSocket = (io) => {
                     replacements,
                     type: db.QueryTypes.SELECT,
                 });
-                
+
                 const conditions = messagesDeletedUser.map((item) => ({
                     [Op.and]: [
                         { chat_groups_id: item.chat_groups_id },
