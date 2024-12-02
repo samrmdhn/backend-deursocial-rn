@@ -18,9 +18,10 @@ export const initializeSocket = (io) => {
     ioInstance = io;
     io.on("connection", (socket) => {
         const token = socket.handshake.headers.authorization;
+        // const token = socket.handshake.query.token;
         socket.on("joinGroup", async (data) => {
             const groupsSlug = data.slug;
-            const dataToken = isValidJwt(token);
+            const usersIdToken = data.users_id;
             if (!groupsSlug) return;
 
             try {
@@ -75,7 +76,7 @@ export const initializeSocket = (io) => {
                 const conditions = messages.map((item) => ({
                     [Op.and]: [
                         { chat_groups_id: item.chat_groups_id },
-                        { users_id: dataToken.tod },
+                        { users_id: usersIdToken },
                     ],
                 }));
                 const result = await ChatStatusGroupsModels.destroy({
@@ -83,6 +84,8 @@ export const initializeSocket = (io) => {
                         [Op.or]: conditions,
                     },
                 });
+                socket.join(groupsSlug);
+                console.log(`Socket ${socket.id} joined group: ${groupsSlug}`);
             } catch (error) {
                 console.error("Error fetching initial messages:", error);
             }
@@ -313,6 +316,14 @@ export const getGroupsMessages = async (req, res) => {
         const query = `
             SELECT
                 g.id AS id,
+                cds.title AS event_name,
+                cds.slug AS event_slug,
+                CASE
+                    WHEN cds.status = 0 THEN 'ended' 
+                    WHEN cds.status = 1 THEN 'ongoing' 
+                    WHEN cds.status = 2 THEN 'upcoming' 
+                    ELSE 'not joined'
+                END AS event_status,
                 CASE
                     WHEN g.users_id = ${getToken.tod} THEN 'joined' 
                     WHEN EXISTS (
@@ -410,7 +421,19 @@ export const getGroupsMessages = async (req, res) => {
                         FROM ir_chat_groups_status as cgs
                         INNER JOIN ir_chat_groups cg ON cg.id = cgs.chat_groups_id
                         WHERE cg.groups_id = g.id
-                ) AS total_unread_messages
+                ) AS total_unread_messages,
+                (
+                    SELECT json_build_object(
+                        'message', cg.messages,
+                        'sender', u2.display_name,
+                        'timestamp', TO_CHAR(TO_TIMESTAMP(cg.created_at), 'YYYY-MM-DD HH24:MI:SS')
+                    )
+                    FROM ir_chat_groups cg
+                    LEFT JOIN ir_users u2 ON cg.users_id = u2.id
+                    WHERE cg.groups_id = g.id
+                    ORDER BY cg.created_at DESC
+                    LIMIT 1
+                ) AS last_chat
             FROM ir_groups g
             LEFT JOIN ir_content_details cds ON cds.id = g.content_details_id
             LEFT JOIN ir_users u ON u.id = g.users_id
