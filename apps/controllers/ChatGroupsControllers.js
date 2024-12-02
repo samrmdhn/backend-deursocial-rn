@@ -440,7 +440,7 @@ export const getGroupsMessages = async (req, res) => {
                         FROM ir_chat_groups_status as cgs
                         INNER JOIN ir_chat_groups cg ON cg.id = cgs.chat_groups_id
 			            LEFT JOIN ir_users u2 ON cg.users_id = u2.id
-                        WHERE cg.groups_id = g.id AND cgs.users_id = u2.id
+                        WHERE cg.groups_id = g.id AND cgs.users_id = :userToken
                 ) AS total_unread_messages,
                 CASE 
                         WHEN (
@@ -448,7 +448,7 @@ export const getGroupsMessages = async (req, res) => {
                             FROM ir_chat_groups_status as cgs
                             INNER JOIN ir_chat_groups cg ON cg.id = cgs.chat_groups_id
                             LEFT JOIN ir_users u2 ON cg.users_id = u2.id
-                            WHERE cg.groups_id = g.id AND cgs.users_id = u2.id
+                            WHERE cg.groups_id = g.id AND cgs.users_id = :userToken
                         ) = 0 THEN NULL
                         ELSE (
                             SELECT json_build_object(
@@ -459,7 +459,7 @@ export const getGroupsMessages = async (req, res) => {
                             FROM ir_chat_groups cg
                             LEFT JOIN ir_users u2 ON cg.users_id = u2.id
                             LEFT JOIN ir_chat_groups_status cgs ON cg.id = cgs.chat_groups_id
-                            WHERE cg.groups_id = g.id AND cg.users_id = u2.id
+                            WHERE cg.groups_id = g.id AND cg.users_id = :userToken
                             ORDER BY cg.created_at DESC
                             LIMIT 1
                         )
