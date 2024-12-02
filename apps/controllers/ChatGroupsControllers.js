@@ -17,8 +17,6 @@ let ioInstance;
 export const initializeSocket = (io) => {
     ioInstance = io;
     io.on("connection", (socket) => {
-        const token = socket.handshake.headers.authorization;
-        // const token = socket.handshake.query.token;
         socket.on("joinGroup", async (data) => {
             const groupsSlug = data.slug;
             const usersIdToken = data.user_id;
