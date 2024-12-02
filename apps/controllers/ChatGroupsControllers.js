@@ -439,20 +439,31 @@ export const getGroupsMessages = async (req, res) => {
                     SELECT COUNT(*) 
                         FROM ir_chat_groups_status as cgs
                         INNER JOIN ir_chat_groups cg ON cg.id = cgs.chat_groups_id
-                        WHERE cg.groups_id = g.id
+			            LEFT JOIN ir_users u2 ON cg.users_id = u2.id
+                        WHERE cg.groups_id = g.id AND cgs.users_id = u2.id
                 ) AS total_unread_messages,
-                (
-                    SELECT json_build_object(
-                        'message', cg.messages,
-                        'sender', u2.display_name,
-                        'timestamp', TO_CHAR(TO_TIMESTAMP(cg.created_at), 'YYYY-MM-DD HH24:MI:SS')
-                    )
-                    FROM ir_chat_groups cg
-                    LEFT JOIN ir_users u2 ON cg.users_id = u2.id
-                    WHERE cg.groups_id = g.id
-                    ORDER BY cg.created_at DESC
-                    LIMIT 1
-                ) AS last_chat
+                CASE 
+                        WHEN (
+                            SELECT COUNT(*)
+                            FROM ir_chat_groups_status as cgs
+                            INNER JOIN ir_chat_groups cg ON cg.id = cgs.chat_groups_id
+                            LEFT JOIN ir_users u2 ON cg.users_id = u2.id
+                            WHERE cg.groups_id = g.id AND cgs.users_id = u2.id
+                        ) = 0 THEN NULL
+                        ELSE (
+                            SELECT json_build_object(
+                                'message', cg.messages,
+                                'sender', u2.display_name,
+                                'timestamp', TO_CHAR(TO_TIMESTAMP(cg.created_at), 'YYYY-MM-DD HH24:MI:SS')
+                            )
+                            FROM ir_chat_groups cg
+                            LEFT JOIN ir_users u2 ON cg.users_id = u2.id
+                            LEFT JOIN ir_chat_groups_status cgs ON cg.id = cgs.chat_groups_id
+                            WHERE cg.groups_id = g.id AND cg.users_id = u2.id
+                            ORDER BY cg.created_at DESC
+                            LIMIT 1
+                        )
+                    END AS last_chat
             FROM ir_groups g
             LEFT JOIN ir_content_details cds ON cds.id = g.content_details_id
             LEFT JOIN ir_users u ON u.id = g.users_id
