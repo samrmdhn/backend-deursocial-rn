@@ -70,8 +70,29 @@ export const initializeSocket = (io) => {
                 }));
 
                 socket.emit("initialMessages", formattedMessages.reverse());
-
-                const conditions = messages.map((item) => ({
+                const queryDeletedUser = `
+                    SELECT
+                        cg.id as chat_groups_id,
+                        u.id as user_id,
+                        u.photo as image,
+                        TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
+                        cg.messages,
+                        u.display_name,
+                        u.display_name_anonymous,
+                        LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
+                    FROM
+                        ir_chat_groups cg
+                        INNER JOIN ir_users u ON u.id = cg.users_id
+                        INNER JOIN ir_groups g ON g.id = cg.groups_id
+                        ${whereClause}
+                        ORDER BY cg.id DESC;
+                `;
+                const messagesDeletedUser = await db.query(queryDeletedUser, {
+                    replacements,
+                    type: db.QueryTypes.SELECT,
+                });
+                
+                const conditions = messagesDeletedUser.map((item) => ({
                     [Op.and]: [
                         { chat_groups_id: item.chat_groups_id },
                         { users_id: usersIdToken },
