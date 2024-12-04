@@ -69,13 +69,13 @@ export const initializeSocket = (io) => {
                 }));
 
                 await ChatStatusGroupsModels.update(
-                    { 
-                        status: 0, 
+                    {
+                        status: 0,
                     },
                     {
                         where: {
                             groups_id: messages[0].groups_id,
-                            users_id: usersIdAccess
+                            users_id: usersIdAccess,
                         },
                     }
                 );
@@ -135,6 +135,66 @@ export const initializeSocket = (io) => {
                 }));
 
                 socket.emit("moreMessages", formattedMessages.reverse());
+            } catch (error) {
+                console.error("Error fetching more messages:", error);
+            }
+        });
+
+        socket.on("readMessage", async (data) => {
+            const groupsSlug = data.slug;
+            const usersIdAccess = data.userId;
+
+            if (!groupsSlug) return;
+
+            try {
+                const replacements = {};
+                let whereClause =
+                    "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupsSlug";
+                replacements.groupsSlug = groupsSlug;
+                const query = `
+                    SELECT
+                        u.id as user_id,
+                        g.id as groups_id,
+                        u.photo as image,
+                        TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
+                        cg.messages,
+                        u.display_name,
+                        u.display_name_anonymous,
+                        LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
+                    FROM
+                        ir_chat_groups cg
+                        INNER JOIN ir_users u ON u.id = cg.users_id
+                        INNER JOIN ir_groups g ON g.id = cg.groups_id
+                        ${whereClause}
+                        ORDER BY cg.id DESC;
+                `;
+                const messages = await db.query(query, {
+                    replacements,
+                    type: db.QueryTypes.SELECT,
+                });
+
+                const formattedMessages = messages.map((msg) => ({
+                    users_id: msg.user_id,
+                    display_name: msg.display_name,
+                    image: process.env.APP_BUCKET_IMAGE + "/" + msg.image,
+                    display_name_anonymous: msg.display_name_anonymous,
+                    groupSlug: msg.slug,
+                    created_at: msg.created_at,
+                    message: msg.messages,
+                }));
+
+                await ChatStatusGroupsModels.update(
+                    {
+                        status: 0,
+                    },
+                    {
+                        where: {
+                            groups_id: messages[0].groups_id,
+                            users_id: usersIdAccess,
+                        },
+                    }
+                );
+
             } catch (error) {
                 console.error("Error fetching more messages:", error);
             }
