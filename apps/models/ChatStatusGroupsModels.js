@@ -8,11 +8,11 @@ const ChatStatusGroupsModels = db.define("ir_chat_groups_status", {
         primaryKey: true,
         autoIncrement: true,
     },
-    chat_groups_id: {
+    groups_id: {
         type: TYPES.BIGINT,
         allowNull: false,
         references: {
-            model: "ir_chat_groups",
+            model: "ir_groups",
             key: "id",
         },
     },
@@ -22,6 +22,22 @@ const ChatStatusGroupsModels = db.define("ir_chat_groups_status", {
         references: {
             model: "ir_users",
             key: "id",
+        },
+    },
+    chat_groups_id: {
+        type: TYPES.BIGINT,
+        allowNull: false,
+        references: {
+            model: "ir_chat_groups",
+            key: "id",
+        },
+    },
+    status: {
+        type: TYPES.TINYINT,
+        allowNull: true,
+        defaultValue: 1,
+        validate: {
+            isIn: [[0, 1]], // Hanya boleh 0, 1, 3 (0: read, 1: unread)
         },
     },
     created_at: {
