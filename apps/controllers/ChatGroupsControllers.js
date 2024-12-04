@@ -2,26 +2,24 @@ import db from "../../configs/Database.js";
 import {
     dateToEpochTime,
     getDataUserUsingToken,
-    isValidJwt,
 } from "../../helpers/customHelpers.js";
+import { responseApi } from "../../libs/RestApiHandler.js";
 import ChatGroupsModels from "../models/ChatGroupsModels.js";
 import { jwtDecode } from "jwt-decode";
-import { Sequelize } from "sequelize";
 import ChatStatusGroupsModels from "../models/ChatStatusGroupsModels.js";
-import GroupMembersModels from "../models/GroupMembersModels.js";
-import { responseApi } from "../../libs/RestApiHandler.js";
-const Op = Sequelize.Op;
 
 let ioInstance;
 
 export const initializeSocket = (io) => {
     ioInstance = io;
     io.on("connection", (socket) => {
+        // console.log("ïni token", token)
         socket.on("joinGroup", async (data) => {
             const groupsSlug = data.slug;
-            const usersIdToken = data.userId;
+            const usersIdAccess = data.userId;
             if (!groupsSlug) return;
 
+            socket.join(groupsSlug);
             try {
                 const limit = 20;
                 const offset = 0;
@@ -36,10 +34,11 @@ export const initializeSocket = (io) => {
                     "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupsSlug";
                 replacements.groupsSlug = groupsSlug;
 
+                // Main query using the slug for fetching messages
                 const query = `
                     SELECT
-                        cg.id as chat_groups_id,
                         u.id as user_id,
+                        g.id as groups_id,
                         u.photo as image,
                         TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                         cg.messages,
@@ -51,7 +50,7 @@ export const initializeSocket = (io) => {
                         INNER JOIN ir_users u ON u.id = cg.users_id
                         INNER JOIN ir_groups g ON g.id = cg.groups_id
                         ${whereClause}
-                        ORDER BY cg.id DESC
+                        ORDER BY cg.id, g.id DESC
                     LIMIT :limit OFFSET :offset;
                 `;
                 const messages = await db.query(query, {
@@ -69,33 +68,19 @@ export const initializeSocket = (io) => {
                     message: msg.messages,
                 }));
 
-                socket.emit("initialMessages", formattedMessages.reverse());
-                const queryDeletedUser = `
-                    SELECT DISTINCT
-                        cg.id as chat_groups_id,
-                        cgs.users_id as user_id
-                    FROM ir_chat_groups_status as cgs
-                        LEFT JOIN ir_chat_groups cg ON cg.id = cgs.chat_groups_id
-                        LEFT JOIN ir_groups g ON g.id = cg.groups_id
-                        ${whereClause} AND cgs.users_id = ${usersIdToken}
-                        ORDER BY cg.id DESC;
-                `;
-                const messagesDeletedUser = await db.query(queryDeletedUser, {
-                    replacements,
-                    type: db.QueryTypes.SELECT,
-                });
+                await ChatStatusGroupsModels.update(
+                    { 
+                        status: 0, 
+                    },
+                    {
+                        where: {
+                            groups_id: messages[0].groups_id,
+                            users_id: usersIdAccess
+                        },
+                    }
+                );
 
-                const conditions = messagesDeletedUser.map((item) => ({
-                    [Op.or]: [
-                        { chat_groups_id: item.chat_groups_id },
-                        { users_id: item.user_id },
-                    ],
-                }));
-                const result = await ChatStatusGroupsModels.destroy({
-                    where: conditions
-                });
-                socket.join(groupsSlug);
-                console.log(`Socket ${socket.id} joined group: ${groupsSlug}`);
+                socket.emit("initialMessages", formattedMessages.reverse());
             } catch (error) {
                 console.error("Error fetching initial messages:", error);
             }
@@ -162,10 +147,6 @@ export const sendMessageToGroup = async (req, res) => {
     let users_id;
     const usersToken = getDataUserUsingToken(req, res);
     users_id = usersToken.tod;
-    const usersIdToken = usersToken.tod;
-    if (message.length > 100) {
-        return res.status(400).send("Message too long");
-    }
     if (Number(users_id) === 0) {
         return res.status(400).send("You cannot joined that");
     }
@@ -183,7 +164,7 @@ export const sendMessageToGroup = async (req, res) => {
     try {
         // Assuming you need to map the slug to group ID
         const groupQuery = `
-            SELECT g.id, g.users_id
+            SELECT g.id
             FROM ir_groups g
             WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs
         `;
@@ -198,61 +179,15 @@ export const sendMessageToGroup = async (req, res) => {
         }
 
         const groupId = groupResult[0].id;
-        const getUserInGroup = await GroupMembersModels.findAll({
-            where: {
-                groups_id: groupId,
-                users_id: {
-                    [Op.ne]: users_id,
-                },
-            },
-            attributes: [
-                Sequelize.fn("DISTINCT", Sequelize.col("users_id")),
-                "users_id",
-            ],
-        });
+
         const chat = await ChatGroupsModels.create({
             groups_id: groupId,
             messages: message,
             users_id: users_id,
             created_at: dateToEpochTime(req.headers["x-date-for"]),
         });
-        let dataToInsert = [];
-        if (getUserInGroup.length > 0) {
-            const userIds = getUserInGroup.map((user) => user.users_id);
-            dataToInsert = userIds.map((userId) => ({
-                users_id: userId,
-                chat_groups_id: chat.id,
-                created_at: dateToEpochTime(req.headers["x-date-for"]),
-            }));
-        }
-        if (groupResult[0].users_id !== usersIdToken) {
-            dataToInsert = [
-                ...dataToInsert,
-                {
-                    users_id: groupResult[0].users_id,
-                    chat_groups_id: chat.id,
-                    created_at: dateToEpochTime(req.headers["x-date-for"]),
-                },
-            ];
-        }
 
-        await ChatStatusGroupsModels.bulkCreate(dataToInsert)
-            .then(() => {
-                console.log("Data berhasil disimpan di ChatStatusGroupsModels");
-            })
-            .catch((error) => {
-                console.error("Gagal menyimpan data:", error);
-            });
-
-        const limit = 20;
-        const offset = 0;
-
-        const replacements = {
-            limit: parseInt(limit),
-            offset: parseInt(offset),
-        };
-
-        // Prepare WHERE clause to match the slug
+        let replacements = {};
         let whereClause =
             "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs";
         replacements.groupSlugs = groupSlugs;
@@ -264,6 +199,7 @@ export const sendMessageToGroup = async (req, res) => {
         // Main query using the slug for fetching messages
         const query = `
             SELECT
+                cg.id as chat_group_id,
                 u.id as user_id,
                 u.photo as image,
                 cg.messages,
@@ -277,7 +213,6 @@ export const sendMessageToGroup = async (req, res) => {
                 INNER JOIN ir_groups g ON g.id = cg.groups_id
                 ${whereClause}
                 ORDER BY cg.id DESC
-            LIMIT :limit OFFSET :offset;
         `;
         const dataMessages = await db.query(query, {
             replacements,
@@ -292,6 +227,24 @@ export const sendMessageToGroup = async (req, res) => {
             groupSlug: msg.slug,
             message: msg.messages,
         }));
+
+        const queryGetTotalMember = `  SELECT * FROM ir_group_members WHERE groups_id = ${groupId} AND users_id != ${users_id} `;
+        const dataTotalMember = await db.query(queryGetTotalMember, {
+            type: db.QueryTypes.SELECT,
+        });
+        const saveStatusChat = dataTotalMember.map((member) => ({
+            groups_id: member.groups_id,
+            users_id: member.users_id,
+            chat_groups_id: dataMessages[0].chat_group_id,
+            created_at: dateToEpochTime(req.headers["x-date-for"]),
+        }));
+        await ChatStatusGroupsModels.bulkCreate(saveStatusChat)
+            .then(() => {
+                console.log("Data berhasil disimpan di ChatStatusGroupsModels");
+            })
+            .catch((error) => {
+                console.error("Gagal menyimpan data:", error);
+            });
 
         ioInstance.to(groupSlugs).emit("newMessage", formattedMessages[0]);
 
@@ -426,35 +379,16 @@ export const getGroupsMessages = async (req, res) => {
                         WHERE creator.id = g.users_id
                     ) AS member
                 ) AS members,
-                (
-                    SELECT COUNT(*) 
-                        FROM ir_chat_groups_status as cgs
-                        INNER JOIN ir_chat_groups cg ON cg.id = cgs.chat_groups_id
-			            LEFT JOIN ir_users u2 ON cg.users_id = u2.id
-                        WHERE cg.groups_id = g.id AND cgs.users_id = :userToken
+				(
+                        SELECT COUNT(*)
+                        FROM ir_chat_groups_status cgs
+                        WHERE cgs.groups_id = g.id AND cgs.status = 1 AND cgs.users_id =  ${getToken.tod}
                 ) AS total_unread_messages,
-                CASE 
-                        WHEN (
-                            SELECT COUNT(*)
-                            FROM ir_chat_groups_status as cgs
-                            INNER JOIN ir_chat_groups cg ON cg.id = cgs.chat_groups_id
-                            LEFT JOIN ir_users u2 ON cg.users_id = u2.id
-                            WHERE cg.groups_id = g.id AND cgs.users_id = :userToken
-                        ) = 0 THEN NULL
-                        ELSE (
-                            SELECT json_build_object(
-                                'message', cg.messages,
-                                'sender', u2.display_name,
-                                'timestamp', TO_CHAR(TO_TIMESTAMP(cg.created_at), 'YYYY-MM-DD HH24:MI:SS')
-                            )
-                            FROM ir_chat_groups cg
-                            LEFT JOIN ir_users u2 ON cg.users_id = u2.id
-                            LEFT JOIN ir_chat_groups_status cgs ON cg.id = cgs.chat_groups_id
-                            WHERE cg.groups_id = g.id AND cgs.users_id = :userToken
-                            ORDER BY cg.created_at DESC
-                            LIMIT 1
-                        )
-                    END AS last_chat
+				(
+                        SELECT COUNT(*)
+                        FROM ir_chat_groups cg
+                        WHERE cg.groups_id = g.id AND cg.users_id =  ${getToken.tod}
+                ) AS last_chat
             FROM ir_groups g
             LEFT JOIN ir_content_details cds ON cds.id = g.content_details_id
             LEFT JOIN ir_users u ON u.id = g.users_id
