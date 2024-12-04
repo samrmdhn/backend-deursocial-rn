@@ -50,7 +50,7 @@ export const initializeSocket = (io) => {
                         INNER JOIN ir_users u ON u.id = cg.users_id
                         INNER JOIN ir_groups g ON g.id = cg.groups_id
                         ${whereClause}
-                        ORDER BY cg.id, g.id DESC
+                        ORDER BY cg.id DESC
                     LIMIT :limit OFFSET :offset;
                 `;
                 const messages = await db.query(query, {
