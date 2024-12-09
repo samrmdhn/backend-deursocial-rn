@@ -17,15 +17,6 @@ Table referal_users {
 }
 
 
-Table posts {
-  id bigint [increment, pk]
-  caption_post string[150]
-  file string[255]
-  users_id bigint [ref: > users.id, not null]
-  created_at bigint
-  updated_at bigint
-}
-
 Table post_likes {
   id bigint [increment, pk]
   users_id bigint [ref: > users.id, not null]

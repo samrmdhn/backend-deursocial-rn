@@ -27,6 +27,11 @@ import GroupsPostsLikesModels from "../apps/models/GroupsPostsLikesModels.js";
 import ChatGroupsModels from "../apps/models/ChatGroupsModels.js";
 import FollowerUsersModels from "../apps/models/FollowerUsersModels.js";
 import ChatStatusGroupsModels from "../apps/models/ChatStatusGroupsModels.js";
+import PostContentDetailModels from "../apps/models/PostContentDetailModels.js";
+import FilePostContentDetailModels from "../apps/models/FilePostContentDetailModels.js";
+import CommentPostContentDetailModels from "../apps/models/CommentPostContentDetailModels.js";
+import LikePostContentDetailModels from "../apps/models/LikePostContentDetailModels.js";
+import ImpressionPostContentDetailModels from "../apps/models/ImpressionPostContentDetailModels.js";
 
 // Menggunakan force: true akan membuat ulang tabel setiap kali dijalankan contoh => Example.sync({ force: true })
 async function syncDatabase() {
@@ -89,6 +94,16 @@ async function syncDatabase() {
         console.log("Table table Follower Users has been created.");
         await ChatStatusGroupsModels.sync({ force: false });
         console.log("Table table Status Chat Groups has been created.");
+        await PostContentDetailModels.sync({ force: false });
+        console.log("Table table post content detail has been created.");
+        await FilePostContentDetailModels.sync({ force: false });
+        console.log("Table table file post content detail has been created.");
+        await CommentPostContentDetailModels.sync({ force: false });
+        console.log("Table table comment post content detail has been created.");
+        await LikePostContentDetailModels.sync({ force: false });
+        console.log("Table table like post content detail has been created.");
+        await ImpressionPostContentDetailModels.sync({ force: false });
+        console.log("Table table like post content detail has been created.");
 
 
         await db.close();
