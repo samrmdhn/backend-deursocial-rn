@@ -44,6 +44,16 @@ export const getPostPerContentDetail = async(req, res) => {
                     FROM ir_impression_post_content_details ipcds
                     WHERE ipcds.post_content_details_id = pcds.id
                 ) AS total_impressions,
+                (
+                    SELECT COUNT(*)
+                    FROM ir_like_post_content_details lpcds
+                    WHERE lpcds.post_content_details_id = pcds.id
+                ) AS total_likes,
+                (
+                    SELECT COUNT(*)
+                    FROM ir_comment_post_content_details cpcds
+                    WHERE cpcds.post_content_details_id = pcds.id
+                ) AS total_comments,
                 TO_CHAR(TO_TIMESTAMP(pcds.created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at,
                 json_build_object(
                     'name', u.display_name,
@@ -164,6 +174,16 @@ export const getDetailPostPerContentDetail = async (req, res, transaction) => {
                     FROM ir_impression_post_content_details ipcds
                     WHERE ipcds.post_content_details_id = pcds.id
                 ) AS total_impressions,
+                (
+                    SELECT COUNT(*)
+                    FROM ir_like_post_content_details lpcds
+                    WHERE lpcds.post_content_details_id = pcds.id
+                ) AS total_likes,
+                (
+                    SELECT COUNT(*)
+                    FROM ir_comment_post_content_details cpcds
+                    WHERE cpcds.post_content_details_id = pcds.id
+                ) AS total_comments,
                 TO_CHAR(TO_TIMESTAMP(pcds.created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at,
                 json_build_object(
                     'name', u.display_name,
@@ -184,7 +204,6 @@ export const getDetailPostPerContentDetail = async (req, res, transaction) => {
                 LEFT JOIN ir_content_details cds ON pcds.content_details_id = cds.id
                 LEFT JOIN ir_users u ON pcds.users_id = u.id
                 LEFT JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
-                LEFT JOIN ir_impression_post_content_details ipcds ON ipcds.post_content_details_id = pcds.id
             ${whereClause}
         `;
         const executeQuery = await db.query(query, {
