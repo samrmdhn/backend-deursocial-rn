@@ -192,13 +192,19 @@ export const getDetailPostPerContentDetail = async (req, res, transaction) => {
             type: db.QueryTypes.SELECT,
             plain: true
         });
-        ImpressionPostContentDetailModels.create({
-            users_id: users_id,
-            post_content_details_id: executeQuery.id
-        })
-        if (!executeQuery) {
+
+        const getIdPostContentDetail = await PostContentDetailModels.findOne({
+            where: {
+                slug: slugPostContentDetail,
+            },
+        });
+        if (!getIdPostContentDetail) {
             return responseApi(res, [], null, "Server error....", 400);
         }
+        ImpressionPostContentDetailModels.create({
+            users_id: users_id,
+            post_content_details_id: getIdPostContentDetail.id
+        })
         return responseApi(res, executeQuery, null, "Data has been retrived", 1);
     } catch (error) {
         console.log("error get detail post", error);
