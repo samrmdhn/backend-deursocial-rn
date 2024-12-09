@@ -45,3 +45,10 @@ export {
     updateDataUser,
     checkExistingDataUser
 } from "./controllers/UsersControllers.js";
+export {
+    createPostContentDetail,
+    getPostPerContentDetail,
+    commentPostPerContentDetail,
+    likePostPerContentDetail,
+    getDetailPostPerContentDetail
+} from "./controllers/PostControllers.js";

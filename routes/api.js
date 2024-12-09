@@ -3,6 +3,7 @@ import * as SettingControllers from "../apps/index.js";
 import * as HomepageControllers from "../apps/index.js";
 import * as GroupsControllers from "../apps/index.js";
 import * as ChatGroupsControllers from "../apps/index.js";
+import * as PostControllers from "../apps/index.js";
 import * as UsersControllers from "../apps/index.js";
 import { verifyToken } from "../apps/middlewares/verifyToken.js";
 
@@ -50,5 +51,12 @@ api.post("/api/user/existing/:type", verifyToken,UsersControllers.checkExistingD
 api.get("/api/user/detail/:username", verifyToken, UsersControllers.getDetailUser);
 api.post("/api/user", verifyToken, UsersControllers.updateDataUser);
 api.post("/api/follow/:username", verifyToken, UsersControllers.followUser);
+
+
+api.get("/api/post/:slugContentDetail", verifyToken, PostControllers.getPostPerContentDetail);
+api.post("/api/create/post/:slugContentDetail", verifyToken, PostControllers.createPostContentDetail);
+api.post("/api/comment/post/:slugPostContentDetail", verifyToken, PostControllers.commentPostPerContentDetail);
+api.post("/api/like/post/:slugPostContentDetail", verifyToken, PostControllers.likePostPerContentDetail);
+api.get("/api/detail/post/:slugPostContentDetail", verifyToken, PostControllers.getDetailPostPerContentDetail);
 
 export default api;
