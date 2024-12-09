@@ -81,7 +81,7 @@ export const getPostPerContentDetail = async(req, res) => {
             replacements,
             type: db.QueryTypes.SELECT,
         });
-        return responseApi(res, executeQuery, null, "Data has been retrived", 1);
+        return responseApi(res, executeQuery, null, "Data has been retrived", 0);
     } catch (error) {
         console.log("error post", error);
         return responseApi(res, [], null, "Server error....", 1);
@@ -224,7 +224,7 @@ export const getDetailPostPerContentDetail = async (req, res, transaction) => {
             users_id: users_id,
             post_content_details_id: getIdPostContentDetail.id
         })
-        return responseApi(res, executeQuery, null, "Data has been retrived", 1);
+        return responseApi(res, executeQuery, null, "Data has been retrived", 0);
     } catch (error) {
         console.log("error get detail post", error);
         return responseApi(res, [], null, "Server error....", 1);
