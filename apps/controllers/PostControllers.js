@@ -14,6 +14,7 @@ import ImpressionPostContentDetailModels from "../models/ImpressionPostContentDe
 import CommentPostContentDetailModels from "../models/CommentPostContentDetailModels.js";
 import PostContentDetailModels from "../models/PostContentDetailModels.js";
 import db from "../../configs/Database.js";
+import { uploadFile } from "../../helpers/FileUpload.js";
 
 
 export const getPostPerContentDetail = async(req, res) => {
@@ -250,6 +251,9 @@ export const createPostContentDetail = withTransaction(
                 ) {
                     return responseApi(res, [], null, "Image not valid", 400);
                 }
+                const fileDestination =
+                process.env.APP_LOCATION_FILE + filesNamed;
+                await uploadFile(file, fileDestination);
                 console.log("filesNamed", filesNamed)
             }
             const getIdContentDetail = await ContentDetailsModels.findOne({
