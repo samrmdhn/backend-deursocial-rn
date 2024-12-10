@@ -250,6 +250,7 @@ export const createPostContentDetail = withTransaction(
                 ) {
                     return responseApi(res, [], null, "Image not valid", 400);
                 }
+                console.log("filesNamed", filesNamed)
             }
             const getIdContentDetail = await ContentDetailsModels.findOne({
                 where: {
