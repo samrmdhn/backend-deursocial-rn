@@ -2,20 +2,19 @@ import db from "../../configs/Database.js";
 import DataTypesCustom from "../../libs/DataTypesCustom.js";
 const { TYPES } = DataTypesCustom;
 
-const PostContentDetailModels = db.define("ir_post_content_details", {
+const SegmentedPostContentDetailModels = db.define("ir_segmented_post_content_details", {
     id: {
         type: TYPES.BIGINT,
         primaryKey: true,
         autoIncrement: true,
     },
-    caption_post: {
-        type: TYPES.TEXT("long"),
-        allowNull: true,
-    },
-    slug: {
-        type: TYPES.STRING(100),
+    post_content_details_id: {
+        type: TYPES.BIGINT,
         allowNull: false,
-        unique: true
+        references: {
+            model: "ir_post_content_details",
+            key: "id",
+        },
     },
     users_id: {
         type: TYPES.BIGINT,
@@ -25,14 +24,13 @@ const PostContentDetailModels = db.define("ir_post_content_details", {
             key: "id",
         },
     },
-    type: {
-        type: TYPES.TINYINT,
+    content_details_id: {
+        type: TYPES.BIGINT,
         allowNull: false,
-        description: "0: Global, 1: Segmented, 2: Ticket",
-        defaultValue: 0,
-        validate: {
-            isIn: [[0, 1, 2]], // Hanya boleh 0, 1, 2 (0: Global, 1: Segmented, 2: Ticket)
-        }
+        references: {
+            model: "ir_content_details",
+            key: "id",
+        },
     },
     created_at: {
         type: TYPES.BIGINT,
@@ -47,4 +45,4 @@ const PostContentDetailModels = db.define("ir_post_content_details", {
     timestamps: false,
 });
 
-export default PostContentDetailModels;
+export default SegmentedPostContentDetailModels;
