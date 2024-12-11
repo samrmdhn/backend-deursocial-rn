@@ -254,7 +254,7 @@ export const createPostContentDetail = withTransaction(
         try {
             const usersToken = getDataUserUsingToken(req, res);
             const users_id = usersToken.tod;
-            const { caption_post, event_slug } = req.body;
+            const { caption_post, event_slug, post_type } = req.body;
             const file = req.files && req.files.image;
             let filesNamed = "";
             if (file) {
@@ -294,6 +294,10 @@ export const createPostContentDetail = withTransaction(
                 { transaction }
             );
             if (typeof event_slug !== "undefined") {
+                if (Number(post_type) == 0 || Number(post_type) == 2) {
+                    console.log("Data wrong because event slug not valid!")
+                    throw new Error("Data wrong because event slug not valid!");
+                }
                 const getIdContentDetail = await ContentDetailsModels.findOne({
                     where: {
                         slug: event_slug,
@@ -318,7 +322,7 @@ export const createPostContentDetail = withTransaction(
                 await uploadFile(file, fileDestination);
                 console.log("filesNamed", filesNamed);
             }
-            return responseApi(res, event_slug, null, "Data has been saved", 0);
+            return responseApi(res, [], null, "Data has been saved", 0);
         } catch (error) {
             console.log("error post", error);
             throw error;
