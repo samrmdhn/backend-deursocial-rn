@@ -15,11 +15,11 @@ import CommentPostContentDetailModels from "../models/CommentPostContentDetailMo
 import PostContentDetailModels from "../models/PostContentDetailModels.js";
 import db from "../../configs/Database.js";
 import { uploadFile } from "../../helpers/FileUpload.js";
+import SegmentedPostContentDetailModels from "../models/SegmentedPostContentDetailModels.js";
 
-
-export const getPostPerContentDetail = async(req, res) => {
+export const getPostPerContentDetail = async (req, res) => {
     try {
-        const { page = 1} = req.query;
+        const { page = 1 } = req.query;
         const slugContentDetail = req.params.slugContentDetail;
         const limit = 10;
         const offset = (page - 1) * limit;
@@ -81,73 +81,85 @@ export const getPostPerContentDetail = async(req, res) => {
             replacements,
             type: db.QueryTypes.SELECT,
         });
-        return responseApi(res, executeQuery, null, "Data has been retrived", 0);
+        return responseApi(
+            res,
+            executeQuery,
+            null,
+            "Data has been retrived",
+            0
+        );
     } catch (error) {
         console.log("error post", error);
         return responseApi(res, [], null, "Server error....", 1);
     }
 };
 
-export const likePostPerContentDetail = withTransaction(async (req, res, transaction) => {
-    try {
-        const usersToken = getDataUserUsingToken(req, res);
-        const users_id = usersToken.tod;
-        const slugPostContentDetail = req.params.slugPostContentDetail;
-        const getIdPostContentDetail = await PostContentDetailModels.findOne({
-            where: {
-                slug: slugPostContentDetail,
-            },
-        });
-        if (!getIdPostContentDetail) {
-            return responseApi(res, [], null, "Server error....", 400);
+export const likePostPerContentDetail = withTransaction(
+    async (req, res, transaction) => {
+        try {
+            const usersToken = getDataUserUsingToken(req, res);
+            const users_id = usersToken.tod;
+            const slugPostContentDetail = req.params.slugPostContentDetail;
+            const getIdPostContentDetail =
+                await PostContentDetailModels.findOne({
+                    where: {
+                        slug: slugPostContentDetail,
+                    },
+                });
+            if (!getIdPostContentDetail) {
+                return responseApi(res, [], null, "Server error....", 400);
+            }
+            await LikePostContentDetailModels.create(
+                {
+                    users_id: users_id,
+                    created_at: dateToEpochTime(req.headers["x-date-for"]),
+                    post_content_details_id: getIdPostContentDetail.id,
+                },
+                { transaction }
+            );
+            return responseApi(res, [], null, "Data has been saved", 0);
+        } catch (error) {
+            console.log("error post", error);
+            return responseApi(res, [], null, "Server error....", 1);
         }
-        await LikePostContentDetailModels.create(
-            {
-                users_id: users_id,
-                created_at: dateToEpochTime(req.headers["x-date-for"]),
-                post_content_details_id: getIdPostContentDetail.id,
-            },
-            { transaction }
-        );
-        return responseApi(res, [], null, "Data has been saved", 0);
-    } catch (error) {
-        console.log("error post", error);
-        return responseApi(res, [], null, "Server error....", 1);
     }
-});
+);
 
-export const commentPostPerContentDetail = withTransaction(async (req, res, transaction) => {
-    try {
-        const { comment_post } = req.body;
-        const usersToken = getDataUserUsingToken(req, res);
-        const users_id = usersToken.tod;
-        const slugPostContentDetail = req.params.slugPostContentDetail;
-        const getIdPostContentDetail = await PostContentDetailModels.findOne({
-            where: {
-                slug: slugPostContentDetail,
-            },
-        });
-        if (!getIdPostContentDetail) {
-            return responseApi(res, [], null, "Server error....", 400);
+export const commentPostPerContentDetail = withTransaction(
+    async (req, res, transaction) => {
+        try {
+            const { comment_post } = req.body;
+            const usersToken = getDataUserUsingToken(req, res);
+            const users_id = usersToken.tod;
+            const slugPostContentDetail = req.params.slugPostContentDetail;
+            const getIdPostContentDetail =
+                await PostContentDetailModels.findOne({
+                    where: {
+                        slug: slugPostContentDetail,
+                    },
+                });
+            if (!getIdPostContentDetail) {
+                return responseApi(res, [], null, "Server error....", 400);
+            }
+            if (comment_post.length > 100) {
+                return responseApi(res, [], null, "Comment to long", 400);
+            }
+            await CommentPostContentDetailModels.create(
+                {
+                    users_id: users_id,
+                    post_content_details_id: getIdPostContentDetail.id,
+                    comment_post: comment_post,
+                    created_at: dateToEpochTime(req.headers["x-date-for"]),
+                },
+                { transaction }
+            );
+            return responseApi(res, [], null, "Data has been saved", 0);
+        } catch (error) {
+            console.log("error post", error);
+            return responseApi(res, [], null, "Server error....", 1);
         }
-        if (comment_post.length > 100) {
-            return responseApi(res, [], null, "Comment to long", 400);
-        }
-        await CommentPostContentDetailModels.create(
-            {
-                users_id: users_id,
-                post_content_details_id: getIdPostContentDetail.id,
-                comment_post: comment_post,
-                created_at: dateToEpochTime(req.headers["x-date-for"])
-            },
-            { transaction }
-        );
-        return responseApi(res, [], null, "Data has been saved", 0);
-    } catch (error) {
-        console.log("error post", error);
-        return responseApi(res, [], null, "Server error....", 1);
     }
-});
+);
 
 export const getDetailPostPerContentDetail = async (req, res, transaction) => {
     try {
@@ -209,7 +221,7 @@ export const getDetailPostPerContentDetail = async (req, res, transaction) => {
         const executeQuery = await db.query(query, {
             replacements,
             type: db.QueryTypes.SELECT,
-            plain: true
+            plain: true,
         });
 
         const getIdPostContentDetail = await PostContentDetailModels.findOne({
@@ -222,9 +234,15 @@ export const getDetailPostPerContentDetail = async (req, res, transaction) => {
         }
         ImpressionPostContentDetailModels.create({
             users_id: users_id,
-            post_content_details_id: getIdPostContentDetail.id
-        })
-        return responseApi(res, executeQuery, null, "Data has been retrived", 0);
+            post_content_details_id: getIdPostContentDetail.id,
+        });
+        return responseApi(
+            res,
+            executeQuery,
+            null,
+            "Data has been retrived",
+            0
+        );
     } catch (error) {
         console.log("error get detail post", error);
         return responseApi(res, [], null, "Server error....", 1);
@@ -236,8 +254,7 @@ export const createPostContentDetail = withTransaction(
         try {
             const usersToken = getDataUserUsingToken(req, res);
             const users_id = usersToken.tod;
-            const { caption_post } = req.body;
-            const slugContentDetail = req.params.slugContentDetail;
+            const { caption_post, event_slug } = req.body;
             const file = req.files && req.files.image;
             let filesNamed = "";
             if (file) {
@@ -251,23 +268,15 @@ export const createPostContentDetail = withTransaction(
                     return responseApi(res, [], null, "Image not valid", 400);
                 }
                 const fileDestination =
-                process.env.APP_LOCATION_FILE + filesNamed;
+                    process.env.APP_LOCATION_FILE + filesNamed;
                 await uploadFile(file, fileDestination);
-                console.log("filesNamed", filesNamed)
+                console.log("filesNamed", filesNamed);
             }
-            const getIdContentDetail = await ContentDetailsModels.findOne({
-                where: {
-                    slug: slugContentDetail,
-                },
-            });
-            if (!getIdContentDetail) {
-                return responseApi(res, [], null, "Server error....", 400);
-            }
+
             if (caption_post.length > 100) {
                 return responseApi(res, [], null, "Caption to long", 400);
             }
             const data = {
-                content_details_id: getIdContentDetail.id,
                 created_at: dateToEpochTime(req.headers["x-date-for"]),
                 caption_post: caption_post,
                 slug: makeRandomString(30),
@@ -280,13 +289,39 @@ export const createPostContentDetail = withTransaction(
                 {
                     post_content_details_id: dataPost.id,
                     file: filesNamed,
+                    created_at: dateToEpochTime(req.headers["x-date-for"]),
                 },
                 { transaction }
             );
-            return responseApi(res, [], null, "Data has been saved", 0);
+            if (typeof event_slug !== "undefined") {
+                const getIdContentDetail = await ContentDetailsModels.findOne({
+                    where: {
+                        slug: event_slug,
+                    },
+                });
+                if (!getIdContentDetail) {
+                    throw new Error("Content detail not found!");
+                }
+                await SegmentedPostContentDetailModels.create(
+                    {
+                        post_content_details_id: dataPost.id,
+                        users_id: users_id,
+                        content_details_id: getIdContentDetail.id,
+                        created_at: dateToEpochTime(req.headers["x-date-for"]),
+                    },
+                    { transaction }
+                );
+            }
+
+            if (file) {
+                const fileDestination = process.env.APP_LOCATION_FILE + filesNamed;
+                await uploadFile(file, fileDestination);
+                console.log("filesNamed", filesNamed);
+            }
+            return responseApi(res, event_slug, null, "Data has been saved", 0);
         } catch (error) {
             console.log("error post", error);
-            return responseApi(res, [], null, "Server error....", 1);
+            throw error;
         }
     }
 );
