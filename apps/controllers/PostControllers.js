@@ -75,7 +75,6 @@ export const getPostPerContentDetail = async(req, res) => {
                 LEFT JOIN ir_content_details cds ON pcds.content_details_id = cds.id
                 LEFT JOIN ir_users u ON pcds.users_id = u.id
                 LEFT JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
-                LEFT JOIN ir_impression_post_content_details ipcds ON ipcds.post_content_details_id = pcds.id
             ${whereClause}
         `;
         const executeQuery = await db.query(query, {
