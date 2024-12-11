@@ -19,20 +19,29 @@ import SegmentedPostContentDetailModels from "../models/SegmentedPostContentDeta
 
 export const getPostPerContentDetail = async (req, res) => {
     try {
-        const { page = 1 } = req.query;
-        const slugContentDetail = req.params.slugContentDetail;
+        const usersToken = getDataUserUsingToken(req, res);
+        const users_id = usersToken.tod;
+        const { page } = req.query;
         const limit = 10;
         const offset = (page - 1) * limit;
-        let whereClause = `WHERE cds.slug = :slugContentDetail`;
-        const replacements = {
-            slugContentDetail: slugContentDetail,
+        const { event_slug } = req.body;
+
+        let whereClause = `WHERE pcds.users_id = :usersId`;
+        let queryJoinTable = "";
+        let fieldTable = "";
+
+        let replacements = {
+            usersId: users_id,
             limit: parseInt(limit, 10),
             offset: parseInt(offset, 10),
         };
-        const query = `
-            SELECT
-                pcds.caption_post AS caption,
-                pcds.slug,
+        if (typeof event_slug !== "undefined") {
+            whereClause += ` AND cds.slug = :slugContentDetail`;
+            replacements.slugContentDetail = event_slug;
+            queryJoinTable = `
+                LEFT JOIN ir_segmented_post_content_details spcds ON pcds.ID = spcds.post_content_details_id
+	            LEFT JOIN ir_content_details cds ON spcds.content_details_id = cds.id`;
+            fieldTable = `
                 cds.title AS event_name,
                 cds.slug AS event_slug,
                 CASE 
@@ -40,6 +49,19 @@ export const getPostPerContentDetail = async (req, res) => {
                     WHEN cds.is_trending = 1 THEN 'ongoing'
                     ELSE 'upcoming' 
                 END AS event_status,
+            `
+        }
+
+        const query = `
+            SELECT
+                pcds.caption_post AS caption,
+                pcds.slug,
+                ${fieldTable}
+                CASE 
+                    WHEN pcds.type = 0 THEN 'global'
+                    WHEN pcds.type = 1 THEN 'event'
+                    ELSE 'ticket' 
+                END AS event_type,
                 (
                     SELECT COUNT(*)
                     FROM ir_impression_post_content_details ipcds
@@ -72,7 +94,7 @@ export const getPostPerContentDetail = async (req, res) => {
                 ) AS images
             FROM
                 ir_post_content_details pcds
-                LEFT JOIN ir_content_details cds ON pcds.content_details_id = cds.id
+                ${queryJoinTable}
                 LEFT JOIN ir_users u ON pcds.users_id = u.id
                 LEFT JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
             ${whereClause}
@@ -161,15 +183,17 @@ export const commentPostPerContentDetail = withTransaction(
     }
 );
 
-export const getDetailPostPerContentDetail = async (req, res, transaction) => {
+export const getDetailPostPerContentDetail = async (req, res) => {
     try {
         const usersToken = getDataUserUsingToken(req, res);
         const users_id = usersToken.tod;
         const slugPostContentDetail = req.params.slugPostContentDetail;
         let whereClause = `WHERE pcds.slug = :slugPostContentDetail`;
+
         const replacements = {
             slugPostContentDetail: slugPostContentDetail,
         };
+
         const query = `
             SELECT
                 pcds.caption_post AS caption,
@@ -177,10 +201,10 @@ export const getDetailPostPerContentDetail = async (req, res, transaction) => {
                 cds.title AS event_name,
                 cds.slug AS event_slug,
                 CASE 
-                    WHEN cds.is_trending = 0 THEN 'ended'
-                    WHEN cds.is_trending = 1 THEN 'ongoing'
-                    ELSE 'upcoming' 
-                END AS event_status,
+                    WHEN pcds.type = 0 THEN 'global'
+                    WHEN cds.is_trending = 1 THEN 'event'
+                    ELSE 'ticket' 
+                END AS event_type,
                 (
                     SELECT COUNT(*)
                     FROM ir_impression_post_content_details ipcds
@@ -213,11 +237,14 @@ export const getDetailPostPerContentDetail = async (req, res, transaction) => {
                 ) AS images
             FROM
                 ir_post_content_details pcds
-                LEFT JOIN ir_content_details cds ON pcds.content_details_id = cds.id
+                LEFT JOIN ir_segmented_post_content_details spcds ON pcds.ID = spcds.post_content_details_id
+	            LEFT JOIN ir_content_details cds ON spcds.content_details_id = cds.id
                 LEFT JOIN ir_users u ON pcds.users_id = u.id
                 LEFT JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
             ${whereClause}
         `;
+
+
         const executeQuery = await db.query(query, {
             replacements,
             type: db.QueryTypes.SELECT,
@@ -276,11 +303,15 @@ export const createPostContentDetail = withTransaction(
             if (caption_post.length > 100) {
                 return responseApi(res, [], null, "Caption to long", 400);
             }
+            if (Number(post_type) == 2 && typeof event_slug === "undefined") {
+                throw new Error("Data wrong because event slug not valid!");
+            }
             const data = {
                 created_at: dateToEpochTime(req.headers["x-date-for"]),
                 caption_post: caption_post,
                 slug: makeRandomString(30),
                 users_id: users_id,
+                type: post_type,
             };
             const dataPost = await PostContentDetailModels.create(data, {
                 transaction,
@@ -294,8 +325,8 @@ export const createPostContentDetail = withTransaction(
                 { transaction }
             );
             if (typeof event_slug !== "undefined") {
-                if (Number(post_type) == 0 || Number(post_type) == 2) {
-                    console.log("Data wrong because event slug not valid!")
+                if (Number(post_type) == 0) {
+                    console.log("Data wrong because event slug not valid!");
                     throw new Error("Data wrong because event slug not valid!");
                 }
                 const getIdContentDetail = await ContentDetailsModels.findOne({
@@ -318,7 +349,8 @@ export const createPostContentDetail = withTransaction(
             }
 
             if (file) {
-                const fileDestination = process.env.APP_LOCATION_FILE + filesNamed;
+                const fileDestination =
+                    process.env.APP_LOCATION_FILE + filesNamed;
                 await uploadFile(file, fileDestination);
                 console.log("filesNamed", filesNamed);
             }
