@@ -53,10 +53,10 @@ api.post("/api/user", verifyToken, UsersControllers.updateDataUser);
 api.post("/api/follow/:username", verifyToken, UsersControllers.followUser);
 
 
-api.get("/api/post/:slugContentDetail", verifyToken, PostControllers.getPostPerContentDetail);
 api.post("/api/create/post", verifyToken, PostControllers.createPostContentDetail);
 api.post("/api/comment/post/:slugPostContentDetail", verifyToken, PostControllers.commentPostPerContentDetail);
 api.post("/api/like/post/:slugPostContentDetail", verifyToken, PostControllers.likePostPerContentDetail);
+api.get("/api/post", verifyToken, PostControllers.getPostPerContentDetail);
 api.get("/api/detail/post/:slugPostContentDetail", verifyToken, PostControllers.getDetailPostPerContentDetail);
 
 export default api;
