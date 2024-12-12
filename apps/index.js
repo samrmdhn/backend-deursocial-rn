@@ -47,7 +47,7 @@ export {
 } from "./controllers/UsersControllers.js";
 export {
     createPostContentDetail,
-    getPostPerContentDetail,
+    getPost,
     commentPostPerContentDetail,
     likePostPerContentDetail,
     getDetailPostPerContentDetail
