@@ -34,7 +34,7 @@ export const getDetailUser = async (req, res) => {
                         WHERE ifs.following_id = u.id
                         ${
                             !isOwner
-                                ? `AND ifs.follower_id = ${getToken.tod}`
+                                ? `AND ifs.follower_id = u.id`
                                 : ""
                         }
                     ) THEN true
@@ -51,20 +51,20 @@ export const getDetailUser = async (req, res) => {
                 INNER JOIN ir_users u_f ON u_f.id = f.follower_id
                 ${
                     !isOwner
-                        ? `WHERE f.following_id = u.id AND f.follower_id = ${getToken.tod}`
-                        : `WHERE f.following_id = ${getToken.tod}`
+                        ? `WHERE f.following_id = u.id AND f.follower_id = u.id`
+                        : `WHERE f.following_id = u.id`
                 }
-                LIMIT 5
+                LIMIT 10
             ) AS followers,
             (
                 SELECT COUNT(*)
                 FROM ir_follower_users f
                 ${
                     !isOwner
-                        ? `WHERE f.following_id = u.id AND f.follower_id = ${getToken.tod}`
-                        : `WHERE f.following_id = ${getToken.tod}`
+                        ? `WHERE f.following_id = u.id AND f.follower_id = u.id`
+                        : `WHERE f.following_id = u.id`
                 }
-            ) AS total_followers`;
+            ) AS total_followers,`;
 
         const query = `
             SELECT
@@ -82,6 +82,59 @@ export const getDetailUser = async (req, res) => {
                     END
                 ) as gender,
                 ${queryFollowedUser}
+                (
+                    SELECT COUNT(*)
+                    FROM ir_post_content_details pcds
+                    WHERE pcds.users_id = u.id
+                ) AS total_post,
+                (
+                    SELECT COALESCE(json_agg(
+                        json_build_object(
+                            'slug', pcds.slug,
+                            'type', 
+                                CASE 
+                                    WHEN pcds.type = 0 THEN 'global'
+                                    WHEN pcds.type = 1 THEN 'event'
+                                    ELSE 'ticket' 
+                                END,
+                            'images', (
+                                SELECT fpcds.file
+                                FROM ir_file_post_content_details fpcds
+                                WHERE fpcds.post_content_details_id = pcds.id
+                                ORDER BY fpcds.id ASC
+                                LIMIT 1
+                            )
+                        )
+                    ), '[]')
+                    FROM ir_post_content_details pcds
+                    LEFT JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
+                    WHERE pcds.users_id = u.id AND (pcds.type = 0 OR pcds.type = 1)
+                    LIMIT 9
+                ) AS user_posts,
+                (
+                    SELECT COALESCE(json_agg(
+                        json_build_object(
+                            'slug', pcds.slug,
+                            'type', 
+                                CASE 
+                                    WHEN pcds.type = 0 THEN 'global'
+                                    WHEN pcds.type = 1 THEN 'event'
+                                    ELSE 'ticket' 
+                                END,
+                            'images', (
+                                SELECT fpcds.file
+                                FROM ir_file_post_content_details fpcds
+                                WHERE fpcds.post_content_details_id = pcds.id
+                                ORDER BY fpcds.id ASC
+                                LIMIT 1
+                            )
+                        )
+                    ), '[]')
+                    FROM ir_post_content_details pcds
+                    LEFT JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
+                    WHERE pcds.users_id = u.id AND pcds.type = 0
+                    LIMIT 9
+                ) AS user_post_tickets
             FROM ir_users u
             WHERE username = :usernameUser
             GROUP BY u.id;
@@ -104,6 +157,8 @@ export const getDetailUser = async (req, res) => {
             followers: queryUser.followers || [],
             total_followers: queryUser.total_followers || 0,
             followed_user: !isOwner ? queryUser.followed_user : false,
+            user_posts: queryUser.user_posts,
+            user_post_tickets: queryUser.user_post_tickets,
         };
 
         return responseApi(res, response, null, "Data has been retrieved", 0);
