@@ -26,7 +26,7 @@ export const getPostPerContentDetail = async (req, res) => {
         const offset = (page - 1) * limit;
         const { event_slug } = req.body;
 
-        let whereClause = `WHERE pcds.users_id = :usersId`;
+        let whereClause = "";
         let queryJoinTable = "";
         let fieldTable = "";
 
@@ -36,7 +36,7 @@ export const getPostPerContentDetail = async (req, res) => {
             offset: parseInt(offset, 10),
         };
         if (typeof event_slug !== "undefined") {
-            whereClause += ` AND cds.slug = :slugContentDetail`;
+            whereClause += ` WHERE cds.slug = :slugContentDetail`;
             replacements.slugContentDetail = event_slug;
             queryJoinTable = `
                 LEFT JOIN ir_segmented_post_content_details spcds ON pcds.ID = spcds.post_content_details_id
