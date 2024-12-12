@@ -84,6 +84,11 @@ export const getDetailUser = async (req, res) => {
                 ${queryFollowedUser}
                 (
                     SELECT COUNT(*)
+                    FROM ir_content_detail_followers cdf
+                    WHERE cdf.users_id = u.id
+                ) AS total_event_followed,
+                (
+                    SELECT COUNT(*)
                     FROM ir_post_content_details pcds
                     WHERE pcds.users_id = u.id
                 ) AS total_post,
@@ -132,7 +137,7 @@ export const getDetailUser = async (req, res) => {
                     ), '[]')
                     FROM ir_post_content_details pcds
                     LEFT JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
-                    WHERE pcds.users_id = u.id AND pcds.type = 0
+                    WHERE pcds.users_id = u.id AND pcds.type = 2
                     LIMIT 9
                 ) AS user_post_tickets
             FROM ir_users u
@@ -159,6 +164,8 @@ export const getDetailUser = async (req, res) => {
             followed_user: !isOwner ? queryUser.followed_user : false,
             user_posts: queryUser.user_posts,
             user_post_tickets: queryUser.user_post_tickets,
+            total_post: queryUser.total_post,
+            total_event_followed: queryUser.total_event_followed,
         };
 
         return responseApi(res, response, null, "Data has been retrieved", 0);
