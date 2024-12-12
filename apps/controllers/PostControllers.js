@@ -327,7 +327,7 @@ export const createPostContentDetail = withTransaction(
             const data = {
                 created_at: dateToEpochTime(req.headers["x-date-for"]),
                 caption_post: caption_post,
-                slug: makeRandomString(30),
+                slug: btoa(dateToEpochTime(req.headers["x-date-for"])),
                 users_id: users_id,
                 type: post_type,
             };
