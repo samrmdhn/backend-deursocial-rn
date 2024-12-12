@@ -27,8 +27,6 @@ export const getPostPerContentDetail = async (req, res) => {
         const { event_slug } = req.body;
 
         let whereClause = "";
-        let queryJoinTable = "";
-        let fieldTable = "";
 
         let replacements = {
             usersId: users_id,
@@ -38,10 +36,12 @@ export const getPostPerContentDetail = async (req, res) => {
         if (typeof event_slug !== "undefined") {
             whereClause += ` WHERE cds.slug = :slugContentDetail`;
             replacements.slugContentDetail = event_slug;
-            queryJoinTable = `
-                LEFT JOIN ir_segmented_post_content_details spcds ON pcds.ID = spcds.post_content_details_id
-	            LEFT JOIN ir_content_details cds ON spcds.content_details_id = cds.id`;
-            fieldTable = `
+        }
+
+        const query = `
+            SELECT
+                pcds.caption_post AS caption,
+                pcds.slug,
                 cds.title AS event_name,
                 cds.slug AS event_slug,
                 CASE 
@@ -49,14 +49,6 @@ export const getPostPerContentDetail = async (req, res) => {
                     WHEN cds.is_trending = 1 THEN 'ongoing'
                     ELSE 'upcoming' 
                 END AS event_status,
-            `
-        }
-
-        const query = `
-            SELECT
-                pcds.caption_post AS caption,
-                pcds.slug,
-                ${fieldTable}
                 CASE 
                     WHEN pcds.type = 0 THEN 'global'
                     WHEN pcds.type = 1 THEN 'event'
@@ -94,7 +86,8 @@ export const getPostPerContentDetail = async (req, res) => {
                 ) AS images
             FROM
                 ir_post_content_details pcds
-                ${queryJoinTable}
+                LEFT JOIN ir_segmented_post_content_details spcds ON pcds.ID = spcds.post_content_details_id
+	            LEFT JOIN ir_content_details cds ON spcds.content_details_id = cds.id
                 LEFT JOIN ir_users u ON pcds.users_id = u.id
                 LEFT JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
             ${whereClause}
