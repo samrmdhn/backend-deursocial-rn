@@ -17,7 +17,7 @@ import db from "../../configs/Database.js";
 import { uploadFile } from "../../helpers/FileUpload.js";
 import SegmentedPostContentDetailModels from "../models/SegmentedPostContentDetailModels.js";
 
-export const getPostPerContentDetail = async (req, res) => {
+export const getPost = async (req, res) => {
     try {
         const usersToken = getDataUserUsingToken(req, res);
         const users_id = usersToken.tod;
@@ -96,10 +96,17 @@ export const getPostPerContentDetail = async (req, res) => {
             replacements,
             type: db.QueryTypes.SELECT,
         });
+        
         return responseApi(
             res,
             executeQuery,
-            null,
+            {
+                assets_image_url: process.env.APP_BUCKET_IMAGE,
+                pagination: {
+                    current_page: parseInt(page, 10),
+                    per_page: parseInt(limit, 10)
+                },
+            },
             "Data has been retrived",
             0
         );
