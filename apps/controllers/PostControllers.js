@@ -96,7 +96,24 @@ export const getPost = async (req, res) => {
             replacements,
             type: db.QueryTypes.SELECT,
         });
-        
+        const countQuery = `
+            SELECT COUNT(*) AS total_count
+            FROM
+                ir_post_content_details pcds
+                LEFT JOIN ir_segmented_post_content_details spcds ON pcds.ID = spcds.post_content_details_id
+	            LEFT JOIN ir_content_details cds ON spcds.content_details_id = cds.id
+                LEFT JOIN ir_users u ON pcds.users_id = u.id
+                LEFT JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
+            ${whereClause}
+        `;
+        const totalCountResult = await db.query(countQuery, {
+            replacements,
+            type: db.QueryTypes.SELECT,
+        });
+
+        const totalCount = totalCountResult[0].total_count;
+        const totalPages = Math.ceil(totalCount / limit);
+
         return responseApi(
             res,
             executeQuery,
@@ -104,7 +121,9 @@ export const getPost = async (req, res) => {
                 assets_image_url: process.env.APP_BUCKET_IMAGE,
                 pagination: {
                     current_page: parseInt(page, 10),
-                    per_page: parseInt(limit, 10)
+                    per_page: parseInt(limit, 10),
+                    total: totalCount,
+                    total_page: totalPages,
                 },
             },
             "Data has been retrived",
@@ -243,7 +262,6 @@ export const getDetailPostPerContentDetail = async (req, res) => {
                 LEFT JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
             ${whereClause}
         `;
-
 
         const executeQuery = await db.query(query, {
             replacements,
