@@ -21,7 +21,7 @@ export const getPost = async (req, res) => {
     try {
         const usersToken = getDataUserUsingToken(req, res);
         const users_id = usersToken.tod;
-        const { page } = req.query;
+        const { page=1 } = req.query;
         const limit = 10;
         const offset = (page - 1) * limit;
         const { event_slug } = req.body;
@@ -91,11 +91,14 @@ export const getPost = async (req, res) => {
                 LEFT JOIN ir_users u ON pcds.users_id = u.id
                 LEFT JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
             ${whereClause}
+            LIMIT :limit OFFSET :offset;
         `;
         const executeQuery = await db.query(query, {
-            replacements,
             type: db.QueryTypes.SELECT,
+            replacements
         });
+
+        console.log("replacements", replacements)
         const countQuery = `
             SELECT COUNT(*) AS total_count
             FROM
