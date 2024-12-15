@@ -288,7 +288,7 @@ export const getContents = async (req, res) => {
 
                         'total_posts',(
                             SELECT COUNT(*) AS total_posts
-                            FROM ir_groups_posts gp WHERE gp.content_details_id = cd.id
+                            FROM ir_segmented_post_content_details gp WHERE gp.content_details_id = cd.id
                         ),
                         'total_groups',(
                             SELECT COUNT(*) AS total_groups
@@ -783,37 +783,59 @@ export const getContentDetails = async (req, res) => {
                 (
                     SELECT json_agg(
                         json_build_object(
-                            'caption', gp.caption_post,
-                            'image', gp.photo,
-                            'created_at', TO_CHAR(TO_TIMESTAMP(gp.created_at), 'YYYY-MM-DD HH24:MI:SS'),
-                            'user', json_build_object(
-                                'id', u.id,
-                                'display_name', u.display_name,
-                                'image', u.photo
+                            'slug', pcds.slug,
+                            'caption_post', pcds.caption_post,
+                            'images', (
+                                SELECT COALESCE(json_agg(
+                                    json_build_object(
+                                            'image', fpcds.file
+                                    )
+                                ), '[]') AS members
+                                FROM ir_file_post_content_details fpcds
+                                WHERE fpcds.post_content_details_id = pcds.id
+                                
                             ),
-                            'total_comments', (
-                                SELECT COUNT(DISTINCT gpcs.id)
-                                FROM ir_groups_posts_comments gpcs
-                                WHERE gpcs.group_posts_id = gp.id
+                            'created_at', TO_CHAR(TO_TIMESTAMP(pcds.created_at), 'YYYY-MM-DD HH24:MI:SS'),
+                            'user', json_build_object(
+                                'display_name', pcds.display_name,
+                                'image', pcds.photo
                             ),
                             'total_likes', (
-                                SELECT COUNT(DISTINCT gpls.id)
-                                FROM ir_groups_posts_likes gpls
-                                WHERE gpls.group_posts_id = gp.id
-                            )
+                                SELECT COUNT(*)
+                                FROM ir_like_post_content_details lpcds
+                                WHERE lpcds.post_content_details_id = pcds.id
+                            ),
+                            'total_comments', (
+                                SELECT COUNT(*)
+                                FROM ir_comment_post_content_details cpcds
+                                WHERE cpcds.post_content_details_id = pcds.id
+                            ) 
                         )
                     )
-                    FROM ir_groups_posts gp
-                    JOIN ir_users u ON gp.users_id = u.id
-                    LEFT JOIN ir_groups_posts_comments gpcs ON gp.id = gpcs.group_posts_id
-                    LEFT JOIN ir_groups_posts_likes gpls ON gp.id = gpls.group_posts_id
-                    WHERE gp.content_details_id = cd.id
-                    GROUP BY gp.id
-                    LIMIT 3
+                    FROM (
+                        SELECT pcds.slug, pcds.caption_post, pcds.id, pcds.created_at, u.display_name, u.photo,
+						(SELECT COUNT(*)
+                            FROM ir_comment_post_content_details cpcds
+                            WHERE cpcds.post_content_details_id = pcds.id) AS total_comments, 
+                            (
+                                SELECT COUNT(*)
+                                FROM ir_like_post_content_details lpcds
+                                WHERE lpcds.post_content_details_id = pcds.id
+                            ) AS total_likes
+                        FROM ir_post_content_details pcds
+                        LEFT JOIN ir_users u ON pcds.users_id = u.id
+                        LEFT JOIN ir_segmented_post_content_details spcds ON pcds.id = spcds.post_content_details_id
+                        LEFT JOIN ir_file_post_content_details fpcds ON pcds.id = fpcds.post_content_details_id
+                        WHERE spcds.content_details_id = cd.id
+                        ORDER BY total_likes DESC, total_comments DESC
+                        LIMIT 3
+                    ) AS pcds
                 ) AS posts,
                 (
                     SELECT COUNT(*) AS total_posts
-                    FROM ir_groups_posts gp WHERE gp.content_details_id = cd.id
+                    FROM ir_post_content_details pcds
+                    LEFT JOIN ir_segmented_post_content_details spcds ON pcds.id = spcds.post_content_details_id
+                    WHERE spcds.content_details_id = cd.id
                 ) AS total_posts,
                 (
                     SELECT COUNT(*) AS total_groups
@@ -976,5 +998,3 @@ export const followEvent = async (req, res) => {
         return responseApi(res, [], null, "Server error....", 1);
     }
 };
-
-
