@@ -20,6 +20,10 @@ const ChatGroupsModels = db.define("ir_chat_groups", {
             key: "id",
         },
     },
+    file: {
+        type: TYPES.STRING(100),
+        allowNull: true,
+    },
     users_id: {
         type: TYPES.BIGINT,
         allowNull: false,

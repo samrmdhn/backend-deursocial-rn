@@ -1,12 +1,15 @@
 import db from "../../configs/Database.js";
 import {
+    createNameFile,
     dateToEpochTime,
     getDataUserUsingToken,
+    getExtension,
 } from "../../helpers/customHelpers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
 import ChatGroupsModels from "../models/ChatGroupsModels.js";
 import { jwtDecode } from "jwt-decode";
 import ChatStatusGroupsModels from "../models/ChatStatusGroupsModels.js";
+import { uploadFile } from "../../helpers/FileUpload.js";
 
 let ioInstance;
 
@@ -42,6 +45,7 @@ export const initializeSocket = (io) => {
                         u.photo as image,
                         TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                         cg.messages,
+                        cg.file as image_messages,
                         u.display_name,
                         u.display_name_anonymous,
                         LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
@@ -66,6 +70,9 @@ export const initializeSocket = (io) => {
                     groupSlug: msg.slug,
                     created_at: msg.created_at,
                     message: msg.messages,
+                    image_messages: msg.image_messages
+                        ? process.env.APP_BUCKET_IMAGE + msg.image_messages
+                        : null,
                 }));
 
                 await ChatStatusGroupsModels.update(
@@ -105,6 +112,7 @@ export const initializeSocket = (io) => {
                         u.id as user_id,
                         u.photo as image,
                         cg.messages,
+                        cg.file as image_messages,
                         TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                         u.display_name,
                         u.display_name_anonymous,
@@ -132,6 +140,9 @@ export const initializeSocket = (io) => {
                     display_name_anonymous: msg.display_name_anonymous,
                     slug: msg.slug,
                     message: msg.messages,
+                    image_messages: msg.image_messages
+                        ? process.env.APP_BUCKET_IMAGE + msg.image_messages
+                        : null,
                 }));
 
                 socket.emit("moreMessages", formattedMessages.reverse());
@@ -158,6 +169,7 @@ export const initializeSocket = (io) => {
                         u.photo as image,
                         TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                         cg.messages,
+                        cg.file as image_messages,
                         u.display_name,
                         u.display_name_anonymous,
                         LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
@@ -194,7 +206,6 @@ export const initializeSocket = (io) => {
                         },
                     }
                 );
-
             } catch (error) {
                 console.error("Error fetching more messages:", error);
             }
@@ -204,6 +215,20 @@ export const initializeSocket = (io) => {
 
 export const sendMessageToGroup = async (req, res) => {
     const { message } = req.body;
+    const file = req.files && req.files.image;
+    let filesNamed = "";
+    if (file) {
+        const fileDate = new Date();
+        filesNamed = fileDate.getTime() + getExtension(file.name);
+        filesNamed = createNameFile(filesNamed);
+        if (
+            getExtension(file.name) !== ".jpg" &&
+            getExtension(file.name) !== ".png"
+        ) {
+            return responseApi(res, [], null, "Image not valid", 400);
+        }
+    }
+
     let users_id;
     const usersToken = getDataUserUsingToken(req, res);
     users_id = usersToken.tod;
@@ -245,6 +270,7 @@ export const sendMessageToGroup = async (req, res) => {
             messages: message,
             users_id: users_id,
             created_at: dateToEpochTime(req.headers["x-date-for"]),
+            file: filesNamed
         });
 
         let replacements = {};
@@ -263,6 +289,7 @@ export const sendMessageToGroup = async (req, res) => {
                 u.id as user_id,
                 u.photo as image,
                 cg.messages,
+                cg.file as image_messages,
                 TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                 u.display_name,
                 u.display_name_anonymous,
@@ -286,6 +313,9 @@ export const sendMessageToGroup = async (req, res) => {
             display_name_anonymous: msg.display_name_anonymous,
             groupSlug: msg.slug,
             message: msg.messages,
+            image_messages: msg.image_messages
+                ? process.env.APP_BUCKET_IMAGE + msg.image_messages
+                : null,
         }));
 
         const queryGetTotalMember = `  SELECT * FROM ir_group_members WHERE groups_id = ${groupId} AND users_id != ${users_id} `;
@@ -298,6 +328,7 @@ export const sendMessageToGroup = async (req, res) => {
             chat_groups_id: dataMessages[0].chat_group_id,
             created_at: dateToEpochTime(req.headers["x-date-for"]),
         }));
+
         await ChatStatusGroupsModels.bulkCreate(saveStatusChat)
             .then(() => {
                 console.log("Data berhasil disimpan di ChatStatusGroupsModels");
@@ -305,7 +336,11 @@ export const sendMessageToGroup = async (req, res) => {
             .catch((error) => {
                 console.error("Gagal menyimpan data:", error);
             });
-
+        if (file) {
+            const fileDestination = process.env.APP_LOCATION_FILE + filesNamed;
+            await uploadFile(file, fileDestination);
+            console.log("filesNamed", filesNamed);
+        }
         ioInstance.to(groupSlugs).emit("newMessage", formattedMessages[0]);
 
         console.log(`Message sent to group ${groupSlugs}: ${message}`);
