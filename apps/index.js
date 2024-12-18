@@ -52,3 +52,7 @@ export {
     likePostPerContentDetail,
     getDetailPostPerContentDetail
 } from "./controllers/PostControllers.js";
+
+export {
+    searchData
+} from "./controllers/SearchControllers.js";
