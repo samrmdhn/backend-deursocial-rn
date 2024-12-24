@@ -200,7 +200,7 @@ export const commentPostPerContentDetail = withTransaction(
                     },
                 });
             if (!getIdPostContentDetail) {
-                return responseApi(res, [], null, "Server error....", 400);
+                return responseApi(res, [], null, "You can't comment this post....", 400);
             }
             if (comment_post.length > 100) {
                 return responseApi(res, [], null, "Comment to long", 400);
@@ -399,3 +399,44 @@ export const createPostContentDetail = withTransaction(
         }
     }
 );
+
+
+export const commentGetPerContentDetail = async(req, res) => {
+    try {
+        const slugPostContentDetail = req.params.slugPostContentDetail;
+        let whereClause = `WHERE pcds.slug = :slugPostContentDetail`;
+
+        const replacements = {
+            slugPostContentDetail: slugPostContentDetail,
+        };
+
+        const  query = `
+            SELECT cpcds.comment_post,
+                json_build_object(
+                        'name', u.display_name,
+                        'image', u.photo,
+                        'username', u.username
+                ) AS user,
+                TO_CHAR(TO_TIMESTAMP(cpcds.created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at
+            FROM 
+            ir_comment_post_content_details cpcds 
+            LEFT JOIN ir_post_content_details pcds ON cpcds.post_content_details_id = pcds.id
+            LEFT JOIN ir_users u ON cpcds.users_id = u.id
+            ${whereClause}
+        `
+        const executeQuery = await db.query(query, {
+            replacements,
+            type: db.QueryTypes.SELECT
+        });
+        return responseApi(
+            res,
+            executeQuery,
+            null,
+            "Data has been retrived",
+            0
+        );
+    } catch (error) {
+        console.log("error get detail post", error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+}

@@ -55,6 +55,7 @@ api.post("/api/follow/:username", verifyToken, UsersControllers.followUser);
 
 api.post("/api/create/post", verifyToken, PostControllers.createPostContentDetail);
 api.post("/api/comment/post/:slugPostContentDetail", verifyToken, PostControllers.commentPostPerContentDetail);
+api.get("/api/comment/post/:slugPostContentDetail", verifyToken, PostControllers.commentGetPerContentDetail);
 api.post("/api/like/post/:slugPostContentDetail", verifyToken, PostControllers.likePostPerContentDetail);
 api.get("/api/post", verifyToken, PostControllers.getPost);
 api.get("/api/detail/post/:slugPostContentDetail", verifyToken, PostControllers.getDetailPostPerContentDetail);
