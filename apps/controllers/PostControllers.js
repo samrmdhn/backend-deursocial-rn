@@ -21,7 +21,7 @@ export const getPost = async (req, res) => {
     try {
         const usersToken = getDataUserUsingToken(req, res);
         const users_id = usersToken.tod;
-        const { page=1 } = req.query;
+        const { page = 1 } = req.query;
         const limit = 10;
         const offset = (page - 1) * limit;
         const { event_slug } = req.body;
@@ -100,10 +100,10 @@ export const getPost = async (req, res) => {
         `;
         const executeQuery = await db.query(query, {
             type: db.QueryTypes.SELECT,
-            replacements
+            replacements,
         });
 
-        console.log("replacements", replacements)
+        console.log("replacements", replacements);
         const countQuery = `
             SELECT COUNT(*) AS total_count
             FROM
@@ -162,8 +162,8 @@ export const likePostPerContentDetail = withTransaction(
                 where: {
                     users_id: users_id,
                     post_content_details_id: getIdPostContentDetail.id,
-                }
-            })
+                },
+            });
 
             if (checkAnyLike) {
                 await checkAnyLike.destroy();
@@ -200,7 +200,13 @@ export const commentPostPerContentDetail = withTransaction(
                     },
                 });
             if (!getIdPostContentDetail) {
-                return responseApi(res, [], null, "You can't comment this post....", 400);
+                return responseApi(
+                    res,
+                    [],
+                    null,
+                    "You can't comment this post....",
+                    400
+                );
             }
             if (comment_post.length > 100) {
                 return responseApi(res, [], null, "Comment to long", 400);
@@ -400,17 +406,21 @@ export const createPostContentDetail = withTransaction(
     }
 );
 
-
-export const commentGetPerContentDetail = async(req, res) => {
+export const commentGetPerContentDetail = async (req, res) => {
     try {
         const slugPostContentDetail = req.params.slugPostContentDetail;
         let whereClause = `WHERE pcds.slug = :slugPostContentDetail`;
+        const { page = 1 } = req.query;
+        const limit = 10;
+        const offset = (page - 1) * limit;
 
-        const replacements = {
+        let replacements = {
+            limit: parseInt(limit, 10),
+            offset: parseInt(offset, 10),
             slugPostContentDetail: slugPostContentDetail,
         };
 
-        const  query = `
+        const query = `
             SELECT cpcds.comment_post,
                 json_build_object(
                         'name', u.display_name,
@@ -423,15 +433,38 @@ export const commentGetPerContentDetail = async(req, res) => {
             LEFT JOIN ir_post_content_details pcds ON cpcds.post_content_details_id = pcds.id
             LEFT JOIN ir_users u ON cpcds.users_id = u.id
             ${whereClause}
-        `
+            LIMIT :limit OFFSET :offset;
+        `;
         const executeQuery = await db.query(query, {
             replacements,
-            type: db.QueryTypes.SELECT
+            type: db.QueryTypes.SELECT,
         });
+        const countQuery = `
+        SELECT COUNT(*) AS total_count
+            FROM 
+            ir_comment_post_content_details cpcds 
+            LEFT JOIN ir_post_content_details pcds ON cpcds.post_content_details_id = pcds.id
+            LEFT JOIN ir_users u ON cpcds.users_id = u.id
+        ${whereClause}
+    `;
+    const totalCountResult = await db.query(countQuery, {
+        replacements,
+        type: db.QueryTypes.SELECT,
+    });
+
+    const totalCount = totalCountResult[0].total_count;
+    const totalPages = Math.ceil(totalCount / limit);
         return responseApi(
             res,
             executeQuery,
-            null,
+            {
+                pagination: {
+                    current_page: parseInt(page, 10),
+                    per_page: parseInt(limit, 10),
+                    total: totalCount,
+                    total_page: totalPages,
+                },
+            },
             "Data has been retrived",
             0
         );
@@ -439,4 +472,4 @@ export const commentGetPerContentDetail = async(req, res) => {
         console.log("error get detail post", error);
         return responseApi(res, [], null, "Server error....", 1);
     }
-}
+};
