@@ -5,6 +5,7 @@ import * as GroupsControllers from "../apps/index.js";
 import * as ChatGroupsControllers from "../apps/index.js";
 import * as PostControllers from "../apps/index.js";
 import * as UsersControllers from "../apps/index.js";
+import * as SearchControllers from "../apps/index.js";
 import { verifyToken } from "../apps/middlewares/verifyToken.js";
 
 const api = express.Router();
@@ -59,5 +60,8 @@ api.get("/api/comment/post/:slugPostContentDetail", verifyToken, PostControllers
 api.post("/api/like/post/:slugPostContentDetail", verifyToken, PostControllers.likePostPerContentDetail);
 api.get("/api/post", verifyToken, PostControllers.getPost);
 api.get("/api/detail/post/:slugPostContentDetail", verifyToken, PostControllers.getDetailPostPerContentDetail);
+
+
+api.get("/api/search/:type", verifyToken, SearchControllers.searchData);
 
 export default api;

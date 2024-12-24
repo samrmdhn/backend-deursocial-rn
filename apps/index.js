@@ -53,3 +53,7 @@ export {
     getDetailPostPerContentDetail,
     commentGetPerContentDetail
 } from "./controllers/PostControllers.js";
+
+export {
+    searchData
+} from "./controllers/SearchControllers.js";
