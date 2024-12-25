@@ -439,7 +439,7 @@ export const commentGetPerContentDetail = async (req, res) => {
                         'image', u.photo,
                         'username', u.username
                 ) AS user,
-            TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at
+            TO_CHAR(TO_TIMESTAMP(cpcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at
             FROM 
             ir_comment_post_content_details cpcds 
             LEFT JOIN ir_post_content_details pcds ON cpcds.post_content_details_id = pcds.id
