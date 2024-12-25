@@ -246,14 +246,25 @@ export const getDetailPostPerContentDetail = async (req, res) => {
                 cds.title AS event_name,
                 cds.slug AS event_slug,
                 CASE 
+                    WHEN cds.is_trending = 0 THEN 'ended'
+                    WHEN cds.is_trending = 1 THEN 'ongoing'
+                    ELSE 'upcoming' 
+                END AS event_status,
+                CASE 
+                    WHEN lpcds.id IS NOT NULL AND lpcds.users_id = 24 THEN TRUE
+                    ELSE FALSE
+                END AS post_liked,
+                CASE 
                     WHEN pcds.type = 0 THEN 'global'
                     WHEN cds.is_trending = 1 THEN 'event'
                     ELSE 'ticket' 
                 END AS event_type,
-                (
-                    SELECT COUNT(*)
-                    FROM ir_impression_post_content_details ipcds
-                    WHERE ipcds.post_content_details_id = pcds.id
+                CAST(
+                    (
+                        SELECT COUNT(*)
+                        FROM ir_impression_post_content_details ipcds
+                        WHERE ipcds.post_content_details_id = pcds.id
+                    ) AS INT
                 ) AS total_impressions,
                 (
                     SELECT COUNT(*)
@@ -286,6 +297,7 @@ export const getDetailPostPerContentDetail = async (req, res) => {
 	            LEFT JOIN ir_content_details cds ON spcds.content_details_id = cds.id
                 LEFT JOIN ir_users u ON pcds.users_id = u.id
                 LEFT JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
+                LEFT JOIN ir_like_post_content_details lpcds ON lpcds.post_content_details_id = pcds.id
             ${whereClause}
         `;
 
