@@ -445,6 +445,7 @@ export const commentGetPerContentDetail = async (req, res) => {
             LEFT JOIN ir_post_content_details pcds ON cpcds.post_content_details_id = pcds.id
             LEFT JOIN ir_users u ON cpcds.users_id = u.id
             ${whereClause}
+            ORDER BY cpcds.created_at DESC
             LIMIT :limit OFFSET :offset;
         `;
         const executeQuery = await db.query(query, {

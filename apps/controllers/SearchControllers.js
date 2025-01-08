@@ -20,7 +20,7 @@ export const searchData = (req, res) => {
 
 const dataEvent = async (req, res) => {
     try {
-        const { page = 1, search_text = "" } = req.body;
+        const { page=1, search_text = "" } = req.query;
         const limit = 10;
         const offset = (page - 1) * limit;
 
