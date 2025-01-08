@@ -810,6 +810,11 @@ export const getContentDetails = async (req, res) => {
                                 SELECT COUNT(*)
                                 FROM ir_comment_post_content_details cpcds
                                 WHERE cpcds.post_content_details_id = pcds.id
+                            ), 
+                            'total_impression', (
+                                SELECT COUNT(*)
+                                FROM ir_impression_post_content_details ipcds
+                                WHERE ipcds.post_content_details_id = pcds.id
                             ) 
                         )
                     )
@@ -817,7 +822,12 @@ export const getContentDetails = async (req, res) => {
                         SELECT pcds.slug, pcds.caption_post, pcds.id, pcds.created_at, u.display_name, u.photo, u.username,
 						(SELECT COUNT(*)
                             FROM ir_comment_post_content_details cpcds
-                            WHERE cpcds.post_content_details_id = pcds.id) AS total_comments, 
+                            WHERE cpcds.post_content_details_id = pcds.id)
+                             AS total_comments,
+                             (SELECT COUNT(*)
+                            FROM ir_impression_post_content_details ipcds
+                            WHERE ipcds.post_content_details_id = pcds.id)
+                             AS total_impression, 
                             (
                                 SELECT COUNT(*)
                                 FROM ir_like_post_content_details lpcds
@@ -828,7 +838,7 @@ export const getContentDetails = async (req, res) => {
                         LEFT JOIN ir_segmented_post_content_details spcds ON pcds.id = spcds.post_content_details_id
                         LEFT JOIN ir_file_post_content_details fpcds ON pcds.id = fpcds.post_content_details_id
                         WHERE spcds.content_details_id = cd.id
-                        ORDER BY total_likes DESC, total_comments DESC
+                        ORDER BY total_likes DESC, total_comments, total_impression DESC
                         LIMIT 3
                     ) AS pcds
                 ) AS posts,
