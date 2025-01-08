@@ -799,7 +799,7 @@ export const getContentDetails = async (req, res) => {
                             'user', json_build_object(
                                 'display_name', pcds.display_name,
                                 'image', pcds.photo,
-                                'username', u.username
+                                'username', pcds.username
                             ),
                             'total_likes', (
                                 SELECT COUNT(*)
