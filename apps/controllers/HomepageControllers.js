@@ -814,7 +814,7 @@ export const getContentDetails = async (req, res) => {
                         )
                     )
                     FROM (
-                        SELECT pcds.slug, pcds.caption_post, pcds.id, pcds.created_at, u.display_name, u.photo,
+                        SELECT pcds.slug, pcds.caption_post, pcds.id, pcds.created_at, u.display_name, u.photo, u.username,
 						(SELECT COUNT(*)
                             FROM ir_comment_post_content_details cpcds
                             WHERE cpcds.post_content_details_id = pcds.id) AS total_comments, 
