@@ -72,7 +72,8 @@ export const joinMemberToGroups = async (req, res) => {
             SELECT
                 LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slugs,
                 g.title,
-                g.id
+                g.id,
+                g.is_gender
             FROM ir_groups g
             ${whereClause}
         `;
@@ -89,6 +90,42 @@ export const joinMemberToGroups = async (req, res) => {
 
         const groups_id = groupsData.id;
         const users_id = getToken.tod;
+
+        const queryUser = `
+            SELECT 
+            u.id,
+            u.gender
+            FROM ir_users u WHERE u.id = ${users_id}
+        `;
+
+        const groupsDataUser = await db.query(queryUser, {
+            replacements,
+            type: db.QueryTypes.SELECT,
+            plain: true,
+        });
+        if (groupsData.is_gender > 0) {
+            if (groupsDataUser.gender != groupsData.is_gender) {
+                return responseApi(
+                    res,
+                    [],
+                    null,
+                    "Sorry you join the group, this group is " + (groupsData.is_gender === 1 ? "male" : "female") + " only",
+                    2
+                );
+            }
+        }
+        if (groupsData.is_anonymous > 0) {
+            if (groupsDataUser.is_anonymous == 0) {
+                return responseApi(
+                    res,
+                    [],
+                    null,
+                    "Sorry you join the group, this group is anonymous only",
+                    2
+                );
+            }
+        }
+
 
         const dataGroupMembers = await GroupMembersModels.findAll({
             where: {
