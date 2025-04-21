@@ -382,14 +382,14 @@ export const getGroupsDetail = async (req, res) => {
                     'is_permitted_to_send', 
                         CASE 
                             WHEN ${getToken.tod} = 0 THEN false
-                            WHEN u.gender != g.is_gender THEN false
+                            WHEN ul.gender != g.is_gender THEN false
                             WHEN g.is_anonymous = 1  THEN true
                             ELSE true
                         END,
                     'message_title',
                         CASE 
                             WHEN ${getToken.tod} = 0 THEN 'Please log in to join'
-                            WHEN u.gender != g.is_gender THEN  'Sorry, this group is ' ||  CASE  
+                            WHEN ul.gender != g.is_gender THEN  'Sorry, this group is ' ||  CASE  
                                 WHEN g.is_gender = 1 THEN 'male'
                                 WHEN g.is_gender = 2 THEN 'female'
                                 ELSE 'unisex'
@@ -400,7 +400,7 @@ export const getGroupsDetail = async (req, res) => {
                     'message',
                         CASE 
                             WHEN ${getToken.tod} = 0 THEN 'You need to log in to join the group'
-                            WHEN u.gender  != g.is_gender THEN 'It seems you dont meet the gender requirement for this group.'
+                            WHEN ul.gender  != g.is_gender THEN 'It seems you dont meet the gender requirement for this group.'
                             WHEN g.is_anonymous = 1 THEN 'You will use an anonymous nickname and your profile will be hidden in this group.'
                             ELSE ''
                         END
@@ -495,11 +495,12 @@ export const getGroupsDetail = async (req, res) => {
                 END AS members_need_approval
             FROM ir_groups g
             LEFT JOIN ir_users u ON u.id = g.users_id
+            LEFT JOIN ir_users ul ON ul.id = ${getToken.tod}
             LEFT JOIN ir_citys c ON c.id = g.citys_id
             LEFT JOIN ir_group_members gm ON gm.groups_id = g.id
             LEFT JOIN ir_content_details cds ON g.content_details_id = cds.id
             ${whereClause}
-            GROUP BY g.id, u.id, c.id, cds.id;
+            GROUP BY g.id, u.id, c.id, cds.id, ul.id;
         `;
 
         const groupsData = await db.query(query, {
