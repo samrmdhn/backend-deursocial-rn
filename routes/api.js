@@ -17,9 +17,9 @@ api.post("/api/vanues", verifyToken, SettingControllers.createVanues);
 api.post("/api/register", SettingControllers.createUsers);
 api.post("/api/login", SettingControllers.loginUsers);
 
-api.get("/api/groups/:contentDetailSlugs", verifyToken, GroupsControllers.getGroups);
+api.get("/api/groups/:contentDetailSlugs", GroupsControllers.getGroups);
 api.get("/api/groups/detail/:slugs", GroupsControllers.getGroupsDetail);
-api.post("/api/groups/:slug", GroupsControllers.createGroups);
+api.post("/api/groups/:slug", verifyToken, GroupsControllers.createGroups);
 // api.post("/api/join/groups", verifyToken, GroupsControllers.joinMemberToGroups);
 api.post("/api/join/group/:slug", verifyToken, GroupsControllers.joinMemberToGroups);
 api.post("/api/approve/member/:slug", verifyToken, GroupsControllers.approveMember);
@@ -58,7 +58,7 @@ api.post("/api/create/post", verifyToken, PostControllers.createPostContentDetai
 api.post("/api/comment/post/:slugPostContentDetail", verifyToken, PostControllers.commentPostPerContentDetail);
 api.get("/api/comment/post/:slugPostContentDetail", verifyToken, PostControllers.commentGetPerContentDetail);
 api.post("/api/like/post/:slugPostContentDetail", verifyToken, PostControllers.likePostPerContentDetail);
-api.get("/api/post", verifyToken, PostControllers.getPost);
+api.get("/api/post", PostControllers.getPost);
 api.get("/api/detail/post/:slugPostContentDetail", verifyToken, PostControllers.getDetailPostPerContentDetail);
 
 
