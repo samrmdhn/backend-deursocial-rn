@@ -21,8 +21,7 @@ export const getPost = async (req, res) => {
     try {
         const usersToken = getDataUserUsingToken(req, res);
         const users_id = usersToken.tod;
-        const { page = 1 } = req.query;
-        const limit = 10;
+        const { page = 1 , limit = 10} = req.query;
         const offset = (page - 1) * limit;
         const { event_slug } = req.body;
 
