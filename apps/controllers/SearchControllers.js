@@ -2,6 +2,7 @@ import { responseApi } from "../../libs/RestApiHandler.js";
 import db from "../../configs/Database.js";
 import { getDataUserUsingToken } from "../../helpers/customHelpers.js";
 import UsersModels from "../models/UsersModels.js";
+import ContentDetailsModels from "../models/ContentDetailsModels.js";
 
 export const searchData = (req, res) => {
     try {
@@ -10,8 +11,170 @@ export const searchData = (req, res) => {
             return dataEvent(req, res);
         } else if (searchType === "users") {
             return dataUser(req, res);
+        } else if (searchType === "groupEvent") {
+            return dataGroupEvent(req, res);
         }
         return responseApi(res, [], null, "Data has been retrieved", 0);
+    } catch (error) {
+        console.log(error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+};
+
+export const dataGroupEvent = async (req, res) => {
+    try {
+        const getToken = getDataUserUsingToken(req, res);
+        const { page = 1, search_text = "" } = req.body;
+        const limit = 10;
+        const offset = (page - 1) * limit;
+
+        let whereClause = `WHERE g.title ILIKE :search_text`;
+        const replacements = {
+            search_text: `%${search_text}%`,
+            limit: parseInt(limit, 10),
+            offset: parseInt(offset, 10),
+        };
+
+        const query = `
+            SELECT
+                g.id AS id,
+                CASE
+                    WHEN g.users_id = ${getToken.tod} THEN 'joined' 
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM ir_group_members gm
+                        WHERE gm.groups_id = g.id AND gm.status = 1 AND gm.users_id = ${getToken.tod}
+                    ) THEN 'joined'
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM ir_group_members gm
+                        WHERE gm.groups_id = g.id AND gm.status = 3 AND gm.users_id = ${getToken.tod}
+                    ) THEN 'rejected'
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM ir_group_members gm
+                        WHERE gm.groups_id = g.id AND gm.status = 2 AND gm.users_id = ${getToken.tod}
+                    ) THEN 'waiting approval'
+                    ELSE 'not joined'
+                END AS is_joined,
+                LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug,
+                g.title,
+                g.description,
+                json_build_object(
+                    'is_gender', 
+                    CASE 
+                        WHEN g.is_gender = 1 THEN 'male'
+                        WHEN g.is_gender = 2 THEN 'female'
+                        ELSE 'unisex'
+                    END,
+                    'is_private', CASE 
+                        WHEN g.is_private = 0 THEN false
+                        ELSE true
+                    END,
+
+                    'is_anonymous_mode', CASE 
+                        WHEN g.is_anonymous = 0 THEN false
+                        ELSE true
+                    END
+                ) AS policies,
+                    json_build_object(
+                        'name', u.display_name,
+                        'image', u.photo,
+                        'username', u.username
+                    )AS user,
+                json_build_object(
+                    'city', json_build_object(
+                        'id', c.id,
+                        'name', c.title
+                    )
+                ) AS location,
+                (
+                    SELECT COUNT(*)
+                    FROM (
+                        SELECT DISTINCT gm.users_id
+                        FROM ir_group_members gm
+                        WHERE gm.groups_id = g.id AND gm.status = 1
+
+                        UNION ALL
+
+                        SELECT DISTINCT g.users_id
+                        FROM ir_groups g_inner
+                        WHERE g_inner.id = g.id
+                    ) AS all_members
+                ) AS current_members,
+                g.max_members as total_members,
+                (
+                    SELECT json_agg(
+                        json_build_object(
+                            'name', member.display_name,
+                            'image', member.photo,
+                            'role', member.role
+                        )
+                    )
+                    FROM (
+                        SELECT DISTINCT
+                            u.display_name,
+                            u.photo,
+                            'member' AS role
+                        FROM ir_group_members gm
+                        JOIN ir_users u ON u.id = gm.users_id
+                        WHERE gm.groups_id = g.id AND gm.status = 1
+
+                        UNION ALL
+
+                        SELECT DISTINCT
+                            creator.display_name,
+                            creator.photo,
+                            'creator' AS role
+                        FROM ir_users creator
+                        WHERE creator.id = g.users_id
+                    ) AS member
+                ) AS members
+            FROM ir_groups g
+            LEFT JOIN ir_content_details cds ON cds.id = g.content_details_id
+            LEFT JOIN ir_users u ON u.id = g.users_id
+            LEFT JOIN ir_citys c ON c.id = g.citys_id
+            LEFT JOIN ir_group_members gm ON gm.groups_id = g.id
+            ${whereClause}
+            GROUP BY g.id, u.id, c.id, cds.id
+            LIMIT :limit OFFSET :offset;
+        `;
+
+        const groupsData = await db.query(query, {
+            replacements,
+            type: db.QueryTypes.SELECT,
+        });
+
+        const countQuery = `
+            SELECT COUNT(*) AS total_count
+            FROM ir_groups g
+            LEFT JOIN ir_content_details cds ON cds.id = g.content_details_id
+            ${whereClause};
+        `;
+        const totalCountResult = await db.query(countQuery, {
+            replacements,
+            type: db.QueryTypes.SELECT,
+        });
+
+        const totalCount = totalCountResult[0].total_count;
+        const totalPages = Math.ceil(totalCount / limit);
+
+        let responseData = groupsData
+        return responseApi(
+            res,
+            responseData,
+            {
+                assets_image_url: process.env.APP_BUCKET_IMAGE,
+                pagination: {
+                    current_page: parseInt(page, 10),
+                    per_page: parseInt(limit, 10),
+                    total: totalCount,
+                    total_page: totalPages,
+                },
+            },
+            "Data retrieved successfully",
+            0
+        );
     } catch (error) {
         console.log(error);
         return responseApi(res, [], null, "Server error....", 1);
