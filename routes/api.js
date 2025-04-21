@@ -18,8 +18,8 @@ api.post("/api/register", SettingControllers.createUsers);
 api.post("/api/login", SettingControllers.loginUsers);
 
 api.get("/api/groups/:contentDetailSlugs", verifyToken, GroupsControllers.getGroups);
-api.get("/api/groups/detail/:slugs", verifyToken, GroupsControllers.getGroupsDetail);
-api.post("/api/groups/:slug", verifyToken, GroupsControllers.createGroups);
+api.get("/api/groups/detail/:slugs", GroupsControllers.getGroupsDetail);
+api.post("/api/groups/:slug", GroupsControllers.createGroups);
 // api.post("/api/join/groups", verifyToken, GroupsControllers.joinMemberToGroups);
 api.post("/api/join/group/:slug", verifyToken, GroupsControllers.joinMemberToGroups);
 api.post("/api/approve/member/:slug", verifyToken, GroupsControllers.approveMember);
@@ -40,7 +40,7 @@ api.post("/api/tags", verifyToken, HomepageControllers.createTags);
 api.post("/api/follow/event", verifyToken, HomepageControllers.followEvent);
 api.get("/api/actress", verifyToken, HomepageControllers.getActress);
 api.post("/api/actress", verifyToken, HomepageControllers.createActress);
-api.get("/api/content/details/:slug", verifyToken, HomepageControllers.getContentDetails);
+api.get("/api/content/details/:slug", HomepageControllers.getContentDetails);
 api.post("/api/content/details", verifyToken, HomepageControllers.createContentDetails);
 api.post("/api/check/auth", HomepageControllers.checkAuth);
 
