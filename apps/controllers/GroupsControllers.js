@@ -399,7 +399,7 @@ export const getGroupsDetail = async (req, res) => {
                         END,
                     'message',
                         CASE 
-                            WHEN ${getToken.tod} = 0 THEN 'Mohon maaf'
+                            WHEN ${getToken.tod} = 0 THEN 'You need to log in to join the group'
                             WHEN u.gender  != g.is_gender THEN 'It seems you dont meet the gender requirement for this group.'
                             WHEN u.gender = g.is_gender AND ${getToken.tod} > 0 THEN 'You will use an anonymous nickname and your profile will be hidden in this group.'
                             ELSE ''
