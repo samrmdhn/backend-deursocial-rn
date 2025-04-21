@@ -48,7 +48,7 @@ const GroupsModels = db.define("ir_groups", {
         allowNull: true,
         defaultValue: 3,
         validate: {
-            isIn: [[0, 1, 2]], // Hanya boleh 1, 2, 3 (1: Men, 2: Women, 3: Unisex)
+            isIn: [[0, 1, 2]], // Hanya boleh 0, 1, 2 (0: Unisex, 1: Men, 2: Women)
         },
     },
     is_anonymous: {
