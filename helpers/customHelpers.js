@@ -167,9 +167,9 @@ export const getDataUserUsingToken = (req, res) => {
     let token = req.headers["authorization"];
     if (token && token.startsWith("Bearer ")) {
         const dataToken = jwtDecode(token.slice(7));
-        if (Number(dataToken.tod) === 0) {
-            return res.status(400).send("Sorry.....!");
-        }
+        // if (Number(dataToken.tod) === 0) {
+        //     return res.status(400).send("Sorry.....!");
+        // }
         return dataToken;
     }
 };
