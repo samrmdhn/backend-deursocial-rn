@@ -382,8 +382,8 @@ export const getGroupsDetail = async (req, res) => {
                     'is_permitted_to_send', 
                         CASE 
                             WHEN ${getToken.tod} = 0 THEN false
-                            WHEN u.gender  != g.is_gender THEN false
-                            WHEN u.gender = g.is_gender AND ${getToken.tod} > 0  THEN true
+                            WHEN u.gender != g.is_gender THEN false
+                            WHEN g.is_anonymous_mode = 1  THEN true
                             ELSE true
                         END,
                     'message_title',
@@ -394,14 +394,14 @@ export const getGroupsDetail = async (req, res) => {
                                 WHEN g.is_gender = 2 THEN 'female'
                                 ELSE 'unisex'
                                 END || '-only.'
-                            WHEN u.gender = g.is_gender AND ${getToken.tod} > 0  THEN 'This group is in anonymous mode.'
+                            WHEN g.is_anonymous_mode = 1 THEN 'This group is in anonymous mode.'
                             ELSE ''
                         END,
                     'message',
                         CASE 
                             WHEN ${getToken.tod} = 0 THEN 'You need to log in to join the group'
                             WHEN u.gender  != g.is_gender THEN 'It seems you dont meet the gender requirement for this group.'
-                            WHEN u.gender = g.is_gender AND ${getToken.tod} > 0 THEN 'You will use an anonymous nickname and your profile will be hidden in this group.'
+                            WHEN g.is_anonymous_mode = 1 THEN 'You will use an anonymous nickname and your profile will be hidden in this group.'
                             ELSE ''
                         END
                 ) AS group_join_status,
