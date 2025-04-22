@@ -199,24 +199,36 @@ export const getGroups = async (req, res) => {
             SELECT
                 g.id AS id,
                 CASE
-                    WHEN g.users_id = ${getToken.tod} THEN 'joined' 
+                    WHEN g.max_members = (
+                        SELECT COUNT(*) FROM (
+                            SELECT DISTINCT gm.users_id
+                            FROM ir_group_members gm
+                            WHERE gm.groups_id = g.id AND gm.status = 1
+                            UNION ALL
+                            SELECT DISTINCT g_inner.users_id
+                            FROM ir_groups g_inner
+                            WHERE g_inner.id = g.id
+                        ) AS all_members
+                    ) THEN 'not joined'
+                    WHEN g.users_id = 21 THEN 'joined'
                     WHEN EXISTS (
                         SELECT 1
                         FROM ir_group_members gm
-                        WHERE gm.groups_id = g.id AND gm.status = 1 AND gm.users_id = ${getToken.tod}
+                        WHERE gm.groups_id = g.id AND gm.status = 1 AND gm.users_id = 21
                     ) THEN 'joined'
                     WHEN EXISTS (
                         SELECT 1
                         FROM ir_group_members gm
-                        WHERE gm.groups_id = g.id AND gm.status = 3 AND gm.users_id = ${getToken.tod}
+                        WHERE gm.groups_id = g.id AND gm.status = 3 AND gm.users_id = 21
                     ) THEN 'rejected'
                     WHEN EXISTS (
                         SELECT 1
                         FROM ir_group_members gm
-                        WHERE gm.groups_id = g.id AND gm.status = 2 AND gm.users_id = ${getToken.tod}
+                        WHERE gm.groups_id = g.id AND gm.status = 2 AND gm.users_id = 21
                     ) THEN 'waiting approval'
                     ELSE 'not joined'
                 END AS is_joined,
+,
                 LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug,
                 g.title,
                 g.description,
