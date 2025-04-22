@@ -81,7 +81,7 @@ export const dataGroupEvent = async (req, res) => {
                         'name', u.display_name,
                         'image', u.photo,
                         'username', u.username
-                    )AS user,
+                    ) AS users,
                 json_build_object(
                     'city', json_build_object(
                         'id', c.id,
