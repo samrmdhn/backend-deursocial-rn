@@ -153,12 +153,31 @@ export const joinMemberToGroups = async (req, res) => {
             },
         });
 
+        const dataGroupsMaxMember = await GroupsModels.findOne({
+            where: {
+                id: groups_id
+            },
+        });
+        const dataGroupsMember = await GroupMembersModels.findAll({
+            where: {
+                id: groups_id
+            },
+        });
         if (dataGroups.length > 0) {
             return responseApi(
                 res,
                 [],
                 null,
                 "Sorry you cannot join members",
+                2
+            );
+        }
+        if (dataGroupsMember.length + 1 > dataGroupsMaxMember.max_members) {
+            return responseApi(
+                res,
+                [],
+                null,
+                "Sorry you cannot join members, the group is fully max member",
                 2
             );
         }
@@ -228,7 +247,6 @@ export const getGroups = async (req, res) => {
                     ) THEN 'waiting approval'
                     ELSE 'not joined'
                 END AS is_joined,
-,
                 LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug,
                 g.title,
                 g.description,
