@@ -419,6 +419,8 @@ export const getGroupsDetail = async (req, res) => {
                     'is_permitted_to_send', 
                         CASE 
                             WHEN ${getToken.tod} = 0 THEN false
+                            WHEN g.is_gender = 0 AND g.is_anonymous = 1 AND ul.is_anonymous = 1 THEN false
+                            WHEN g.is_gender = 0 AND g.is_anonymous = 1 THEN true
                             WHEN g.is_gender = 0 THEN true
                             WHEN ul.gender != g.is_gender THEN false
                             WHEN g.is_anonymous = 1  THEN true
@@ -427,6 +429,8 @@ export const getGroupsDetail = async (req, res) => {
                     'message_title',
                         CASE 
                             WHEN ${getToken.tod} = 0 THEN 'Please log in to join'
+                            WHEN g.is_gender = 0 AND g.is_anonymous = 1 AND ul.is_anonymous = 1 THEN 'This group is in anonymous mode and unisex'
+                            WHEN g.is_gender = 0 AND g.is_anonymous = 1 THEN 'This group is in anonymous mode and unisex'
                             WHEN g.is_gender = 0 THEN ''
                             WHEN ul.gender != g.is_gender THEN  'Sorry, this group is ' ||  CASE  
                                 WHEN g.is_gender = 1 THEN 'male'
@@ -439,6 +443,8 @@ export const getGroupsDetail = async (req, res) => {
                     'message',
                         CASE 
                             WHEN ${getToken.tod} = 0 THEN 'You need to log in to join the group'
+                            WHEN g.is_gender = 0 AND g.is_anonymous = 1 AND ul.is_anonymous = 1 THEN 'Sorry you cant join this group, change mode your account'
+                            WHEN g.is_gender = 0 AND g.is_anonymous = 1 THEN 'This group is in anonymous mode and unisex'
                             WHEN g.is_gender = 0 THEN ''
                             WHEN ul.gender  != g.is_gender THEN 'It seems you dont meet the gender requirement for this group.'
                             WHEN g.is_anonymous = 1 THEN 'You will use an anonymous nickname and your profile will be hidden in this group.'
