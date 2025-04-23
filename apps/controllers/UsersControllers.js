@@ -81,6 +81,13 @@ export const getDetailUser = async (req, res) => {
                         ELSE 'unisex'
                     END
                 ) as gender,
+                (
+                    CASE 
+                        WHEN u.is_anonymous = 0 THEN 'non active'
+                        WHEN u.is_anonymous = 1 THEN 'active'
+                        ELSE 'unisex'
+                    END
+                ) as anonymous,
                 ${queryFollowedUser}
                 (
                     SELECT COUNT(*)
@@ -155,6 +162,7 @@ export const getDetailUser = async (req, res) => {
             email: queryUser.email,
             phone: queryUser.phone,
             gender: queryUser.gender,
+            anonymous: queryUser.anonymous,
             display_name: queryUser.display_name,
             username: queryUser.username,
             description: queryUser.description,
@@ -223,6 +231,7 @@ export const updateDataUser = async (req, res) => {
             photo,
             username,
             gender,
+            anonymous,
             phone,
         } = req.body;
 
@@ -294,6 +303,7 @@ export const updateDataUser = async (req, res) => {
                 photo: photo,
                 username: username,
                 gender: gender,
+                is_anonymous: anonymous,
                 phone: phone,
             },
             {
