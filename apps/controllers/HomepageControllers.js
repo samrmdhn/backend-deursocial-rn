@@ -412,7 +412,7 @@ export const getEventOrganizers = async (req, res) => {
             limit: limitPerPage,
             offset,
             attributes: {
-                exclude: ["created_at", "updated_at", "id"],
+                exclude: ["created_at", "updated_at"],
             },
         });
 
