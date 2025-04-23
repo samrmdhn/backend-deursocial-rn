@@ -153,12 +153,31 @@ export const joinMemberToGroups = async (req, res) => {
             },
         });
 
+        const dataGroupsMaxMember = await GroupsModels.findOne({
+            where: {
+                id: groups_id
+            },
+        });
+        const dataGroupsMember = await GroupMembersModels.findAll({
+            where: {
+                id: groups_id
+            },
+        });
         if (dataGroups.length > 0) {
             return responseApi(
                 res,
                 [],
                 null,
                 "Sorry you cannot join members",
+                2
+            );
+        }
+        if (dataGroupsMember.length + 1 > dataGroupsMaxMember.max_members) {
+            return responseApi(
+                res,
+                [],
+                null,
+                "Sorry you cannot join members, the group is fully max member",
                 2
             );
         }
@@ -199,21 +218,32 @@ export const getGroups = async (req, res) => {
             SELECT
                 g.id AS id,
                 CASE
-                    WHEN g.users_id = ${getToken.tod} THEN 'joined' 
+                    WHEN g.max_members = (
+                        SELECT COUNT(*) FROM (
+                            SELECT DISTINCT gm.users_id
+                            FROM ir_group_members gm
+                            WHERE gm.groups_id = g.id AND gm.status = 1
+                            UNION ALL
+                            SELECT DISTINCT g_inner.users_id
+                            FROM ir_groups g_inner
+                            WHERE g_inner.id = g.id
+                        ) AS all_members
+                    ) THEN 'not joined'
+                    WHEN g.users_id = 21 THEN 'joined'
                     WHEN EXISTS (
                         SELECT 1
                         FROM ir_group_members gm
-                        WHERE gm.groups_id = g.id AND gm.status = 1 AND gm.users_id = ${getToken.tod}
+                        WHERE gm.groups_id = g.id AND gm.status = 1 AND gm.users_id = 21
                     ) THEN 'joined'
                     WHEN EXISTS (
                         SELECT 1
                         FROM ir_group_members gm
-                        WHERE gm.groups_id = g.id AND gm.status = 3 AND gm.users_id = ${getToken.tod}
+                        WHERE gm.groups_id = g.id AND gm.status = 3 AND gm.users_id = 21
                     ) THEN 'rejected'
                     WHEN EXISTS (
                         SELECT 1
                         FROM ir_group_members gm
-                        WHERE gm.groups_id = g.id AND gm.status = 2 AND gm.users_id = ${getToken.tod}
+                        WHERE gm.groups_id = g.id AND gm.status = 2 AND gm.users_id = 21
                     ) THEN 'waiting approval'
                     ELSE 'not joined'
                 END AS is_joined,
@@ -419,29 +449,38 @@ export const getGroupsDetail = async (req, res) => {
                     'is_permitted_to_send', 
                         CASE 
                             WHEN ${getToken.tod} = 0 THEN false
+                            WHEN g.is_gender = 0 AND g.is_anonymous = 1 AND ul.is_anonymous = 0 THEN false
+                            WHEN g.is_gender = 0 AND g.is_anonymous = 1 THEN true
                             WHEN g.is_gender = 0 THEN true
                             WHEN ul.gender != g.is_gender THEN false
-                            WHEN g.is_anonymous = 1  THEN true
+                            WHEN g.is_anonymous = 1 AND ul.is_anonymous = 1  THEN true
+                            WHEN g.is_anonymous = 1 AND ul.is_anonymous = 0  THEN false
                             ELSE true
                         END,
                     'message_title',
                         CASE 
                             WHEN ${getToken.tod} = 0 THEN 'Please log in to join'
+                            WHEN g.is_gender = 0 AND g.is_anonymous = 1 AND ul.is_anonymous = 0 THEN 'This group is in anonymous mode'
+                            WHEN g.is_gender = 0 AND g.is_anonymous = 1 THEN 'This group is in anonymous mode and unisex'
                             WHEN g.is_gender = 0 THEN ''
                             WHEN ul.gender != g.is_gender THEN  'Sorry, this group is ' ||  CASE  
                                 WHEN g.is_gender = 1 THEN 'male'
                                 WHEN g.is_gender = 2 THEN 'female'
                                 ELSE 'unisex'
                                 END || '-only.'
-                            WHEN g.is_anonymous = 1 THEN 'This group is in anonymous mode.'
+                            WHEN g.is_anonymous = 1 AND ul.is_anonymous = 1 THEN 'This group is in anonymous mode.'
+                            WHEN g.is_anonymous = 1 AND ul.is_anonymous = 0 THEN 'This group is in anonymous mode.'
                             ELSE ''
                         END,
                     'message',
                         CASE 
                             WHEN ${getToken.tod} = 0 THEN 'You need to log in to join the group'
+                            WHEN g.is_gender = 0 AND g.is_anonymous = 1 AND ul.is_anonymous = 0 THEN 'Sorry you cant join this group, change mode your account'
+                            WHEN g.is_gender = 0 AND g.is_anonymous = 1 THEN 'This group is in anonymous mode and unisex'
                             WHEN g.is_gender = 0 THEN ''
                             WHEN ul.gender  != g.is_gender THEN 'It seems you dont meet the gender requirement for this group.'
-                            WHEN g.is_anonymous = 1 THEN 'You will use an anonymous nickname and your profile will be hidden in this group.'
+                            WHEN g.is_anonymous = 1 AND ul.is_anonymous = 1 THEN 'You will use an anonymous nickname and your profile will be hidden in this group.'
+                            WHEN g.is_anonymous = 1 AND ul.is_anonymous = 0 THEN 'Sorry you cant join , Please change your account on anonymous mode.'
                             ELSE ''
                         END
                 ) AS group_join_status,
