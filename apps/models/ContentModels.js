@@ -15,6 +15,11 @@ const ContentModels = db.define(
             type: TYPES.STRING(100),
             allowNull: false,
         },
+        slug: {
+            type: TYPES.STRING(100),
+            allowNull: false,
+            unique: true
+        },
         status: {
             type: TYPES.TINYINT,
             defaultValue: 1,

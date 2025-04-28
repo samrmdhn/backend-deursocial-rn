@@ -222,7 +222,7 @@ export const updateContents = async (req, res) => {
  */
 export const getContents = async (req, res) => {
     try {
-        const { page = 1, title = "" } = req.query;
+        const { page = 1, slug = "" } = req.query;
         const limit = 10;
         const offset = (page - 1) * limit;
 
@@ -233,15 +233,16 @@ export const getContents = async (req, res) => {
             offset: parseInt(offset),
         };
 
-        if (title) {
-            whereClause += ` WHERE c.title ILIKE :title`;
-            replacements.title = `%${title}%`;
+        if (slug) {
+            whereClause += ` WHERE c.slug ILIKE :slug`;
+            replacements.slug = `%${slug}%`;
         }
 
         const query = `
             SELECT 
                 c.id, 
                 c.title,
+                c.slug,
                 dt.title AS display_type,
                 json_agg(
                     json_build_object(
@@ -345,6 +346,7 @@ export const getContents = async (req, res) => {
         const responseData = contentData.map((item) => ({
             id: item.id,
             title: item.title,
+            content_slug: item.slug,
             display_types: item.display_type,
             content_details: item.content_details,
         }));
