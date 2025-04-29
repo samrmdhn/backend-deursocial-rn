@@ -372,6 +372,136 @@ export const getContents = async (req, res) => {
 };
 
 /**
+ * Fungsi untuk get data display.
+ * @param {*} req
+ * @param {*} res
+ * @returns {Promise} - Promise yang berisi hasil dari operasi update.
+ */
+export const getContentsData = async (req, res) => {
+    try {
+        const contentsSlug = req.params.slug;
+
+        const { page = 1 } = req.query;
+        const limit = 10;
+        const offset = (page - 1) * limit;
+
+        let whereClause = ``;
+        const replacements = {
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+        };
+
+        if (contentsSlug) {
+            whereClause += ` WHERE c.slug ILIKE :contentsSlug`;
+            replacements.contentsSlug = `%${contentsSlug}%`;
+        }
+
+        const query = `
+            SELECT 
+                cd.id,
+                cd.title,
+                cd.slug,
+                TO_CHAR(TO_TIMESTAMP(cd.schedule_start), 'YYYY-MM-DD HH24:MI:SS') AS schedule_start,
+                TO_CHAR(TO_TIMESTAMP(cd.schedule_end), 'YYYY-MM-DD HH24:MI:SS') AS schedule_end,
+                TO_CHAR(TO_TIMESTAMP(cd.date_start), 'YYYY-MM-DD HH24:MI:SS') AS date_start,
+                TO_CHAR(TO_TIMESTAMP(cd.date_end), 'YYYY-MM-DD HH24:MI:SS') AS date_end,
+                cd.description,
+                cd.image,
+                CASE WHEN cd.is_trending = 1 THEN true ELSE false END AS is_trending,
+                CASE 
+                    WHEN cd.is_trending = 0 THEN 'ended' 
+                    WHEN cd.is_trending = 1 THEN 'ongoing' 
+                    ELSE 'upcoming' 
+                END AS status,
+                json_build_object(
+                    'id', tcd.id,
+                    'name', tcd.name
+                ) AS type_content_details,
+                json_build_object(
+                    'id', eo.id,
+                    'name', eo.name,
+                    'image', eo.image
+                ) AS event_organizers,
+                (
+                    SELECT json_build_object(
+                        'total_followers', COUNT(*),
+                        'users', (
+                            SELECT json_agg(
+                                json_build_object(
+                                    'id', u.id,
+                                    'display_name', u.display_name,
+                                    'image', u.photo
+                                )
+                            )
+                            FROM ir_content_detail_followers cdf2
+                            JOIN ir_users u ON cdf2.users_id = u.id
+                            WHERE cdf2.content_details_id = cd.id
+                            LIMIT 3
+                        )
+                    )
+                    FROM ir_content_detail_followers cdf
+                    WHERE cdf.content_details_id = cd.id
+                ) AS followers,
+                (
+                    SELECT COUNT(*) FROM ir_segmented_post_content_details gp WHERE gp.content_details_id = cd.id
+                ) AS total_posts,
+                (
+                    SELECT COUNT(*) FROM ir_groups g WHERE g.content_details_id = cd.id
+                ) AS total_groups,
+                json_build_object(
+                    'region', json_build_object(
+                        'id', co.id,
+                        'name', co.title
+                    ),
+                    'city', json_build_object(
+                        'id', ci.id,
+                        'name', ci.title
+                    ),
+                    'venue', json_build_object(
+                        'id', v.id,
+                        'name', v.title
+                    )
+                ) AS location
+            FROM ir_contents c
+            LEFT JOIN ir_content_details cd ON cd.contents_id = c.id
+            LEFT JOIN ir_type_content_details tcd ON cd.type_content_details_id = tcd.id
+            LEFT JOIN ir_event_organizers eo ON cd.event_organizers_id = eo.id
+            LEFT JOIN ir_vanues v ON cd.vanues_id = v.id
+            LEFT JOIN ir_citys ci ON v.citys_id = ci.id
+            LEFT JOIN ir_provinces p ON v.provinces_id = p.id
+            LEFT JOIN ir_countries co ON v.countries_id = co.id
+            ${whereClause}
+            ORDER BY cd.id
+            LIMIT :limit OFFSET :offset;
+        `;
+
+        const contentDetails = await db.query(query, {
+            replacements,
+            type: db.QueryTypes.SELECT,
+        });
+
+        return responseApi(
+            res,
+            contentDetails,
+            {
+                assets_image_url: process.env.APP_BUCKET_IMAGE,
+                pagination: {
+                    current_page: parseInt(page),
+                    per_page: parseInt(limit),
+                    total: contentDetails.length,
+                    total_page: 1,
+                },
+            },
+            "Data Success Retrieved",
+            0
+        );
+    } catch (error) {
+        console.error(error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+};
+
+/**
  * function create new event organizers
  * @param {*} req
  * @param {*} res

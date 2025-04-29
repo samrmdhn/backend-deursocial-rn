@@ -31,6 +31,7 @@ api.get("/api/display/types", verifyToken, HomepageControllers.getDisplayTypes);
 api.post("/api/contents", verifyToken, HomepageControllers.createContents);
 api.post("/api/contents/:id", verifyToken, HomepageControllers.updateContents);
 api.get("/api/contents", verifyToken, HomepageControllers.getContents);
+api.get("/api/contents/:slug", verifyToken, HomepageControllers.getContentsData);
 api.get("/api/event/organizers", verifyToken, HomepageControllers.getEventOrganizers);
 api.post("/api/event/organizers", verifyToken, HomepageControllers.createEventOrganizers);
 api.get("/api/type/content/detail", verifyToken, HomepageControllers.getTypeContentDetails);
