@@ -17,6 +17,7 @@ export {
     createContentDetails,
     getContentDetails,
     followEvent,
+    getContentsData
 } from "./controllers/HomepageControllers.js";
 export {
     visitorToken,
