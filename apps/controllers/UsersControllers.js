@@ -120,7 +120,7 @@ export const getDetailUser = async (req, res) => {
                     ), '[]')
                     FROM ir_post_content_details pcds
                     LEFT JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
-                    WHERE pcds.users_id = u.id AND (pcds.type = 0 OR pcds.type = 1)
+                    WHERE pcds.users_id = u.id
                     LIMIT 9
                 ) AS user_posts,
                 (
