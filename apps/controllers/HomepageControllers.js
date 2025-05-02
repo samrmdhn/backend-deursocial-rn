@@ -874,7 +874,9 @@ export const createContentDetails = withTransaction(
  */
 export const getContentDetails = async (req, res) => {
     try {
+        const usersToken = getDataUserUsingToken(req, res);
         const contentDetailsSlug = req.params.slug;
+        const users_id = usersToken.tod;
 
         const replacements = {};
         let whereClause = "WHERE cd.slug = :contentDetailsSlug";
@@ -947,7 +949,15 @@ export const getContentDetails = async (req, res) => {
                                 SELECT COUNT(*)
                                 FROM ir_impression_post_content_details ipcds
                                 WHERE ipcds.post_content_details_id = pcds.id
-                            ) 
+                            ), 
+                            'post_liked', (
+                                SELECT EXISTS (
+                                    SELECT 1
+                                    FROM ir_like_post_content_details l
+                                    WHERE l.post_content_details_id = pcds.id
+                                    AND l.users_id = ${users_id}
+                                )
+                            )
                         )
                     )
                     FROM (
@@ -1065,7 +1075,7 @@ export const getContentDetails = async (req, res) => {
             {
                 assets_image_url: process.env.APP_BUCKET_IMAGE,
             },
-            "Data retrieved successfully",
+            "Data retrieved successfullysssss",
             0
         );
     } catch (error) {
