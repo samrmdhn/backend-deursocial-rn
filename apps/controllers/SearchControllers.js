@@ -1,6 +1,6 @@
 import { responseApi } from "../../libs/RestApiHandler.js";
 import db from "../../configs/Database.js";
-import { getDataUserUsingToken } from "../../helpers/customHelpers.js";
+import { cuttingString, getDataUserUsingToken } from "../../helpers/customHelpers.js";
 import UsersModels from "../models/UsersModels.js";
 import ContentDetailsModels from "../models/ContentDetailsModels.js";
 
@@ -330,16 +330,25 @@ export const dataUser = async (req, res) => {
     const getToken = await getDataUserUsingToken(req, res);
     try {
         const userId = getToken.tod;
-        const replacements = { userId };
         const userData = await UsersModels.findOne({
             where: { id: userId },
         });
 
-        if (!userData) {
-            return responseApi(res, [], null, "User not found", 1);
-        }
+        const { page = 1, search_text = "" } = req.body;
+        const limit = 10;
+        const offset = (page - 1) * limit;
 
-        const isOwner = Number(userData.id) === Number(getToken.tod);
+        let whereClause = `WHERE u.display_name ILIKE :search_text`;
+        const replacements = {
+            search_text: `%${search_text}%`,
+            limit: parseInt(limit, 10),
+            offset: parseInt(offset, 10),
+        };
+        // if (!userData) {
+        //     return responseApi(res, [], null, "User not found", 1);
+        // }
+
+        const isOwner = Number(userData?.id) === Number(getToken.tod);
         const queryFollowedUser = `
             (
                 CASE 
@@ -381,10 +390,8 @@ export const dataUser = async (req, res) => {
             SELECT
                 u.username,
                 u.display_name,
-                u.email,
                 u.description,
                 u.photo,
-                u.phone,
                 (
                     CASE 
                         WHEN u.gender = 1 THEN 'male'
@@ -452,6 +459,7 @@ export const dataUser = async (req, res) => {
                     LIMIT 9
                 ) AS user_post_tickets
             FROM ir_users u
+            ${whereClause}
             GROUP BY u.id;
         `;
 
@@ -462,12 +470,10 @@ export const dataUser = async (req, res) => {
         });
 
         const response = queryUsers.map((queryUser) => ({
-            email: queryUser.email,
-            phone: queryUser.phone,
             gender: queryUser.gender,
             display_name: queryUser.display_name,
             username: queryUser.username,
-            description: queryUser.description,
+            description: cuttingString(queryUser.description, 22),
             image: process.env.APP_BUCKET_IMAGE + queryUser.photo,
             followers: queryUser.followers || [],
             total_followers: queryUser.total_followers || 0,
@@ -477,7 +483,6 @@ export const dataUser = async (req, res) => {
             total_post: queryUser.total_post,
             total_event_followed: queryUser.total_event_followed,
         }));
-
         return responseApi(res, response, null, "Data has been retrieved", 0);
     } catch (error) {
         console.error("Error:", error);

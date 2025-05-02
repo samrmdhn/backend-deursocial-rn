@@ -146,7 +146,7 @@ export const downloadImage = (urlImage) => {
                     });
                 })
                 .on("error", (err) => {
-                    fs.unlink(filePath, () => {}); // Hapus file jika terjadi kesalahan
+                    fs.unlink(filePath, () => { }); // Hapus file jika terjadi kesalahan
                     console.error("Error downloading image:", err);
                     resolve({
                         image: "",
@@ -182,7 +182,7 @@ export const isValidJwt = (tokenUser) => {
         (err, decoded) => {
             if (err) {
                 console.error("JWT Error:", err.message);
-                return {status: 1};
+                return { status: 1 };
             }
             let token = tokenUser;
             if (token && token.startsWith("Bearer ")) {
@@ -190,8 +190,12 @@ export const isValidJwt = (tokenUser) => {
                 if (Number(dataToken.tod) === 0) {
                     return false;
                 }
-                return {...dataToken, status: 0};
+                return { ...dataToken, status: 0 };
             }
         }
     );
 };
+
+export const cuttingString = (text, length) => {
+    return text.length > length ? text.slice(0, length) + ' ...' : text;
+}
