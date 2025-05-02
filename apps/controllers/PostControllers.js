@@ -233,7 +233,6 @@ export const getDetailPostPerContentDetail = async (req, res) => {
     try {
         const usersToken = getDataUserUsingToken(req, res);
         const users_id = usersToken.tod;
-        console.log("users_id", users_id)
         const slugPostContentDetail = req.params.slugPostContentDetail;
         let whereClause = `WHERE pcds.slug = :slugPostContentDetail`;
 
