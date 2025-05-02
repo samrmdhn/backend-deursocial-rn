@@ -83,17 +83,19 @@ export const getPost = async (req, res) => {
                     FROM ir_file_post_content_details fpcds
                     WHERE fpcds.post_content_details_id = pcds.id
                 ) AS images,
-                CASE 
-                    WHEN lpcds.id IS NOT NULL AND lpcds.users_id = ${users_id} THEN TRUE
-                    ELSE FALSE
-                END AS post_liked
+                (
+                    SELECT EXISTS (
+                        SELECT 1
+                        FROM ir_like_post_content_details l
+                        WHERE l.post_content_details_id = pcds.id
+                        AND l.users_id = ${users_id}
+                    )
+                ) AS post_liked
             FROM
                 ir_post_content_details pcds
                 LEFT JOIN ir_segmented_post_content_details spcds ON pcds.ID = spcds.post_content_details_id
 	            LEFT JOIN ir_content_details cds ON spcds.content_details_id = cds.id
                 LEFT JOIN ir_users u ON pcds.users_id = u.id
-                LEFT JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
-                LEFT JOIN ir_like_post_content_details lpcds ON lpcds.post_content_details_id = pcds.id
             ${whereClause}
             LIMIT :limit OFFSET :offset;
         `;
