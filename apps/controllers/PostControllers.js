@@ -84,7 +84,7 @@ export const getPost = async (req, res) => {
                     WHERE fpcds.post_content_details_id = pcds.id
                 ) AS images,
                 CASE 
-                    WHEN lpcds.id IS NOT NULL AND lpcds.users_id = 24 THEN TRUE
+                    WHEN lpcds.id IS NOT NULL AND lpcds.users_id = ${users_id} THEN TRUE
                     ELSE FALSE
                 END AS post_liked
             FROM
@@ -231,6 +231,7 @@ export const getDetailPostPerContentDetail = async (req, res) => {
     try {
         const usersToken = getDataUserUsingToken(req, res);
         const users_id = usersToken.tod;
+        console.log("users_id", users_id)
         const slugPostContentDetail = req.params.slugPostContentDetail;
         let whereClause = `WHERE pcds.slug = :slugPostContentDetail`;
 
@@ -250,7 +251,7 @@ export const getDetailPostPerContentDetail = async (req, res) => {
                     ELSE 'upcoming' 
                 END AS event_status,
                 CASE 
-                    WHEN lpcds.id IS NOT NULL AND lpcds.users_id = 24 THEN TRUE
+                    WHEN lpcds.id IS NOT NULL AND lpcds.users_id = ${users_id} THEN TRUE
                     ELSE FALSE
                 END AS post_liked,
                 CASE 
@@ -314,10 +315,13 @@ export const getDetailPostPerContentDetail = async (req, res) => {
         if (!getIdPostContentDetail) {
             return responseApi(res, [], null, "Server error....", 400);
         }
-        ImpressionPostContentDetailModels.create({
-            users_id: users_id,
-            post_content_details_id: getIdPostContentDetail.id,
-        });
+        if (Number(users_id) > 0 ) {
+            ImpressionPostContentDetailModels.create({
+                users_id: users_id,
+                post_content_details_id: getIdPostContentDetail.id,
+            });
+        }
+
         return responseApi(
             res,
             executeQuery,
