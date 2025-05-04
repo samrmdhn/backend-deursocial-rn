@@ -16,6 +16,7 @@ import PostContentDetailModels from "../models/PostContentDetailModels.js";
 import db from "../../configs/Database.js";
 import { uploadFile } from "../../helpers/FileUpload.js";
 import SegmentedPostContentDetailModels from "../models/SegmentedPostContentDetailModels.js";
+import UsersModels from "../models/UsersModels.js";
 
 export const getPost = async (req, res) => {
     try {
@@ -191,11 +192,13 @@ export const getLikePostContentDetail = async (req, res) => {
         const page = parseInt(req.query.page, 10) || 1;
         const limit = parseInt(req.query.limit, 10) || 10;
         const offset = (page - 1) * limit;
-
-        const event_slug = req.query.event_slug; // bisa dipakai jika dibutuhkan
-
-        const usersToken = await getDataUserUsingToken(req, res);
-        const users_id = usersToken?.tod;
+        const usernameUser = req.params.username;
+        const getDataUsersModels = await UsersModels.findOne({
+            where: {
+                username: usernameUser,
+            },
+        });
+        const users_id = getDataUsersModels?.id;
 
         let whereClause = "WHERE lpcd.users_id = :usersId";
         let replacements = {
@@ -654,9 +657,13 @@ export const getCommentPostContentDetail = async (req, res) => {
         const page = parseInt(req.query.page, 10) || 1;
         const limit = parseInt(req.query.limit, 10) || 10;
         const offset = (page - 1) * limit;
-
-        const usersToken = await getDataUserUsingToken(req, res);
-        const users_id = usersToken?.tod;
+        const usernameUser = req.params.username;
+        const getDataUsersModels = await UsersModels.findOne({
+            where: {
+                username: usernameUser,
+            },
+        });
+        const users_id = getDataUsersModels?.id;
 
         const replacements = {
             users_id,
