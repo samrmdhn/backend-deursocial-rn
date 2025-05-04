@@ -674,6 +674,7 @@ export const getCommentPostContentDetail = async (req, res) => {
         const query = `
             SELECT
                 cpcds.comment_post,
+                pcds.slug AS post_slug,
                 TO_CHAR(TO_TIMESTAMP(cpcds.created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at,
                 json_build_object(
                     'name', u.display_name,
