@@ -199,7 +199,7 @@ export const getGroups = async (req, res) => {
     try {
         const getToken = getDataUserUsingToken(req, res);
         const contentDetailSlugs = req.params.contentDetailSlugs;
-        const { page = 1, title = "" } = req.query;
+        const { page = 1, search_text = "" } = req.query;
         const limit = 10;
         const offset = (page - 1) * limit;
 
@@ -209,9 +209,9 @@ export const getGroups = async (req, res) => {
             limit: parseInt(limit, 10),
             offset: parseInt(offset, 10),
         };
-        if (title) {
-            whereClause += ` AND g.title ILIKE :title`;
-            replacements.title = `%${title}%`;
+        if (search_text) {
+            whereClause += ` AND g.title ILIKE :search_text`;
+            replacements.search_text = `%${search_text}%`;
         }
 
         const query = `
