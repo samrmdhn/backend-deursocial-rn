@@ -648,3 +648,75 @@ export const deleteDetailPostPerContentDetail = withTransaction(
         }
     }
 )
+
+export const getCommentPostContentDetail = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 10;
+        const offset = (page - 1) * limit;
+
+        const usersToken = await getDataUserUsingToken(req, res);
+        const users_id = usersToken?.tod;
+
+        const replacements = {
+            users_id,
+            limit,
+            offset,
+        };
+
+        const query = `
+            SELECT
+                cpcds.comment_post,
+                TO_CHAR(TO_TIMESTAMP(cpcds.created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at,
+                json_build_object(
+                    'name', u.display_name,
+                    'image', u.photo,
+                    'username', u.username
+                ) AS user
+            FROM ir_comment_post_content_details cpcds
+            JOIN ir_post_content_details pcds ON pcds.id = cpcds.post_content_details_id
+            JOIN ir_users u ON cpcds.users_id = u.id
+            WHERE cpcds.users_id = :users_id
+            ORDER BY cpcds.created_at DESC
+            LIMIT :limit OFFSET :offset
+        `;
+
+        const data = await db.query(query, {
+            type: db.QueryTypes.SELECT,
+            replacements,
+        });
+
+        const countQuery = `
+            SELECT COUNT(*) AS total_count
+            FROM ir_comment_post_content_details cpcds
+            WHERE cpcds.users_id = :users_id
+        `;
+
+        const totalResult = await db.query(countQuery, {
+            type: db.QueryTypes.SELECT,
+            replacements,
+        });
+
+        const total = parseInt(totalResult[0]?.total_count || 0, 10);
+        const totalPages = Math.ceil(total / limit);
+
+        return responseApi(
+            res,
+            data,
+            {
+                assets_image_url: process.env.APP_BUCKET_IMAGE,
+                pagination: {
+                    current_page: page,
+                    per_page: limit,
+                    total,
+                    total_page: totalPages,
+                },
+            },
+            "Data has been retrieved",
+            0
+        );
+    } catch (error) {
+        console.error("Error getCommentPostContentDetail:", error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+};
