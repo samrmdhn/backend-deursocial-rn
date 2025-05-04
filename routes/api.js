@@ -66,4 +66,6 @@ api.get("/api/detail/post/:slugPostContentDetail", verifyToken, PostControllers.
 
 api.get("/api/search/:type", verifyToken, SearchControllers.searchData);
 
+api.get("/api/city", SearchControllers.getDataCity);
+
 export default api;

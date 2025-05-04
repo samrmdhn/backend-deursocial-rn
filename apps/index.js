@@ -59,3 +59,7 @@ export {
 export {
     searchData
 } from "./controllers/SearchControllers.js";
+
+export {
+    getDataCity
+} from "./controllers/RegionalsControllers.js";
