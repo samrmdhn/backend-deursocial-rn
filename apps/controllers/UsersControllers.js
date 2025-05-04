@@ -31,12 +31,8 @@ export const getDetailUser = async (req, res) => {
                     WHEN EXISTS (
                         SELECT 1
                         FROM ir_follower_users ifs
-                        WHERE ifs.following_id = u.id
-                        ${
-                            !isOwner
-                                ? `AND ifs.follower_id = u.id`
-                                : ""
-                        }
+                        WHERE ifs.following_id = ${getToken.tod}
+                          AND ifs.follower_id = u.id
                     ) THEN true
                     ELSE false
                 END
@@ -59,11 +55,7 @@ export const getDetailUser = async (req, res) => {
             (
                 SELECT COUNT(*)
                 FROM ir_follower_users f
-                ${
-                    !isOwner
-                        ? `WHERE f.following_id = u.id AND f.follower_id = u.id`
-                        : `WHERE f.following_id = u.id`
-                }
+                WHERE f.follower_id = u.id
             ) AS total_followers,`;
 
         const query = `
@@ -194,24 +186,22 @@ export const followUser = async (req, res) => {
         });
         const follow = await FollowerUsersModels.findOne({
             where: {
-                follower_id: Number(dataTokenUser.tod),
-                following_id: Number(getDataUsersModels.id),
+                follower_id: Number(getDataUsersModels.id),
+                following_id: Number(dataTokenUser.tod),
             },
         });
-
         if (follow) {
-            // Jika user ditemukan, hapus user tersebut
             await follow.destroy();
         } else {
             await FollowerUsersModels.create({
-                follower_id: Number(dataTokenUser.tod),
-                following_id: Number(getDataUsersModels.id),
+                follower_id: Number(getDataUsersModels.id),
+                following_id: Number(dataTokenUser.tod),
                 created_at: dateToEpochTime(req.headers["x-date-for"]),
             });
         }
         return responseApi(
             res,
-            ["response"],
+            [],
             null,
             "Data has been retrieved",
             0
