@@ -103,8 +103,6 @@ export const getPost = async (req, res) => {
             type: db.QueryTypes.SELECT,
             replacements,
         });
-
-        console.log("replacements", replacements);
         const countQuery = `
             SELECT COUNT(*) AS total_count
             FROM
@@ -186,6 +184,123 @@ export const likePostPerContentDetail = withTransaction(
         }
     }
 );
+
+
+export const getLikePostContentDetail = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 10;
+        const offset = (page - 1) * limit;
+
+        const event_slug = req.query.event_slug; // bisa dipakai jika dibutuhkan
+
+        const usersToken = await getDataUserUsingToken(req, res);
+        const users_id = usersToken?.tod;
+
+        let whereClause = "WHERE lpcd.users_id = :usersId";
+        let replacements = {
+            usersId: users_id,
+            limit: limit,
+            offset: offset,
+        };
+
+        const query = `
+            SELECT 
+                pcds.caption_post AS caption,
+                pcds.slug AS slug,
+                TO_CHAR(TO_TIMESTAMP(pcds.created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at,
+                (
+                    SELECT EXISTS (
+                        SELECT 1
+                        FROM ir_like_post_content_details l
+                        WHERE l.post_content_details_id = pcds.id
+                          AND l.users_id = pcds.users_id
+                    )
+                ) AS post_liked,
+                CAST(
+                    (
+                        SELECT COUNT(*)
+                        FROM ir_impression_post_content_details ipcds
+                        WHERE ipcds.post_content_details_id = pcds.id
+                    ) AS INT
+                ) AS total_impressions,
+                json_build_object(
+                    'name', u.display_name,
+                    'image', u.photo,
+                    'username', u.username
+                ) AS user,
+                (
+                    SELECT COALESCE(json_agg(
+                        json_build_object(
+                            'image', fpcds.file
+                        )
+                    ), '[]') AS members
+                    FROM ir_file_post_content_details fpcds
+                    WHERE fpcds.post_content_details_id = pcds.id
+                ) AS images,
+                (
+                    SELECT COUNT(*)
+                    FROM ir_like_post_content_details lpcds
+                    WHERE lpcds.post_content_details_id = pcds.id
+                ) AS total_likes,
+                (
+                    SELECT COUNT(*)
+                    FROM ir_comment_post_content_details cpcds
+                    WHERE cpcds.post_content_details_id = pcds.id
+                ) AS total_comments
+            FROM ir_like_post_content_details lpcd
+            JOIN ir_post_content_details pcds 
+                ON lpcd.post_content_details_id = pcds.id
+                JOIN ir_users u ON pcds.users_id = u.id
+            ${whereClause}
+            ORDER BY lpcd.created_at DESC
+            LIMIT :limit OFFSET :offset
+        `;
+
+        const executeQuery = await db.query(query, {
+            type: db.QueryTypes.SELECT,
+            replacements,
+        });
+
+        const countQuery = `
+            SELECT COUNT(*) AS total_count
+            FROM ir_like_post_content_details lpcd
+            JOIN ir_post_content_details pcd 
+                ON lpcd.post_content_details_id = pcd.id
+            ${whereClause}
+        `;
+
+        const totalCountResult = await db.query(countQuery, {
+            replacements,
+            type: db.QueryTypes.SELECT,
+        });
+
+        const totalCount = parseInt(totalCountResult[0]?.total_count || 0, 10);
+        const totalPages = Math.ceil(totalCount / limit);
+
+        return responseApi(
+            res,
+            executeQuery,
+            {
+                assets_image_url: process.env.APP_BUCKET_IMAGE,
+                pagination: {
+                    current_page: page,
+                    per_page: limit,
+                    total: totalCount,
+                    total_page: totalPages,
+                },
+            },
+            "Data has been retrieved",
+            0
+        );
+    } catch (error) {
+        console.error("error get data like", error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+};
+
+
+
 
 export const commentPostPerContentDetail = withTransaction(
     async (req, res, transaction) => {
@@ -500,10 +615,10 @@ export const deleteDetailPostPerContentDetail = withTransaction(
             const users_id = usersToken.tod;
             const slugPostContentDetail = req.params.slugPostContentDetail;
             const getIdPostContentDetail = await PostContentDetailModels.findOne({
-                    where: {
-                        slug: slugPostContentDetail,
-                    },
-                });
+                where: {
+                    slug: slugPostContentDetail,
+                },
+            });
             const checkAnyLike = await LikePostContentDetailModels.findOne({
                 where: {
                     post_content_details_id: getIdPostContentDetail.id,

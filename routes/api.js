@@ -68,4 +68,5 @@ api.get("/api/search/:type", verifyToken, SearchControllers.searchData);
 
 api.get("/api/city", SearchControllers.getDataCity);
 
+api.get("/api/like/post", verifyToken, PostControllers.getLikePostContentDetail)
 export default api;
