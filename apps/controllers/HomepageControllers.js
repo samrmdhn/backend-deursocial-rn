@@ -898,6 +898,14 @@ export const getContentDetails = async (req, res) => {
                 CASE WHEN cd.is_trending = 0 THEN 'ended' 
                     WHEN cd.is_trending = 1 THEN 'ongoing' 
                     ELSE 'upcoming' END AS status,
+                CASE
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM ir_content_detail_followers cdf
+                        WHERE cdf.content_details_id = cd.id AND cdf.users_id = ${users_id}
+                    ) THEN 'following'
+                    ELSE 'not following'
+                END AS is_follow,
                 (
                     SELECT json_build_object(
                         'total_followers', COUNT(*),
@@ -1092,7 +1100,9 @@ export const getContentDetails = async (req, res) => {
  */
 export const followEvent = async (req, res) => {
     try {
-        const { slug, users_id } = req.body;
+        const usersToken = getDataUserUsingToken(req, res);
+        const users_id = usersToken.tod;
+        const { slug } = req.query;
         const getContentDetail = await ContentDetailsModels.findOne({
             where: { slug: slug },
         });
