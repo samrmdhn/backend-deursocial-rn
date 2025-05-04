@@ -52,7 +52,8 @@ export {
     commentPostPerContentDetail,
     likePostPerContentDetail,
     getDetailPostPerContentDetail,
-    commentGetPerContentDetail
+    commentGetPerContentDetail,
+    deleteDetailPostPerContentDetail
 } from "./controllers/PostControllers.js";
 
 export {

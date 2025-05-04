@@ -21,7 +21,7 @@ export const getPost = async (req, res) => {
     try {
         const usersToken = getDataUserUsingToken(req, res);
         const users_id = usersToken.tod;
-        const { page = 1 , limit = 10} = req.query;
+        const { page = 1, limit = 10 } = req.query;
         const offset = (page - 1) * limit;
         const { event_slug } = req.body;
 
@@ -318,7 +318,7 @@ export const getDetailPostPerContentDetail = async (req, res) => {
         if (!getIdPostContentDetail) {
             return responseApi(res, [], null, "Server error....", 400);
         }
-        if (Number(users_id) > 0 ) {
+        if (Number(users_id) > 0) {
             ImpressionPostContentDetailModels.create({
                 users_id: users_id,
                 post_content_details_id: getIdPostContentDetail.id,
@@ -466,13 +466,13 @@ export const commentGetPerContentDetail = async (req, res) => {
             LEFT JOIN ir_users u ON cpcds.users_id = u.id
         ${whereClause}
     `;
-    const totalCountResult = await db.query(countQuery, {
-        replacements,
-        type: db.QueryTypes.SELECT,
-    });
+        const totalCountResult = await db.query(countQuery, {
+            replacements,
+            type: db.QueryTypes.SELECT,
+        });
 
-    const totalCount = totalCountResult[0].total_count;
-    const totalPages = Math.ceil(totalCount / limit);
+        const totalCount = totalCountResult[0].total_count;
+        const totalPages = Math.ceil(totalCount / limit);
         return responseApi(
             res,
             executeQuery,
@@ -492,3 +492,44 @@ export const commentGetPerContentDetail = async (req, res) => {
         return responseApi(res, [], null, "Server error....", 1);
     }
 };
+
+export const deleteDetailPostPerContentDetail = withTransaction(
+    async (req, res) => {
+        try {
+            const usersToken = getDataUserUsingToken(req, res);
+            const users_id = usersToken.tod;
+            const slugPostContentDetail = req.params.slugPostContentDetail;
+            const getIdPostContentDetail = await PostContentDetailModels.findOne({
+                    where: {
+                        slug: slugPostContentDetail,
+                    },
+                });
+            const checkAnyLike = await LikePostContentDetailModels.findOne({
+                where: {
+                    post_content_details_id: getIdPostContentDetail.id,
+                },
+            });
+            const checkAnyComment = await CommentPostContentDetailModels.findOne({
+                where: {
+                    post_content_details_id: getIdPostContentDetail.id,
+                },
+            });
+            if (!getIdPostContentDetail && checkAnyLike && checkAnyComment) {
+                return responseApi(res, [], null, "Server error....", 400);
+            }
+            if (getIdPostContentDetail) {
+                if (checkAnyLike) {
+                    await checkAnyLike.destroy();
+                }
+                if (checkAnyComment) {
+                    await checkAnyComment.destroy();
+                }
+                await getIdPostContentDetail.destroy();
+            }
+            return responseApi(res, [], null, "Data has been deleted", 0);
+        } catch (error) {
+            console.log("error post", error);
+            return responseApi(res, [], null, "Server error....", 1);
+        }
+    }
+)
