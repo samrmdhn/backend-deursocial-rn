@@ -229,21 +229,21 @@ export const getGroups = async (req, res) => {
                             WHERE g_inner.id = g.id
                         ) AS all_members
                     ) THEN 'not joined'
-                    WHEN g.users_id = 21 THEN 'joined'
+                    WHEN g.users_id = ${getToken.tod} THEN 'creator'
                     WHEN EXISTS (
                         SELECT 1
                         FROM ir_group_members gm
-                        WHERE gm.groups_id = g.id AND gm.status = 1 AND gm.users_id = 21
+                        WHERE gm.groups_id = g.id AND gm.status = 1 AND gm.users_id = ${getToken.tod}
                     ) THEN 'joined'
                     WHEN EXISTS (
                         SELECT 1
                         FROM ir_group_members gm
-                        WHERE gm.groups_id = g.id AND gm.status = 3 AND gm.users_id = 21
+                        WHERE gm.groups_id = g.id AND gm.status = 3 AND gm.users_id = ${getToken.tod}
                     ) THEN 'rejected'
                     WHEN EXISTS (
                         SELECT 1
                         FROM ir_group_members gm
-                        WHERE gm.groups_id = g.id AND gm.status = 2 AND gm.users_id = 21
+                        WHERE gm.groups_id = g.id AND gm.status = 2 AND gm.users_id = ${getToken.tod}
                     ) THEN 'waiting approval'
                     ELSE 'not joined'
                 END AS is_joined,
