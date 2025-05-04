@@ -534,7 +534,7 @@ export const createPostContentDetail = withTransaction(
                 await uploadFile(file, fileDestination);
                 console.log("filesNamed", filesNamed);
             }
-            return responseApi(res, [dataPost], null, "Data has been saved", 0);
+            return responseApi(res, [{"post_slug": dataPost.slug}], null, "Data has been saved", 0);
         } catch (error) {
             console.log("error post", error);
             throw error;
