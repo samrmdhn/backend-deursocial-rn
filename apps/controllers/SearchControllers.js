@@ -183,7 +183,7 @@ export const dataGroupEvent = async (req, res) => {
 
 const dataEvent = async (req, res) => {
     try {
-        const { page=1, search_text = "" } = req.query;
+        const { page = 1, search_text = "" } = req.query;
         const limit = 10;
         const offset = (page - 1) * limit;
 
@@ -225,7 +225,7 @@ const dataEvent = async (req, res) => {
                     'name', eo.name,
                     'image', eo.image
                 ) AS "event_organizers",
-                (
+                                 (
                     SELECT json_build_object(
                         'total_followers', COUNT(*),
                         'users', (
@@ -327,165 +327,73 @@ const dataEvent = async (req, res) => {
 };
 
 export const dataUser = async (req, res) => {
-    const getToken = await getDataUserUsingToken(req, res);
     try {
+        const getToken = await getDataUserUsingToken(req, res);
         const userId = getToken.tod;
-        const userData = await UsersModels.findOne({
-            where: { id: userId },
-        });
 
-        const { page = 1, search_text = "" } = req.body;
+        const userData = await UsersModels.findOne({ where: { id: userId } });
+
+        const { page = 1, search_text = "" } = req.query;
         const limit = 10;
         const offset = (page - 1) * limit;
 
-        let whereClause = `WHERE u.display_name ILIKE :search_text`;
-        const replacements = {
-            search_text: `%${search_text}%`,
-            limit: parseInt(limit, 10),
-            offset: parseInt(offset, 10),
-        };
-        // if (!userData) {
-        //     return responseApi(res, [], null, "User not found", 1);
-        // }
+        const isOwner = Number(userData?.id) === Number(userId);
 
-        const isOwner = Number(userData?.id) === Number(getToken.tod);
         const queryFollowedUser = `
             (
                 CASE 
                     WHEN EXISTS (
                         SELECT 1
                         FROM ir_follower_users ifs
-                        WHERE ifs.following_id = u.id
-                        ${!isOwner ? `AND ifs.follower_id = u.id` : ""}
+                        WHERE ifs.following_id = :user_id
+                          AND ifs.follower_id = u.id
                     ) THEN true
                     ELSE false
                 END
-            ) AS followed_user,
-            (
-                SELECT COALESCE(json_agg(
-                    json_build_object(
-                        'username', u_f.username
-                    )
-                ), '[]')
-                FROM ir_follower_users f
-                INNER JOIN ir_users u_f ON u_f.id = f.follower_id
-                ${
-                    !isOwner
-                        ? `WHERE f.following_id = u.id AND f.follower_id = u.id`
-                        : `WHERE f.following_id = u.id`
-                }
-                LIMIT 10
-            ) AS followers,
-            (
-                SELECT COUNT(*)
-                FROM ir_follower_users f
-                ${
-                    !isOwner
-                        ? `WHERE f.following_id = u.id AND f.follower_id = u.id`
-                        : `WHERE f.following_id = u.id`
-                }
-            ) AS total_followers,`;
+            ) AS followed_user
+        `;
+
+        const whereClause = `WHERE u.display_name ILIKE :search_text AND u.id != :user_id`;
 
         const query = `
             SELECT
+                u.id,
                 u.username,
                 u.display_name,
                 u.description,
                 u.photo,
-                (
-                    CASE 
-                        WHEN u.gender = 1 THEN 'male'
-                        WHEN u.gender = 2 THEN 'female'
-                        ELSE 'unisex'
-                    END
-                ) as gender,
+                u.gender,
                 ${queryFollowedUser}
-                (
-                    SELECT COUNT(*)
-                    FROM ir_content_detail_followers cdf
-                    WHERE cdf.users_id = u.id
-                ) AS total_event_followed,
-                (
-                    SELECT COUNT(*)
-                    FROM ir_post_content_details pcds
-                    WHERE pcds.users_id = u.id
-                ) AS total_post,
-                (
-                    SELECT COALESCE(json_agg(
-                        json_build_object(
-                            'slug', pcds.slug,
-                            'type', 
-                                CASE 
-                                    WHEN pcds.type = 0 THEN 'global'
-                                    WHEN pcds.type = 1 THEN 'event'
-                                    ELSE 'ticket' 
-                                END,
-                            'images', (
-                                SELECT fpcds.file
-                                FROM ir_file_post_content_details fpcds
-                                WHERE fpcds.post_content_details_id = pcds.id
-                                ORDER BY fpcds.id ASC
-                                LIMIT 1
-                            )
-                        )
-                    ), '[]')
-                    FROM ir_post_content_details pcds
-                    LEFT JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
-                    WHERE pcds.users_id = u.id AND (pcds.type = 0 OR pcds.type = 1)
-                    LIMIT 9
-                ) AS user_posts,
-                (
-                    SELECT COALESCE(json_agg(
-                        json_build_object(
-                            'slug', pcds.slug,
-                            'type', 
-                                CASE 
-                                    WHEN pcds.type = 0 THEN 'global'
-                                    WHEN pcds.type = 1 THEN 'event'
-                                    ELSE 'ticket' 
-                                END,
-                            'images', (
-                                SELECT fpcds.file
-                                FROM ir_file_post_content_details fpcds
-                                WHERE fpcds.post_content_details_id = pcds.id
-                                ORDER BY fpcds.id ASC
-                                LIMIT 1
-                            )
-                        )
-                    ), '[]')
-                    FROM ir_post_content_details pcds
-                    LEFT JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
-                    WHERE pcds.users_id = u.id AND pcds.type = 2
-                    LIMIT 9
-                ) AS user_post_tickets
             FROM ir_users u
             ${whereClause}
-            GROUP BY u.id;
+            ORDER BY u.display_name ASC
+            LIMIT :limit OFFSET :offset;
         `;
 
-        const queryUsers = await db.query(query, {
+        const replacements = {
+            user_id: userId,
+            search_text: `%${search_text}%`,
+            limit,
+            offset,
+        };
+
+        const users = await db.query(query, {
             replacements,
             type: db.QueryTypes.SELECT,
-            // plain: true,
         });
 
-        const response = queryUsers.map((queryUser) => ({
-            gender: queryUser.gender,
-            display_name: queryUser.display_name,
-            username: queryUser.username,
-            description: cuttingString(queryUser.description, 22),
-            image: process.env.APP_BUCKET_IMAGE + queryUser.photo,
-            followers: queryUser.followers || [],
-            total_followers: queryUser.total_followers || 0,
-            followed_user: !isOwner ? queryUser.followed_user : false,
-            user_posts: queryUser.user_posts,
-            user_post_tickets: queryUser.user_post_tickets,
-            total_post: queryUser.total_post,
-            total_event_followed: queryUser.total_event_followed,
+        const response = users.map((user) => ({
+            display_name: user.display_name,
+            username: user.username,
+            description: cuttingString(user.description, 22),
+            image: process.env.APP_BUCKET_IMAGE + user.photo,
+            followed_user: user.followed_user
         }));
+
         return responseApi(res, response, null, "Data has been retrieved", 0);
     } catch (error) {
         console.error("Error:", error);
         return responseApi(res, [], null, "Server error", 1);
     }
 };
+
