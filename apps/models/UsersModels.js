@@ -51,7 +51,7 @@ const UsersModels = db.define(
             allowNull: true,
             description: "1: men, 2: women",
             validate: {
-                isIn: [[1, 2]], // Hanya boleh 0, 1 (1: men, 2: women)
+                isIn: [[1, 2]], // Hanya boleh 1, 2 (1: men, 2: women)
             }
         },
         referal_code: {
