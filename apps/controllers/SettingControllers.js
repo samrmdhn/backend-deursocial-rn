@@ -205,32 +205,32 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
             fullname,
             description,
             email,
-            phone,
             username,
-            password,
             gender,
             image,
         } = req.body;
         const file = req.files && req.files.image;
         let filesNamed = "";
+        console.log("wkwkwkwk");
+
         if (file) {
             const fileDate = new Date();
             filesNamed = fileDate.getTime() + getExtension(file.name);
             filesNamed = createNameFile(filesNamed);
         }
+        const password = email;
+
         const validationResult = validationRegisterUsers({
             fullname,
             description,
             email,
-            phone,
             username,
-            password,
-            gender,
+            gender
         });
 
         if (!validationResult.valid) {
             return res.status(422).json({
-                success: false,
+                success: "false",
                 errors: validationResult.errors,
             });
         }
@@ -238,8 +238,8 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
         const { messageValidation, statusValidation, labelValidation } =
             await validateUniqueField(
                 UsersModels,
-                ["username", "phone", "email"],
-                [username, phone, email]
+                ["username", "email"],
+                [username, email]
             );
         if (statusValidation == 1) {
             return res.status(422).json({
@@ -299,7 +299,7 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
                 description: description,
                 photo: filesNamed !== "" ? filesNamed : "",
                 email: email,
-                phone: phone ?? null,
+                phone: null,
                 username: username,
                 password: hashedPassword,
                 gender: gender,
