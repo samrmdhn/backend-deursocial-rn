@@ -534,7 +534,7 @@ export const createPostContentDetail = withTransaction(
                 await uploadFile(file, fileDestination);
                 console.log("filesNamed", filesNamed);
             }
-            return responseApi(res, [{"post_slug": dataPost.slug}], null, "Data has been saved", 0);
+            return responseApi(res, [{ "post_slug": dataPost.slug }], null, "Data has been saved", 0);
         } catch (error) {
             console.log("error post", error);
             throw error;
@@ -652,6 +652,7 @@ export const deleteDetailPostPerContentDetail = withTransaction(
     }
 )
 
+
 export const getCommentPostContentDetail = async (req, res) => {
     try {
         const page = parseInt(req.query.page, 10) || 1;
@@ -663,7 +664,10 @@ export const getCommentPostContentDetail = async (req, res) => {
                 username: usernameUser,
             },
         });
-        const users_id = getDataUsersModels?.id;
+        if (!getDataUsersModels) {
+            return responseApi(res, [], null, "User not found", 1);
+        }
+        const users_id = getDataUsersModels.id;
 
         const replacements = {
             users_id,
@@ -675,15 +679,27 @@ export const getCommentPostContentDetail = async (req, res) => {
             SELECT
                 cpcds.comment_post,
                 pcds.slug AS post_slug,
+                json_build_object(
+                    'caption_post', pcds.caption_post,
+                    'slug', pcds.slug,
+                    'created_at', TO_CHAR(TO_TIMESTAMP(pcds.created_at), 'YYYY-MM-DD HH24:MI:SS'),
+                    'user', json_build_object(
+                        'id', upost.id,
+                        'name', upost.display_name,
+                        'username', upost.username,
+                        'image', upost.photo
+                    )
+                ) AS user_post,
                 TO_CHAR(TO_TIMESTAMP(cpcds.created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at,
                 json_build_object(
-                    'name', u.display_name,
-                    'image', u.photo,
-                    'username', u.username
+                    'name', commenter.display_name,
+                    'image', commenter.photo,
+                    'username', commenter.username
                 ) AS user
             FROM ir_comment_post_content_details cpcds
             JOIN ir_post_content_details pcds ON pcds.id = cpcds.post_content_details_id
-            JOIN ir_users u ON cpcds.users_id = u.id
+            JOIN ir_users commenter ON cpcds.users_id = commenter.id
+            JOIN ir_users upost ON pcds.users_id = upost.id
             WHERE cpcds.users_id = :users_id
             ORDER BY cpcds.created_at DESC
             LIMIT :limit OFFSET :offset
@@ -696,8 +712,8 @@ export const getCommentPostContentDetail = async (req, res) => {
 
         const countQuery = `
             SELECT COUNT(*) AS total_count
-            FROM ir_comment_post_content_details cpcds
-            WHERE cpcds.users_id = :users_id
+            FROM ir_comment_post_content_details
+            WHERE users_id = :users_id
         `;
 
         const totalResult = await db.query(countQuery, {
@@ -724,7 +740,8 @@ export const getCommentPostContentDetail = async (req, res) => {
             0
         );
     } catch (error) {
-        console.error("Error getCommentPostContentDetail:", error);
-        return responseApi(res, [], null, "Server error....", 1);
+        console.error("Error getCommentPostContentDetail:", error.message);
+        return responseApi(res, [], null, "Internal server error", 1);
     }
 };
+
