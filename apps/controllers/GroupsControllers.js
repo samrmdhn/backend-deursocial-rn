@@ -9,6 +9,8 @@ import { responseApi } from "../../libs/RestApiHandler.js";
 import ContentDetailsModels from "../models/ContentDetailsModels.js";
 import GroupMembersModels from "../models/GroupMembersModels.js";
 import GroupsModels from "../models/GroupsModels.js";
+import UsersModels from "../models/UsersModels.js";
+import { where } from "sequelize";
 
 export const createGroups = async (req, res) => {
     try {
@@ -198,6 +200,13 @@ export const joinMemberToGroups = async (req, res) => {
 export const getGroups = async (req, res) => {
     try {
         const getToken = getDataUserUsingToken(req, res);
+        const userId = getToken.tod;
+        const dataUser = await UsersModels.findOne({
+            where: {
+                id: userId,
+            },
+        });
+        
         const contentDetailSlugs = req.params.contentDetailSlugs;
         const { page = 1, search_text = "" } = req.query;
         const limit = 10;
@@ -213,6 +222,10 @@ export const getGroups = async (req, res) => {
             whereClause += ` AND g.title ILIKE :search_text`;
             replacements.search_text = `%${search_text}%`;
         }
+        if (dataUser.is_anonymous == 0) {
+            whereClause += ` AND g.is_anonymous = 0`;
+        }
+        whereClause += ` AND g.is_gender in (0, ${dataUser.gender})`;
 
         const query = `
             SELECT
