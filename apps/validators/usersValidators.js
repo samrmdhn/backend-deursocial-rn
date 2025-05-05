@@ -5,11 +5,7 @@ export const validationRegisterUsers = (userData) => {
         fullname: Joi.string().required().min(3).max(100),
         description: Joi.string().optional().max(100),
         email: Joi.string().email().required(),
-        phone: Joi.string()
-            .optional()
-            .pattern(/^\+?[0-9]{10,15}$/),
         username: Joi.string().required().min(3).max(50),
-        password: Joi.string().required().min(6).max(10),
         gender: Joi.number().required().not(Joi.valid(0)).valid(1, 2).messages({
             "any.required": "Gender is required",
             "any.invalid": "Select Gender",
