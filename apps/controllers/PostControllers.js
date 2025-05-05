@@ -217,7 +217,7 @@ export const getLikePostContentDetail = async (req, res) => {
                         SELECT 1
                         FROM ir_like_post_content_details l
                         WHERE l.post_content_details_id = pcds.id
-                          AND l.users_id = pcds.users_id
+                          AND l.users_id = ${users_id}
                     )
                 ) AS post_liked,
                 CAST(
