@@ -90,55 +90,7 @@ export const getDetailUser = async (req, res) => {
                     SELECT COUNT(*)
                     FROM ir_post_content_details pcds
                     WHERE pcds.users_id = u.id
-                ) AS total_post,
-                (
-                    SELECT COALESCE(json_agg(
-                        json_build_object(
-                            'slug', pcds.slug,
-                            'type', 
-                                CASE 
-                                    WHEN pcds.type = 0 THEN 'global'
-                                    WHEN pcds.type = 1 THEN 'event'
-                                    ELSE 'ticket' 
-                                END,
-                            'images', (
-                                SELECT fpcds.file
-                                FROM ir_file_post_content_details fpcds
-                                WHERE fpcds.post_content_details_id = pcds.id
-                                ORDER BY fpcds.id ASC
-                                LIMIT 1
-                            )
-                        )
-                    ), '[]')
-                    FROM ir_post_content_details pcds
-                    LEFT JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
-                    WHERE pcds.users_id = u.id
-                    LIMIT 9
-                ) AS user_posts,
-                (
-                    SELECT COALESCE(json_agg(
-                        json_build_object(
-                            'slug', pcds.slug,
-                            'type', 
-                                CASE 
-                                    WHEN pcds.type = 0 THEN 'global'
-                                    WHEN pcds.type = 1 THEN 'event'
-                                    ELSE 'ticket' 
-                                END,
-                            'images', (
-                                SELECT fpcds.file
-                                FROM ir_file_post_content_details fpcds
-                                WHERE fpcds.post_content_details_id = pcds.id
-                                ORDER BY fpcds.id ASC
-                                LIMIT 1
-                            )
-                        )
-                    ), '[]')
-                    FROM ir_post_content_details pcds
-                    LEFT JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
-                    WHERE pcds.users_id = u.id AND pcds.type = 2
-                    LIMIT 9
-                ) AS user_post_tickets
+                ) AS total_post
             FROM ir_users u
             WHERE username = :usernameUser
             GROUP BY u.id;
@@ -162,8 +114,6 @@ export const getDetailUser = async (req, res) => {
             followers: queryUser.followers || [],
             total_followers: queryUser.total_followers || 0,
             followed_user: !isOwner ? queryUser.followed_user : false,
-            user_posts: queryUser.user_posts,
-            user_post_tickets: queryUser.user_post_tickets,
             total_post: queryUser.total_post,
             total_event_followed: queryUser.total_event_followed,
         };
