@@ -209,6 +209,8 @@ export const getLikePostContentDetail = async (req, res) => {
 
         const query = `
             SELECT 
+                cds.title AS event_title,
+                cds.slug AS event_slug,
                 pcds.caption_post AS caption,
                 pcds.slug AS slug,
                 TO_CHAR(TO_TIMESTAMP(pcds.created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at,
@@ -252,9 +254,10 @@ export const getLikePostContentDetail = async (req, res) => {
                     WHERE cpcds.post_content_details_id = pcds.id
                 ) AS total_comments
             FROM ir_like_post_content_details lpcd
-            JOIN ir_post_content_details pcds 
-                ON lpcd.post_content_details_id = pcds.id
-                JOIN ir_users u ON pcds.users_id = u.id
+            JOIN ir_post_content_details pcds ON lpcd.post_content_details_id = pcds.id
+            JOIN ir_users u ON pcds.users_id = u.id
+            JOIN ir_segmented_post_content_details spcds ON spcds.post_content_details_id = pcds.id
+            JOIN ir_content_details cds ON cds.id = spcds.content_details_id
             ${whereClause}
             ORDER BY lpcd.created_at DESC
             LIMIT :limit OFFSET :offset
