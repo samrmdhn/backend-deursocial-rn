@@ -224,8 +224,8 @@ export const getGroups = async (req, res) => {
         const query = `
             SELECT
                 g.id AS id,
-                CASE
-                    WHEN g.max_members = (
+				CASE 
+					WHEN g.max_members = (
                         SELECT COUNT(*) FROM (
                             SELECT DISTINCT gm.users_id
                             FROM ir_group_members gm
@@ -235,7 +235,10 @@ export const getGroups = async (req, res) => {
                             FROM ir_groups g_inner
                             WHERE g_inner.id = g.id
                         ) AS all_members
-                    ) THEN 'not joined'
+                    ) THEN true
+                ELSE false
+                END AS is_max_member,
+                CASE
                     WHEN g.users_id = ${getToken.tod} THEN 'creator'
                     WHEN EXISTS (
                         SELECT 1
