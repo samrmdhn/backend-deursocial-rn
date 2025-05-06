@@ -23,6 +23,7 @@ api.post("/api/groups/:slug", verifyToken, GroupsControllers.createGroups);
 // api.post("/api/join/groups", verifyToken, GroupsControllers.joinMemberToGroups);
 api.post("/api/join/group/:slug", verifyToken, GroupsControllers.joinMemberToGroups);
 api.post("/api/approve/member/:slug", verifyToken, GroupsControllers.approveMember);
+api.get("/api/get/member/group/:slugGroup", GroupsControllers.getMemberNeedApprovalGroup);
 
 api.get("/api/homepages", HomepageControllers.homepage);
 api.post("/api/display/types", verifyToken, HomepageControllers.createDisplayTypes);
