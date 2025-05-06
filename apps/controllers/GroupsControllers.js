@@ -66,6 +66,7 @@ export const joinMemberToGroups = async (req, res) => {
         const replacements = {
             groupSlugs: groupSlugs,
         };
+        let statusMember = 1;
 
         let whereClause =
             "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs";
@@ -75,7 +76,12 @@ export const joinMemberToGroups = async (req, res) => {
                 LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slugs,
                 g.title,
                 g.id,
-                g.is_gender
+                g.is_gender,
+                g.max_members,
+                g.is_anonymous,
+                g.is_private,
+                g.status,
+                g.password_join
             FROM ir_groups g
             ${whereClause}
         `;
@@ -85,7 +91,6 @@ export const joinMemberToGroups = async (req, res) => {
             type: db.QueryTypes.SELECT,
             plain: true,
         });
-
         if (!groupsData) {
             return responseApi(res, [], null, "Group not found", 1);
         }
@@ -100,13 +105,13 @@ export const joinMemberToGroups = async (req, res) => {
             FROM ir_users u WHERE u.id = ${users_id}
         `;
 
-        const groupsDataUser = await db.query(queryUser, {
+        const dataUser = await db.query(queryUser, {
             replacements,
             type: db.QueryTypes.SELECT,
             plain: true,
         });
         if (groupsData.is_gender > 0) {
-            if (groupsDataUser.gender != groupsData.is_gender) {
+            if (dataUser.gender != groupsData.is_gender) {
                 return responseApi(
                     res,
                     [],
@@ -129,15 +134,15 @@ export const joinMemberToGroups = async (req, res) => {
         }
 
 
-        const dataGroupMembers = await GroupMembersModels.findAll({
+        const dataGroupMembers = await GroupMembersModels.findOne({
             where: {
                 groups_id: groups_id,
                 users_id: users_id,
             },
         });
 
-        if (dataGroupMembers.length > 0) {
-            if (dataGroupMembers[0].status === 3) {
+        if (dataGroupMembers) {
+            if (dataGroupMembers.status === 3) {
                 return responseApi(
                     res,
                     [],
@@ -148,33 +153,12 @@ export const joinMemberToGroups = async (req, res) => {
             }
         }
 
-        const dataGroups = await GroupsModels.findAll({
-            where: {
-                id: groups_id,
-                users_id: users_id,
-            },
-        });
-
-        const dataGroupsMaxMember = await GroupsModels.findOne({
-            where: {
-                id: groups_id
-            },
-        });
         const dataGroupsMember = await GroupMembersModels.findAll({
             where: {
                 id: groups_id
             },
         });
-        if (dataGroups.length > 0) {
-            return responseApi(
-                res,
-                [],
-                null,
-                "Sorry you cannot join members",
-                2
-            );
-        }
-        if (dataGroupsMember.length + 1 > dataGroupsMaxMember.max_members) {
+        if ((dataGroupsMember.length + 1) > groupsData.max_members) {
             return responseApi(
                 res,
                 [],
@@ -183,10 +167,20 @@ export const joinMemberToGroups = async (req, res) => {
                 2
             );
         }
+        if (groupsData.is_private === 1) {
+            statusMember = 2;
+        }
 
+        if (dataGroupMembers) {
+            if (dataGroupMembers.status === 2) {
+                await dataGroupMembers.destroy()
+                return responseApi(res, [], null, "You have successfully left the group.", 0);
+            }
+        }
         await GroupMembersModels.create({
             users_id: users_id,
             groups_id: groups_id,
+            status: statusMember,
             created_at: makeEpocTime(),
         });
 

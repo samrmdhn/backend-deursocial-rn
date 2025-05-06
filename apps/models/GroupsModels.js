@@ -46,7 +46,7 @@ const GroupsModels = db.define("ir_groups", {
     is_gender: {
         type: TYPES.TINYINT,
         allowNull: true,
-        defaultValue: 3,
+        defaultValue: 0,
         validate: {
             isIn: [[0, 1, 2]], // Hanya boleh 0, 1, 2 (0: Unisex, 1: Men, 2: Women)
         },
@@ -61,7 +61,6 @@ const GroupsModels = db.define("ir_groups", {
     },
     is_private: {
         type: TYPES.TINYINT,
-        allowNull: true,
         defaultValue: 0,
         validate: {
             isIn: [[0, 1]], // Hanya boleh 0, 1 (0: no private, 1: yes private)
