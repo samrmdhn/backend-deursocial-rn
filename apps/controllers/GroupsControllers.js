@@ -200,7 +200,7 @@ export const getGroups = async (req, res) => {
                 id: userId,
             },
         });
-        
+
         const contentDetailSlugs = req.params.contentDetailSlugs;
         const { page = 1, search_text = "" } = req.query;
         const limit = 10;
@@ -685,5 +685,78 @@ export const approveMember = async (req, res) => {
     } catch (error) {
         console.log(error);
         return responseApi(res, [], null, "Server error....", 1);
+    }
+};
+
+export const getMemberNeedApprovalGroup = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 10;
+        const offset = (page - 1) * limit;
+        const groupSlug = req.params.slugGroup;
+        const replacements = {
+            group_slug: groupSlug,
+            limit,
+            offset,
+        };
+        const query = `
+            SELECT 
+                    u.display_name AS name,
+                    u.photo AS image,
+                    u.username,
+                    TO_CHAR(TO_TIMESTAMP(gm.created_at), 'YYYY-MM-DD HH24:MI:SS') AS joined_date
+                FROM 
+                    ir_group_members gm
+                JOIN 
+                    ir_users u ON u.id = gm.users_id
+                JOIN
+                    ir_groups g ON g.id = gm.groups_id
+                WHERE 
+                    LOWER(REPLACE(g.title, ' ', '-') || '-' || CAST(g.id AS TEXT)) = :group_slug
+                    AND gm.status = 2
+            LIMIT :limit OFFSET :offset
+`;
+
+
+        const data = await db.query(query, {
+            type: db.QueryTypes.SELECT,
+            replacements,
+        });
+        const countQuery = `
+        SELECT COUNT(*) AS total_count
+        FROM ir_group_members gm
+        JOIN ir_groups g ON g.id = gm.groups_id
+        WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || CAST(g.id AS TEXT)) = :group_slug
+        AND gm.status = 2
+    `;
+
+
+        const totalResult = await db.query(countQuery, {
+            type: db.QueryTypes.SELECT,
+            replacements,
+        });
+
+        const total = parseInt(totalResult[0]?.total_count || 0, 10);
+        const totalPages = Math.ceil(total / limit);
+
+        return responseApi(
+            res,
+            data,
+            {
+                assets_image_url: process.env.APP_BUCKET_IMAGE,
+                pagination: {
+                    current_page: page,
+                    per_page: limit,
+                    total,
+                    total_page: totalPages,
+                },
+            },
+            "Data has been retrieved",
+            0
+        );
+    } catch (error) {
+        // Catch and log any errors
+        console.error("Error in getMemberNeedApprovalGroup:", error);
+        return responseApi(res, [], null, "Internal server error", 1);
     }
 };
