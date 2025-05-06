@@ -784,7 +784,7 @@ export const getMomentPostContentDetail = async (req, res) => {
                     WHERE fpcds.post_content_details_id = pcds.id
                     ORDER BY fpcds.id ASC
                     LIMIT 1
-                ) AS image
+                ) AS images
             FROM ir_post_content_details pcds
             JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
             JOIN ir_segmented_post_content_details spcds ON spcds.post_content_details_id = pcds.id
