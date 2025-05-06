@@ -748,3 +748,88 @@ export const getCommentPostContentDetail = async (req, res) => {
     }
 };
 
+
+export const getMomentPostContentDetail = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 10;
+        const offset = (page - 1) * limit;
+        const usernameUser = req.params.username;
+        const getDataUsersModels = await UsersModels.findOne({
+            where: {
+                username: usernameUser,
+            },
+        });
+        if (!getDataUsersModels) {
+            return responseApi(res, [], null, "User not found", 1);
+        }
+        const users_id = getDataUsersModels.id;
+
+        const replacements = {
+            users_id,
+            limit,
+            offset,
+        };
+
+        const query = `SELECT 
+                pcds.slug,
+                CASE 
+                    WHEN pcds.type = 0 THEN 'global'
+                    WHEN pcds.type = 1 THEN 'event'
+                    ELSE 'ticket' 
+                END AS type,
+                (
+                    SELECT fpcds.file
+                    FROM ir_file_post_content_details fpcds
+                    WHERE fpcds.post_content_details_id = pcds.id
+                    ORDER BY fpcds.id ASC
+                    LIMIT 1
+                ) AS image
+            FROM ir_post_content_details pcds
+            JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
+            JOIN ir_segmented_post_content_details spcds ON spcds.post_content_details_id = pcds.id
+            JOIN ir_users u ON pcds.users_id = u.id
+            WHERE pcds.users_id = :users_id
+            ORDER BY pcds.id ASC
+            LIMIT :limit OFFSET :offset
+        `;
+        const data = await db.query(query, {
+            type: db.QueryTypes.SELECT,
+            replacements,
+        });
+
+        const countQuery = `
+            SELECT COUNT(*) AS total_count
+            FROM ir_comment_post_content_details
+            WHERE users_id = :users_id
+        `;
+
+        const totalResult = await db.query(countQuery, {
+            type: db.QueryTypes.SELECT,
+            replacements,
+        });
+
+        const total = parseInt(totalResult[0]?.total_count || 0, 10);
+        const totalPages = Math.ceil(total / limit);
+
+        return responseApi(
+            res,
+            data,
+            {
+                assets_image_url: process.env.APP_BUCKET_IMAGE,
+                pagination: {
+                    current_page: page,
+                    per_page: limit,
+                    total,
+                    total_page: totalPages,
+                },
+            },
+            "Data has been retrieved",
+            0
+        );
+    } catch (error) {
+        console.error("Error getCommentPostContentDetail:", error.message);
+        return responseApi(res, [], null, "Internal server error", 1);
+    }
+
+}

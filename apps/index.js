@@ -55,7 +55,8 @@ export {
     commentGetPerContentDetail,
     deleteDetailPostPerContentDetail,
     getLikePostContentDetail,
-    getCommentPostContentDetail
+    getCommentPostContentDetail,
+    getMomentPostContentDetail
 } from "./controllers/PostControllers.js";
 
 export {
