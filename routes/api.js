@@ -72,4 +72,5 @@ api.get("/api/city", SearchControllers.getDataCity);
 api.get("/api/like/post/profile/:username", verifyToken, PostControllers.getLikePostContentDetail)
 api.get("/api/comment/post/profile/:username", verifyToken, PostControllers.getCommentPostContentDetail)
 api.get("/api/moment/post/profile/:username", verifyToken, PostControllers.getMomentPostContentDetail)
+api.get("/api/followers/post/profile/:username", verifyToken, PostControllers.getFollowerOnProfile)
 export default api;

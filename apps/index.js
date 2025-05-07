@@ -57,7 +57,8 @@ export {
     deleteDetailPostPerContentDetail,
     getLikePostContentDetail,
     getCommentPostContentDetail,
-    getMomentPostContentDetail
+    getMomentPostContentDetail,
+    getFollowerOnProfile
 } from "./controllers/PostControllers.js";
 
 export {

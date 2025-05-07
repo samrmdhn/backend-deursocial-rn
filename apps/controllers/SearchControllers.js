@@ -344,9 +344,9 @@ export const dataUser = async (req, res) => {
                 CASE 
                     WHEN EXISTS (
                         SELECT 1
-                        FROM ir_follower_users ifs
-                        WHERE ifs.following_id = :user_id
-                          AND ifs.follower_id = u.id
+                        FROM ir_following_users ifs
+                        WHERE 
+                            ifs.following_id = ${getToken.tod} AND ifs.users_id = u.id
                     ) THEN true
                     ELSE false
                 END
