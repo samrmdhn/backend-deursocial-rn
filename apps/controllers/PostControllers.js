@@ -836,6 +836,8 @@ export const getMomentPostContentDetail = async (req, res) => {
 
 export const getFollowerOnProfile = async (req, res) => {
     try {
+        const getToken = await getDataUserUsingToken(req, res);
+
         const page = parseInt(req.query.page, 10) || 1;
         const limit = parseInt(req.query.limit, 10) || 10;
         const offset = (page - 1) * limit;
@@ -850,6 +852,7 @@ export const getFollowerOnProfile = async (req, res) => {
         if (!getDataUsersModels) {
             return responseApi(res, [], null, "User not found", 1);
         }
+        const isOwner = Number(getDataUsersModels.id) === Number(getToken.tod);
 
         const users_id = getDataUsersModels.id;
 
@@ -869,8 +872,10 @@ export const getFollowerOnProfile = async (req, res) => {
                         WHEN EXISTS (
                             SELECT 1
                             FROM ir_following_users ifs
-                            WHERE ifs.users_id = ${users_id}
-                            AND ifs.following_id = u.id
+                            WHERE 
+                            ${isOwner ?
+                                `ifs.users_id = ${getToken.tod}` : `ifs.users_id = u.id`
+                            }
                         ) THEN true
                         ELSE false
                     END
