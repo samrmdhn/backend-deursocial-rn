@@ -2,13 +2,17 @@ import db from "../../configs/Database.js";
 import DataTypesCustom from "../../libs/DataTypesCustom.js";
 const { TYPES } = DataTypesCustom;
 
-const FollowerUsersModels = db.define("ir_follower_users", {
+/**
+ * following_id memfollow users
+ * 
+ */
+const FollowingUsersModels = db.define("ir_following_users", {
     id: {
         type: TYPES.BIGINT,
         primaryKey: true,
         autoIncrement: true,
     },
-    follower_id: {
+    following_id: {
         type: TYPES.BIGINT,
         allowNull: false,
         references: {
@@ -16,7 +20,7 @@ const FollowerUsersModels = db.define("ir_follower_users", {
             key: "id",
         },
     },
-    following_id: {
+    users_id: {
         type: TYPES.BIGINT,
         allowNull: false,
         references: {
@@ -37,4 +41,4 @@ const FollowerUsersModels = db.define("ir_follower_users", {
     timestamps: false,
 });
 
-export default FollowerUsersModels;
+export default FollowingUsersModels;

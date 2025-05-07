@@ -6,7 +6,7 @@ import {
     getDataUserUsingToken,
     makeDataJwt,
 } from "../../helpers/customHelpers.js";
-import FollowerUsersModels from "../models/FollowerUsersModels.js";
+import FollowingUsersModels from "../models/FollowingUsersModels.js";
 import db from "../../configs/Database.js";
 import { signVisitorToken } from "../../libs/JwtHandlers.js";
 
@@ -30,32 +30,23 @@ export const getDetailUser = async (req, res) => {
                 CASE 
                     WHEN EXISTS (
                         SELECT 1
-                        FROM ir_follower_users ifs
-                        WHERE ifs.following_id = ${getToken.tod}
-                          AND ifs.follower_id = u.id
+                        FROM ir_following_users ifs
+                        WHERE 
+                        ${isOwner ?
+                            `ifs.users_id = ${getToken.tod}` : `ifs.users_id = u.id`
+                        }
                     ) THEN true
                     ELSE false
                 END
             ) AS followed_user,
             (
-                SELECT COALESCE(json_agg(
-                    json_build_object(
-                        'username', u_f.username
-                    )
-                ), '[]')
-                FROM ir_follower_users f
-                INNER JOIN ir_users u_f ON u_f.id = f.follower_id
-                ${
-                    !isOwner
-                        ? `WHERE f.following_id = u.id AND f.follower_id = u.id`
-                        : `WHERE f.following_id = u.id`
-                }
-                LIMIT 10
-            ) AS followers,
-            (
                 SELECT COUNT(*)
-                FROM ir_follower_users f
-                WHERE f.follower_id = u.id
+                FROM ir_following_users f
+                WHERE 
+                ${isOwner ?
+                `f.users_id = ${getToken.tod}` : `f.users_id = u.id`
+            }
+                
             ) AS total_followers,`;
 
         const query = `
@@ -134,17 +125,17 @@ export const followUser = async (req, res) => {
                 username: usernameUser,
             },
         });
-        const follow = await FollowerUsersModels.findOne({
+        const follow = await FollowingUsersModels.findOne({
             where: {
-                follower_id: Number(getDataUsersModels.id),
+                users_id: Number(getDataUsersModels.id),
                 following_id: Number(dataTokenUser.tod),
             },
         });
         if (follow) {
             await follow.destroy();
         } else {
-            await FollowerUsersModels.create({
-                follower_id: Number(getDataUsersModels.id),
+            await FollowingUsersModels.create({
+                users_id: Number(getDataUsersModels.id),
                 following_id: Number(dataTokenUser.tod),
                 created_at: dateToEpochTime(req.headers["x-date-for"]),
             });
@@ -315,19 +306,19 @@ export const checkExistingDataUser = async (req, res) => {
         if (queryResult) {
             return Number(queryResult?.id) !== Number(dataTokenUser.tod)
                 ? responseApi(
-                      res,
-                      [check_string],
-                      null,
-                      `${check_string} is already taken`,
-                      0
-                  )
+                    res,
+                    [check_string],
+                    null,
+                    `${check_string} is already taken`,
+                    0
+                )
                 : responseApi(
-                      res,
-                      [check_string],
-                      null,
-                      `${check_string} is your data`,
-                      0
-                  );
+                    res,
+                    [check_string],
+                    null,
+                    `${check_string} is your data`,
+                    0
+                );
         }
 
         // Jika data tidak ditemukan

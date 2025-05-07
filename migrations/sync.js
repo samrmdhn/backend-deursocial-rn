@@ -25,7 +25,7 @@ import GroupsPostsModels from "../apps/models/GroupsPostsModels.js";
 import GroupsPostsCommentsModels from "../apps/models/GroupsPostsCommentsModels.js";
 import GroupsPostsLikesModels from "../apps/models/GroupsPostsLikesModels.js";
 import ChatGroupsModels from "../apps/models/ChatGroupsModels.js";
-import FollowerUsersModels from "../apps/models/FollowerUsersModels.js";
+import FollowingUsersModels from "../apps/models/FollowingUsersModels.js";
 import ChatStatusGroupsModels from "../apps/models/ChatStatusGroupsModels.js";
 import PostContentDetailModels from "../apps/models/PostContentDetailModels.js";
 import FilePostContentDetailModels from "../apps/models/FilePostContentDetailModels.js";
@@ -91,7 +91,7 @@ async function syncDatabase() {
         console.log("Table table Groups Post Like has been created.");
         await ChatGroupsModels.sync({ force: false });
         console.log("Table table Chat Groups has been created.");
-        await FollowerUsersModels.sync({ force: false });
+        await FollowingUsersModels.sync({ force: false });
         console.log("Table table Follower Users has been created.");
         await ChatStatusGroupsModels.sync({ force: false });
         console.log("Table table Status Chat Groups has been created.");
