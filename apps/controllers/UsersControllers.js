@@ -33,8 +33,8 @@ export const getDetailUser = async (req, res) => {
                         FROM ir_following_users ifs
                         WHERE 
                         ${isOwner ?
-                            `ifs.users_id = ${getToken.tod}` : `ifs.users_id = u.id`
-                        }
+                `ifs.users_id = ${getToken.tod}` : `ifs.users_id = u.id`
+            }
                     ) THEN true
                     ELSE false
                 END
@@ -125,6 +125,10 @@ export const followUser = async (req, res) => {
                 username: usernameUser,
             },
         });
+        if (getDataUsersModels.id === dataTokenUser.tod) {
+            return responseApi(res, [], null, "Sorry you cannot be followed", 1);
+        }
+
         const follow = await FollowingUsersModels.findOne({
             where: {
                 users_id: Number(getDataUsersModels.id),

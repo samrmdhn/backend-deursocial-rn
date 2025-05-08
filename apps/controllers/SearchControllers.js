@@ -353,7 +353,7 @@ export const dataUser = async (req, res) => {
             ) AS followed_user
         `;
 
-        const whereClause = `WHERE u.display_name ILIKE :search_text AND u.id != :user_id`;
+        const whereClause = `WHERE u.display_name ILIKE :search_text`;
 
         const query = `
             SELECT
@@ -362,8 +362,7 @@ export const dataUser = async (req, res) => {
                 u.display_name,
                 u.description,
                 u.photo,
-                u.gender,
-                ${queryFollowedUser}
+                u.gender
             FROM ir_users u
             ${whereClause}
             ORDER BY u.display_name ASC
