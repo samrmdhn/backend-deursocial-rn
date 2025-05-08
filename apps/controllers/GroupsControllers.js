@@ -414,7 +414,7 @@ export const getGroupsDetail = async (req, res) => {
                 res,
                 {},
                 {},
-                "Data retrieved successfully undefined",
+                "Sorry You Cannot be see these group",
                 1
             );
         } else {
@@ -423,12 +423,12 @@ export const getGroupsDetail = async (req, res) => {
                     res,
                     {},
                     {},
-                    "Data retrieved successfully 3",
+                    "Sorry You Cannot be see these group",
                     1
                 );
             }
         }
-
+        console.log("validationGroupsData", validationGroupsData)
         const query = `
             SELECT
                 LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slugs,
@@ -514,7 +514,7 @@ export const getGroupsDetail = async (req, res) => {
                     END
                 ) AS policies,
                 json_build_object(
-                    'name', u.display_name,
+                    'name', CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END,
                     'image', u.photo,
                     'username', u.username
                 ) AS user,
@@ -549,7 +549,7 @@ export const getGroupsDetail = async (req, res) => {
                     )
                     FROM (
                         SELECT DISTINCT
-                            u.display_name,
+                            CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
                             u.photo,
                             'member' AS role
                         FROM ir_group_members gm
@@ -559,7 +559,7 @@ export const getGroupsDetail = async (req, res) => {
                         UNION ALL
 
                         SELECT DISTINCT
-                            creator.display_name,
+                            CASE WHEN g.is_anonymous = 1 THEN creator.display_name_anonymous ELSE creator.display_name END AS display_name,
                             creator.photo,
                             'creator' AS role
                         FROM ir_users creator
@@ -570,7 +570,10 @@ export const getGroupsDetail = async (req, res) => {
                     WHEN g.users_id = ${getToken.tod} THEN (
                         SELECT json_agg(
                             json_build_object(
-                                'name', u.display_name,
+                                'name', CASE 
+                                    WHEN g.is_anonymous = 1 THEN u.display_name_anonymous 
+                                    ELSE u.display_name 
+                                END,
                                 'image', u.photo,
                                 'username', u.username,
                                 'joined_date', TO_CHAR(TO_TIMESTAMP(gm.created_at), 'YYYY-MM-DD HH24:MI:SS')
