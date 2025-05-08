@@ -122,7 +122,7 @@ export const joinMemberToGroups = async (req, res) => {
             }
         }
         if (groupsData.is_anonymous > 0) {
-            if (groupsDataUser.is_anonymous == 0) {
+            if (dataUser.is_anonymous == 0) {
                 return responseApi(
                     res,
                     [],
