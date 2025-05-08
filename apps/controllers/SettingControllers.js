@@ -1,6 +1,7 @@
 import {
     createNameFile,
     downloadImage,
+    formatString,
     getExtension,
     makeDataJwt,
     makeEpocTime,
@@ -22,6 +23,7 @@ import { validateUniqueField } from "../../helpers/validationSavedData.js";
 import bcrypt from "bcrypt";
 import { validationRegisterUsers } from "../validators/usersValidators.js";
 import axios from "axios";
+import { encrypt } from "../../helpers/CustomShortEncrypt.js";
 
 const Op = Sequelize.Op;
 
@@ -301,6 +303,7 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
                 email: email,
                 phone: null,
                 username: username,
+                username_anonymous: await encrypt(formatString(anonName), "rahasia123"),
                 password: hashedPassword,
                 gender: gender,
                 created_at: makeEpocTime(),
