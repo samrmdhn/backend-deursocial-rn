@@ -278,7 +278,7 @@ export const getGroups = async (req, res) => {
                     END
                 ) AS policies,
                     json_build_object(
-                        'name', u.display_name,
+                        'name', CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END,
                         'image', u.photo,
                         'username', u.username
                     )AS user,
@@ -313,7 +313,7 @@ export const getGroups = async (req, res) => {
                     )
                     FROM (
                         SELECT DISTINCT
-                            u.display_name,
+                            CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
                             u.photo,
                             'member' AS role
                         FROM ir_group_members gm

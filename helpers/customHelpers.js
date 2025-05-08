@@ -199,3 +199,16 @@ export const isValidJwt = (tokenUser) => {
 export const cuttingString = (text, length) => {
     return text.length > length ? text.slice(0, length) + ' ...' : text;
 }
+
+
+/**
+ * Menghapus semua spasi
+ * Mengubah huruf pertama menjadi kapital
+ * @param {*} str 
+ * @returns 
+ */
+export const formatString = (str) => {
+    return str
+      .replace(/\s+/g, '') 
+      .replace(/^([a-z])/, (match) => match.toUpperCase());
+  }

@@ -42,6 +42,11 @@ const UsersModels = db.define(
             allowNull: false,
             unique: true,
         },
+        username_anonymous: {
+            type: TYPES.STRING(100),
+            allowNull: false,
+            unique: true,
+        },
         password: {
             type: TYPES.STRING(100),
             allowNull: false,
