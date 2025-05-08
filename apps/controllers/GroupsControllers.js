@@ -11,6 +11,7 @@ import GroupMembersModels from "../models/GroupMembersModels.js";
 import GroupsModels from "../models/GroupsModels.js";
 import UsersModels from "../models/UsersModels.js";
 import { where } from "sequelize";
+import { decrypt } from "../../helpers/CustomShortEncrypt.js";
 
 export const createGroups = async (req, res) => {
     try {
@@ -280,7 +281,7 @@ export const getGroups = async (req, res) => {
                     json_build_object(
                         'name', CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END,
                         'image', u.photo,
-                        'username', u.username
+                        'username', CASE WHEN g.is_anonymous = 1 THEN u.username_anonymous ELSE u.username END
                     )AS user,
                 json_build_object(
                     'city', json_build_object(
