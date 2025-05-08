@@ -46,8 +46,7 @@ export const initializeSocket = (io) => {
                         TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                         cg.messages,
                         cg.file as image_messages,
-                        u.display_name,
-                        u.display_name_anonymous,
+                        CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
                         LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
                     FROM
                         ir_chat_groups cg
@@ -114,8 +113,7 @@ export const initializeSocket = (io) => {
                         cg.messages,
                         cg.file as image_messages,
                         TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
-                        u.display_name,
-                        u.display_name_anonymous,
+                        CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
                         LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
                     FROM
                         ir_chat_groups cg
@@ -170,8 +168,7 @@ export const initializeSocket = (io) => {
                         TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                         cg.messages,
                         cg.file as image_messages,
-                        u.display_name,
-                        u.display_name_anonymous,
+                        CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
                         LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
                     FROM
                         ir_chat_groups cg
@@ -291,8 +288,7 @@ export const sendMessageToGroup = async (req, res) => {
                 cg.messages,
                 cg.file as image_messages,
                 TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
-                u.display_name,
-                u.display_name_anonymous,
+                CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
                 LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
             FROM
                 ir_chat_groups cg
@@ -467,11 +463,11 @@ export const getGroupsMessages = async (req, res) => {
                         UNION ALL
 
                         SELECT DISTINCT
-                            creator.display_name,
-                            creator.photo,
+                            u.display_name,
+                            u.photo,
                             'creator' AS role
                         FROM ir_users creator
-                        WHERE creator.id = g.users_id
+                        WHERE u.id = g.users_id
                     ) AS member
                 ) AS members,
 				(
