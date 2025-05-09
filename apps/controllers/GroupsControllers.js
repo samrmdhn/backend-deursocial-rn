@@ -3,6 +3,7 @@ import db from "../../configs/Database.js";
 import {
     getDataUserUsingToken,
     makeEpocTime,
+    withTransaction,
 } from "../../helpers/customHelpers.js";
 import { getPagination } from "../../helpers/paginationHelpers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
@@ -12,6 +13,8 @@ import GroupsModels from "../models/GroupsModels.js";
 import UsersModels from "../models/UsersModels.js";
 import { where } from "sequelize";
 import { decrypt } from "../../helpers/CustomShortEncrypt.js";
+import ChatGroupsModels from "../models/ChatGroupsModels.js";
+import ChatStatusGroupsModels from "../models/ChatStatusGroupsModels.js";
 
 export const createGroups = async (req, res) => {
     try {
@@ -431,7 +434,6 @@ export const getGroupsDetail = async (req, res) => {
                 );
             }
         }
-        console.log("validationGroupsData", validationGroupsData)
         const query = `
             SELECT
                 LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slugs,
@@ -766,3 +768,50 @@ export const getMemberNeedApprovalGroup = async (req, res) => {
         return responseApi(res, [], null, "Internal server error", 1);
     }
 };
+
+
+export const deleteGroup = withTransaction(async (req, res) => {
+    try {
+        const usersToken = getDataUserUsingToken(req, res);
+        const users_id = usersToken.tod;
+
+        const dataUser = await UsersModels.findOne({ where: { id: users_id } });
+
+        const groupSlugs = req.params.slugGroup;
+        const query = `
+        SELECT g.id FROM ir_groups g
+        WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs
+        GROUP BY g.id;
+      `;
+
+        const groupsData = await db.query(query, {
+            replacements: { groupSlugs },
+            type: db.QueryTypes.SELECT,
+            plain: true,
+        });
+        if (!dataUser) {
+            return responseApi(res, [], null, "Sorry You Cannot be delete these group", 1);
+        }
+        if (dataUser.id !== groupsData.users_id) {
+            return responseApi(res, [], null, "Sorry You Cannot be delete these group", 1);
+        }
+
+        if (!groupsData?.id) {
+            return responseApi(res, [], null, "Group not found", 1);
+        }
+
+        const groups_id = groupsData.id;
+        GroupsModels.destroy({ where: { id: groups_id } })
+        await Promise.all([
+            GroupMembersModels.destroy({ where: { groups_id } }),
+            ChatGroupsModels.destroy({ where: { groups_id } }),
+            ChatStatusGroupsModels.destroy({ where: { groups_id } }),
+        ]);
+
+        return responseApi(res, [], null, "Data has been deleted", 0);
+    } catch (error) {
+        console.error("deleteGroup error:", error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+});
+
