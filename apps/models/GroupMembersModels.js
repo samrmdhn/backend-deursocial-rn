@@ -29,7 +29,7 @@ const GroupMembersModels = db.define("ir_group_members", {
         allowNull: true,
         defaultValue: 1,
         validate: {
-            isIn: [[1, 2, 3]], // Hanya boleh 1, 2, 3 (1: joined, 2: need approval, 3: blocked)
+            isIn: [[1, 2, 3, 4]], // Hanya boleh 1, 2, 3 (1: joined, 2: need approval, 3: blocked, 4: leave)
         },
     },
     created_at: {
