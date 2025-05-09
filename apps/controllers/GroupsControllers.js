@@ -656,7 +656,7 @@ export const approveMember = async (req, res) => {
                 res,
                 {},
                 {},
-                "Data retrieved successfully undefined",
+                "Cannot be approve member",
                 1
             );
         } else {
@@ -665,7 +665,7 @@ export const approveMember = async (req, res) => {
                     res,
                     {},
                     {},
-                    "Data retrieved successfully 3",
+                    "You are blocked",
                     1
                 );
             }
@@ -811,6 +811,80 @@ export const deleteGroup = withTransaction(async (req, res) => {
         return responseApi(res, [], null, "Data has been deleted", 0);
     } catch (error) {
         console.error("deleteGroup error:", error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+});
+
+export const leaveGroup = withTransaction(async (req, res) => {
+    try {
+        const getToken = getDataUserUsingToken(req, res);
+        const users_id = getToken.tod;
+
+        const dataUser = await UsersModels.findOne({ where: { id: users_id } });
+        if (!dataUser) {
+            return responseApi(res, [], null, "Sorry You Cannot be leave these group", 1);
+        }
+        const username = dataUser.username;
+        const groupSlugs = req.params.slugGroup;
+        const replacements = {};
+        let whereClause = `WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs 
+            AND g.users_id = :userToken AND u.username = :username`;
+        replacements.groupSlugs = groupSlugs;
+        replacements.userToken = getToken.tod;
+        replacements.username = username;
+        const queryValidation = `
+            SELECT
+			gm.status,
+            gm.id
+            FROM ir_groups g
+            LEFT JOIN ir_group_members gm ON gm.groups_id = g.id
+            LEFT JOIN ir_users u ON u.id = gm.users_id
+            ${whereClause}
+            GROUP BY g.id, gm.id, u.id;
+        `;
+        const validationGroupsData = await db.query(queryValidation, {
+            replacements,
+            type: db.QueryTypes.SELECT,
+            plain: true,
+        });
+        if (typeof validationGroupsData?.status === "undefined") {
+            return responseApi(
+                res,
+                {},
+                {},
+                "Cannot be approve member",
+                1
+            );
+        } else {
+            if (validationGroupsData?.status === 3) {
+                return responseApi(
+                    res,
+                    {},
+                    {},
+                    "You are blocked",
+                    1
+                );
+            }
+        }
+        await GroupMembersModels.update(
+            {
+                status: 4,
+            },
+            {
+                where: {
+                    id: validationGroupsData?.id,
+                },
+            }
+        );
+
+        return responseApi(
+            res,
+            [],
+            "Successfully leave group",
+            0
+        );
+    } catch (error) {
+        console.log(error);
         return responseApi(res, [], null, "Server error....", 1);
     }
 });

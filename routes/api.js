@@ -25,6 +25,7 @@ api.post("/api/join/group/:slug", verifyToken, GroupsControllers.joinMemberToGro
 api.post("/api/approve/member/:slug", verifyToken, GroupsControllers.approveMember);
 api.get("/api/get/member/group/:slugGroup", GroupsControllers.getMemberNeedApprovalGroup);
 api.delete("/api/removed/group/:slugGroup", verifyToken, GroupsControllers.deleteGroup);
+api.delete("/api/leave/group/:slugGroup", verifyToken, GroupsControllers.leaveGroup);
 
 
 api.get("/api/homepages", HomepageControllers.homepage);

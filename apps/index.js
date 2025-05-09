@@ -37,7 +37,8 @@ export {
     getGroupsDetail,
     approveMember,
     getMemberNeedApprovalGroup,
-    deleteGroup
+    deleteGroup,
+    leaveGroup
 } from "./controllers/GroupsControllers.js";
 
 export { sendMessageToGroup, getGroupsMessages } from "./controllers/ChatGroupsControllers.js";
