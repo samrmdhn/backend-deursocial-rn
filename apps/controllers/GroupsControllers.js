@@ -217,10 +217,12 @@ export const getGroups = async (req, res) => {
             whereClause += ` AND g.title ILIKE :search_text`;
             replacements.search_text = `%${search_text}%`;
         }
-        if (dataUser.is_anonymous == 0) {
-            whereClause += ` AND g.is_anonymous = 0`;
+        if (dataUser) {
+            if (dataUser.is_anonymous == 0) {
+                whereClause += ` AND g.is_anonymous = 0`;
+            }
+            whereClause += ` AND g.is_gender in (0, ${dataUser.gender})`;
         }
-        whereClause += ` AND g.is_gender in (0, ${dataUser.gender})`;
 
         const query = `
             SELECT
@@ -280,7 +282,7 @@ export const getGroups = async (req, res) => {
                 ) AS policies,
                     json_build_object(
                         'name', CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END,
-                        'image', u.photo,
+                        'image', CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END,
                         'username', CASE WHEN g.is_anonymous = 1 THEN u.username_anonymous ELSE u.username END
                     )AS user,
                 json_build_object(
@@ -315,7 +317,7 @@ export const getGroups = async (req, res) => {
                     FROM (
                         SELECT DISTINCT
                             CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
-                            u.photo,
+                            CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END,
                             'member' AS role
                         FROM ir_group_members gm
                         JOIN ir_users u ON u.id = gm.users_id
@@ -516,7 +518,7 @@ export const getGroupsDetail = async (req, res) => {
                 ) AS policies,
                 json_build_object(
                     'name', CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END,
-                    'image', u.photo,
+                    'image', CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END,
                     'username', u.username
                 ) AS user,
                 json_build_object(
@@ -551,7 +553,7 @@ export const getGroupsDetail = async (req, res) => {
                     FROM (
                         SELECT DISTINCT
                             CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
-                            u.photo,
+                            CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END,
                             'member' AS role
                         FROM ir_group_members gm
                         JOIN ir_users u ON u.id = gm.users_id
@@ -575,7 +577,7 @@ export const getGroupsDetail = async (req, res) => {
                                     WHEN g.is_anonymous = 1 THEN u.display_name_anonymous 
                                     ELSE u.display_name 
                                 END,
-                                'image', u.photo,
+                                'image', CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END,
                                 'username', u.username,
                                 'joined_date', TO_CHAR(TO_TIMESTAMP(gm.created_at), 'YYYY-MM-DD HH24:MI:SS')
                             )
