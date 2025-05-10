@@ -353,7 +353,7 @@ export const getGroupsMessages = async (req, res) => {
     try {
         const getToken = getDataUserUsingToken(req, res);
         const { page = 1, title = "" } = req.query;
-        const limit = 10;
+        const limit = 50;
         const offset = (page - 1) * limit;
 
         let whereClause = `WHERE gm.status = 1 AND gm.users_id = :userToken OR g.users_id = :userToken`;
@@ -378,25 +378,6 @@ export const getGroupsMessages = async (req, res) => {
                     WHEN cds.status = 2 THEN 'upcoming' 
                     ELSE 'not joined'
                 END AS event_status,
-                CASE
-                    WHEN g.users_id = ${getToken.tod} THEN 'joined' 
-                    WHEN EXISTS (
-                        SELECT 1
-                        FROM ir_group_members gm
-                        WHERE gm.groups_id = g.id AND gm.status = 1 AND gm.users_id = ${getToken.tod}
-                    ) THEN 'joined'
-                    WHEN EXISTS (
-                        SELECT 1
-                        FROM ir_group_members gm
-                        WHERE gm.groups_id = g.id AND gm.status = 3 AND gm.users_id = ${getToken.tod}
-                    ) THEN 'rejected'
-                    WHEN EXISTS (
-                        SELECT 1
-                        FROM ir_group_members gm
-                        WHERE gm.groups_id = g.id AND gm.status = 2 AND gm.users_id = ${getToken.tod}
-                    ) THEN 'waiting approval'
-                    ELSE 'not joined'
-                END AS is_joined,
                 LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug,
                 g.title,
                 g.description,
@@ -418,9 +399,9 @@ export const getGroupsMessages = async (req, res) => {
                     END
                 ) AS policies,
                     json_build_object(
-                        'name', u.display_name,
-                        'image', u.photo,
-                        'username', u.username
+                        'name', CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END,
+                        'image', CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END,
+                        'username', CASE WHEN g.is_anonymous = 1 THEN u.username_anonymous ELSE u.username END
                     )AS user,
                 json_build_object(
                     'city', json_build_object(
@@ -453,8 +434,8 @@ export const getGroupsMessages = async (req, res) => {
                     )
                     FROM (
                         SELECT DISTINCT
-                            u.display_name,
-                            u.photo,
+                            CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
+                            CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END,
                             'member' AS role
                         FROM ir_group_members gm
                         JOIN ir_users u ON u.id = gm.users_id
@@ -463,8 +444,8 @@ export const getGroupsMessages = async (req, res) => {
                         UNION ALL
 
                         SELECT DISTINCT
-                            u.display_name,
-                            u.photo,
+                            CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
+                            CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END,
                             'creator' AS role
                         FROM ir_users creator
                         WHERE u.id = g.users_id
@@ -486,7 +467,8 @@ export const getGroupsMessages = async (req, res) => {
             LEFT JOIN ir_citys c ON c.id = g.citys_id
             LEFT JOIN ir_group_members gm ON gm.groups_id = g.id
             ${whereClause}
-            GROUP BY g.id, u.id, c.id, cds.id
+            GROUP BY g.id, u.id, c.id, cds.id, gm.created_at, g.created_at
+            ORDER BY GREATEST(gm.created_at, g.created_at) DESC
             LIMIT :limit OFFSET :offset;
         `;
 
