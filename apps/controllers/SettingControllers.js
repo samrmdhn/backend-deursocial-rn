@@ -319,6 +319,7 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
                 display_name: newUser.display_name,
                 display_name_anonymous: newUser.display_name_anonymous,
                 username_anonymous: newUser.username_anonymous,
+                gender: newUser.gender,
                 image: newUser.photo,
             });
         }
@@ -384,6 +385,7 @@ export const loginUsers = async (req, res) => {
                 display_name: user.display_name,
                 display_name_anonymous: user.display_name_anonymous,
                 username_anonymous: user.username_anonymous,
+                gender: user.gender,
                 image: user.photo,
             });
         }
@@ -436,6 +438,7 @@ export const checkAuth = async (req, res) => {
                 display_name: getExistingUser.display_name,
                 display_name_anonymous: getExistingUser.display_name_anonymous,
                 username_anonymous: getExistingUser.username_anonymous,
+                gender: getExistingUser.gender,
                 image: getExistingUser.photo,
             });
             dataToken = { access_token: visitorToken };
