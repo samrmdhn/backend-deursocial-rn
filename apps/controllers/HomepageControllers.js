@@ -312,14 +312,14 @@ export const getContents = async (req, res) => {
                     )
                 ) AS content_details
             FROM ir_contents c
-            LEFT JOIN ir_display_types dt ON c.display_types_id = dt.id
-            LEFT JOIN ir_content_details cd ON cd.contents_id = c.id
-            LEFT JOIN ir_type_content_details tcd ON cd.type_content_details_id = tcd.id
-            LEFT JOIN ir_event_organizers eo ON cd.event_organizers_id = eo.id
-            LEFT JOIN ir_vanues v ON cd.vanues_id = v.id
-            LEFT JOIN ir_citys ci ON v.citys_id = ci.id
-            LEFT JOIN ir_provinces p ON v.provinces_id = p.id
-            LEFT JOIN ir_countries co ON v.countries_id = co.id
+            JOIN ir_display_types dt ON c.display_types_id = dt.id
+            JOIN ir_content_details cd ON cd.contents_id = c.id
+            JOIN ir_type_content_details tcd ON cd.type_content_details_id = tcd.id
+            JOIN ir_event_organizers eo ON cd.event_organizers_id = eo.id
+            JOIN ir_vanues v ON cd.vanues_id = v.id
+            JOIN ir_citys ci ON v.citys_id = ci.id
+            JOIN ir_provinces p ON v.provinces_id = p.id
+            JOIN ir_countries co ON v.countries_id = co.id
             ${whereClause}
             GROUP BY c.id, dt.title
             ORDER BY c.id

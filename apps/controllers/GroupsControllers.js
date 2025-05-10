@@ -395,8 +395,14 @@ export const getGroups = async (req, res) => {
 };
 
 export const getGroupsDetail = async (req, res) => {
-    const getToken = getDataUserUsingToken(req, res);
     try {
+        const getToken = getDataUserUsingToken(req, res);
+        const userId = getToken.tod;
+        const getUsers = await UsersModels.findOne({
+            where: {
+                id: userId
+            }
+        });
         const groupSlugs = req.params.slugs;
         const replacements = {};
         let whereClause =
@@ -608,6 +614,17 @@ export const getGroupsDetail = async (req, res) => {
         let responseData = {};
         if (groupsData.length > 0) {
             responseData = groupsData[0];
+            if (getUsers.is_anonymous != (responseData.policies.is_anonymous_mode ? 1 : 0)) {
+                return responseApi(
+                    res,
+                    {},
+                    {
+                        assets_image_url: process.env.APP_BUCKET_IMAGE,
+                    },
+                    "Data retrieved successfully",
+                    0
+                );
+            }
         }
         return responseApi(
             res,
