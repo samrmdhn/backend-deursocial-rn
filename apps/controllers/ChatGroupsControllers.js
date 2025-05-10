@@ -42,7 +42,7 @@ export const initializeSocket = (io) => {
                     SELECT
                         u.id as user_id,
                         g.id as groups_id,
-                        u.photo as image,
+                        CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END AS image,
                         TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                         cg.messages,
                         cg.file as image_messages,
@@ -109,7 +109,7 @@ export const initializeSocket = (io) => {
                 const query = `
                     SELECT
                         u.id as user_id,
-                        u.photo as image,
+                        CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END AS image,
                         cg.messages,
                         cg.file as image_messages,
                         TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
@@ -164,7 +164,7 @@ export const initializeSocket = (io) => {
                     SELECT
                         u.id as user_id,
                         g.id as groups_id,
-                        u.photo as image,
+                        CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END AS image,
                         TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                         cg.messages,
                         cg.file as image_messages,
@@ -284,7 +284,7 @@ export const sendMessageToGroup = async (req, res) => {
             SELECT
                 cg.id as chat_group_id,
                 u.id as user_id,
-                u.photo as image,
+                CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END AS image,
                 cg.messages,
                 cg.file as image_messages,
                 TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
