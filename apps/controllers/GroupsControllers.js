@@ -779,7 +779,7 @@ export const deleteGroup = withTransaction(async (req, res) => {
 
         const groupSlugs = req.params.slugGroup;
         const query = `
-        SELECT g.id FROM ir_groups g
+        SELECT g.id, g.users_id FROM ir_groups g
         WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs
         GROUP BY g.id;
       `;
@@ -790,10 +790,10 @@ export const deleteGroup = withTransaction(async (req, res) => {
             plain: true,
         });
         if (!dataUser) {
-            return responseApi(res, [], null, "Sorry You Cannot be delete these group", 1);
+            return responseApi(res, [], null, "Sorry You Cannot be delete these group 1", 1);
         }
         if (dataUser.id !== groupsData.users_id) {
-            return responseApi(res, [], null, "Sorry You Cannot be delete these group", 1);
+            return responseApi(res, [], null, "Sorry You Cannot be delete these group 2", 1);
         }
 
         if (!groupsData?.id) {
