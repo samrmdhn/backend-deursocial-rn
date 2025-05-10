@@ -565,7 +565,7 @@ export const getGroupsDetail = async (req, res) => {
 
                         SELECT DISTINCT
                             CASE WHEN g.is_anonymous = 1 THEN creator.display_name_anonymous ELSE creator.display_name END AS display_name,
-                            creator.photo,
+                            CASE WHEN g.is_anonymous = 1 THEN '' ELSE creator.photo END AS photo,
                             'creator' AS role
                         FROM ir_users creator
                         WHERE creator.id = g.users_id
