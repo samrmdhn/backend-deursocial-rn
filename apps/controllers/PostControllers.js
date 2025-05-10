@@ -789,7 +789,7 @@ export const getMomentPostContentDetail = async (req, res) => {
             JOIN ir_segmented_post_content_details spcds ON spcds.post_content_details_id = pcds.id
             JOIN ir_users u ON pcds.users_id = u.id
             WHERE pcds.users_id = :users_id
-            ORDER BY pcds.id ASC
+            ORDER BY pcds.id DESC
             LIMIT :limit OFFSET :offset
         `;
         const data = await db.query(query, {
@@ -799,7 +799,7 @@ export const getMomentPostContentDetail = async (req, res) => {
 
         const countQuery = `
             SELECT COUNT(*) AS total_count
-            FROM ir_comment_post_content_details
+            FROM ir_post_content_details
             WHERE users_id = :users_id
         `;
 
