@@ -353,7 +353,7 @@ export const getGroupsMessages = async (req, res) => {
     try {
         const getToken = getDataUserUsingToken(req, res);
         const { page = 1, title = "" } = req.query;
-        const limit = 50;
+        const limit = 10;
         const offset = (page - 1) * limit;
 
         let whereClause = `WHERE gm.status = 1 AND gm.users_id = :userToken OR g.users_id = :userToken`;
