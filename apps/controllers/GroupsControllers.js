@@ -138,15 +138,15 @@ export const joinMemberToGroups = async (req, res) => {
         }
 
 
-        const dataGroupMembers = await GroupMembersModels.findOne({
+        const dataGroupMember = await GroupMembersModels.findOne({
             where: {
                 groups_id: groups_id,
                 users_id: users_id,
             },
         });
 
-        if (dataGroupMembers) {
-            if (dataGroupMembers.status === 3) {
+        if (dataGroupMember) {
+            if (dataGroupMember.status === 3) {
                 return responseApi(
                     res,
                     [],
@@ -157,12 +157,12 @@ export const joinMemberToGroups = async (req, res) => {
             }
         }
 
-        const dataGroupsMember = await GroupMembersModels.findAll({
+        const dataGroupsMembers = await GroupMembersModels.findAll({
             where: {
                 id: groups_id
             },
         });
-        if ((dataGroupsMember.length + 1) > groupsData.max_members) {
+        if ((dataGroupsMembers.length + 1) > groupsData.max_members) {
             return responseApi(
                 res,
                 [],
@@ -175,10 +175,24 @@ export const joinMemberToGroups = async (req, res) => {
             statusMember = 2;
         }
 
-        if (dataGroupMembers) {
-            if (dataGroupMembers.status === 2) {
-                await dataGroupMembers.destroy()
+        if (dataGroupMember) {
+            if (dataGroupMember.status === 2) {
+                await dataGroupMember.destroy()
                 return responseApi(res, [], null, "You have successfully left the group.", 0);
+            }
+            if (dataGroupMember.status === 4) {
+                dataGroupMember.update(
+                    {
+                        status: 2,
+                    },
+                    {
+                        where: {
+                            groups_id: groups_id,
+                            users_id: users_id,
+                        },
+                    }
+                );
+                return responseApi(res, [], null, "You have successfully Joined.", 0);
             }
         }
         await GroupMembersModels.create({
