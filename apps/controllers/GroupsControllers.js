@@ -521,7 +521,7 @@ export const getGroupsDetail = async (req, res) => {
                 json_build_object(
                     'name', CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END,
                     'image', CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END,
-                    'username', u.username
+                    'username', CASE WHEN g.is_anonymous = 1 THEN u.username_anonymous ELSE u.username END
                 ) AS user,
                 json_build_object(
                     'city', json_build_object(
