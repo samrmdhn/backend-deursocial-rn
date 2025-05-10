@@ -828,7 +828,7 @@ export const leaveGroup = withTransaction(async (req, res) => {
         const groupSlugs = req.params.slugGroup;
         const replacements = {};
         let whereClause = `WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs 
-            AND g.users_id = :userToken AND u.username = :username`;
+            AND gm.users_id = :userToken`;
         replacements.groupSlugs = groupSlugs;
         replacements.userToken = getToken.tod;
         replacements.username = username;
@@ -852,7 +852,7 @@ export const leaveGroup = withTransaction(async (req, res) => {
                 res,
                 {},
                 {},
-                "Cannot be approve member",
+                "Sorry Any problem",
                 1
             );
         } else {
