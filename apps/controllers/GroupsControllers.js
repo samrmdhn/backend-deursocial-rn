@@ -329,8 +329,8 @@ export const getGroups = async (req, res) => {
                         UNION ALL
 
                         SELECT DISTINCT
-                            creator.display_name,
-                            creator.photo,
+                            CASE WHEN g.is_anonymous = 1 THEN creator.display_name_anonymous ELSE creator.display_name END AS display_name,
+                            CASE WHEN g.is_anonymous = 1 THEN '' ELSE creator.photo END,
                             'creator' AS role
                         FROM ir_users creator
                         WHERE creator.id = g.users_id
@@ -614,17 +614,17 @@ export const getGroupsDetail = async (req, res) => {
         let responseData = {};
         if (groupsData.length > 0) {
             responseData = groupsData[0];
-            if (getUsers.is_anonymous != (responseData.policies.is_anonymous_mode ? 1 : 0)) {
-                return responseApi(
-                    res,
-                    {},
-                    {
-                        assets_image_url: process.env.APP_BUCKET_IMAGE,
-                    },
-                    "Data retrieved successfully",
-                    0
-                );
-            }
+            // if (getUsers.is_anonymous != (responseData.policies.is_anonymous_mode ? 1 : 0)) {
+            //     return responseApi(
+            //         res,
+            //         {},
+            //         {
+            //             assets_image_url: process.env.APP_BUCKET_IMAGE,
+            //         },
+            //         "Data retrieved successfully",
+            //         0
+            //     );
+            // }
         }
         return responseApi(
             res,
