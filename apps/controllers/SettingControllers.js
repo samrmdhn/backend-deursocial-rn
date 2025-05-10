@@ -318,6 +318,7 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
                 username: newUser.username,
                 display_name: newUser.display_name,
                 display_name_anonymous: newUser.display_name_anonymous,
+                username_anonymous: newUser.username_anonymous,
                 image: newUser.photo,
             });
         }
@@ -374,6 +375,7 @@ export const loginUsers = async (req, res) => {
         }
 
         let visitorToken = "";
+        console.log("ini user", user)
         if (user) {
             const { datas } = makeDataJwt(req, user.id);
             visitorToken = signVisitorToken({
@@ -381,6 +383,7 @@ export const loginUsers = async (req, res) => {
                 username: user.username,
                 display_name: user.display_name,
                 display_name_anonymous: user.display_name_anonymous,
+                username_anonymous: user.username_anonymous,
                 image: user.photo,
             });
         }
@@ -432,6 +435,7 @@ export const checkAuth = async (req, res) => {
                 username: getExistingUser.username,
                 display_name: getExistingUser.display_name,
                 display_name_anonymous: getExistingUser.display_name_anonymous,
+                username_anonymous: getExistingUser.username_anonymous,
                 image: getExistingUser.photo,
             });
             dataToken = { access_token: visitorToken };
