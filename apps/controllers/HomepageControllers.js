@@ -897,8 +897,8 @@ export const getContentDetails = async (req, res) => {
                 cd.description,
                 cd.image,
                 CASE WHEN cd.is_trending = 1 THEN true ELSE false END AS is_trending,
-                CASE WHEN cd.is_trending = 0 THEN 'ended' 
-                    WHEN cd.is_trending = 1 THEN 'ongoing' 
+                CASE WHEN cd.status = 0 THEN 'ended' 
+                    WHEN cd.status = 1 THEN 'ongoing' 
                     ELSE 'upcoming' END AS status,
                 CASE
                     WHEN EXISTS (
