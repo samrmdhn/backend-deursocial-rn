@@ -1,6 +1,7 @@
 import { Where } from "sequelize/lib/utils";
 import db from "../../configs/Database.js";
 import {
+    dateToEpochTime,
     getDataUsersUsingReqAndRes,
     getDataUserUsingToken,
     makeEpocTime,
@@ -69,7 +70,7 @@ export const createGroups = async (req, res) => {
             is_gender: is_gender,
             is_private: is_private,
             is_anonymous: is_anonymous,
-            created_at: makeEpocTime(),
+            created_at: dateToEpochTime(req.headers["x-date-for"]),
         });
         return responseApi(res, [], null, "Data Success Saved", 0);
     } catch (error) {
