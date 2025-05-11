@@ -198,7 +198,7 @@ export const joinMemberToGroups = async (req, res) => {
             if (dataGroupMember.status === 4) {
                 dataGroupMember.update(
                     {
-                        status: 2,
+                        status: statusMember,
                     },
                     {
                         where: {
