@@ -10,6 +10,7 @@ import ChatGroupsModels from "../models/ChatGroupsModels.js";
 import { jwtDecode } from "jwt-decode";
 import ChatStatusGroupsModels from "../models/ChatStatusGroupsModels.js";
 import { uploadFile } from "../../helpers/FileUpload.js";
+import UsersModels from "../models/UsersModels.js";
 
 let ioInstance;
 
@@ -352,11 +353,17 @@ export const sendMessageToGroup = async (req, res) => {
 export const getGroupsMessages = async (req, res) => {
     try {
         const getToken = getDataUserUsingToken(req, res);
+        const userId = getToken.tod;
+        const dataUser = await UsersModels.findOne({
+            where: {
+                id: userId,
+            },
+        });
         const { page = 1, title = "" } = req.query;
         const limit = 10;
         const offset = (page - 1) * limit;
 
-        let whereClause = `WHERE gm.status = 1 AND gm.users_id = :userToken OR g.users_id = :userToken`;
+        let whereClause = `WHERE gm.status = 1 AND gm.users_id = :userToken`;
         const replacements = {
             userToken: getToken.tod,
             limit: parseInt(limit, 10),
@@ -366,6 +373,14 @@ export const getGroupsMessages = async (req, res) => {
             whereClause += ` AND g.title ILIKE :title`;
             replacements.title = `%${title}%`;
         }
+        if (dataUser) {
+            if (dataUser.is_anonymous == 0) {
+                whereClause += ` AND g.is_anonymous = 0`;
+            }
+            whereClause += ` AND g.is_gender in (0, ${dataUser.gender})`;
+        }
+
+        whereClause += ` OR g.users_id = :userToken`
 
         const query = `
             SELECT
