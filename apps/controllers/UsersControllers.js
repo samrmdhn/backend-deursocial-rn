@@ -32,9 +32,8 @@ export const getDetailUser = async (req, res) => {
                         SELECT 1
                         FROM ir_following_users ifs
                         WHERE 
-                        ${isOwner ?
-                `ifs.users_id = ${getToken.tod}` : `ifs.users_id = u.id`
-            }
+                        ifs.users_id = ${getToken.tod}
+                        AND ifs.following_id = ${userData.id}
                     ) THEN true
                     ELSE false
                 END
