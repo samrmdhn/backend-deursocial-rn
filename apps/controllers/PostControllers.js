@@ -874,6 +874,7 @@ export const getFollowerOnProfile = async (req, res) => {
                 u.id,
                 u.display_name,
                 u.username,
+                u.photo as image,
                 (
                     CASE 
                         WHEN EXISTS (
