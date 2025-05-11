@@ -8,6 +8,7 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { jwtDecode } from "jwt-decode";
 import jwt from "jsonwebtoken";
+import UsersModels from "../apps/models/UsersModels.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -209,6 +210,22 @@ export const cuttingString = (text, length) => {
  */
 export const formatString = (str) => {
     return str
-      .replace(/\s+/g, '') 
-      .replace(/^([a-z])/, (match) => match.toUpperCase());
-  }
+        .replace(/\s+/g, '')
+        .replace(/^([a-z])/, (match) => match.toUpperCase());
+}
+
+export const getDataUsersUsingReqAndRes = async (req, res) => {
+    try {
+        const getToken = await getDataUserUsingToken(req, res);
+        const userId = getToken.tod;
+        const dataUser = await UsersModels.findOne({
+            where: {
+                id: userId,
+            },
+        });
+        return {status: true, data: dataUser};
+    } catch (error) {
+        console.log("[ERROR on getDataUsers helper]:", error)
+        return {status: false, data: {}};
+    }
+}
