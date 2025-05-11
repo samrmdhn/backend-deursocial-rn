@@ -338,3 +338,36 @@ export const checkExistingDataUser = async (req, res) => {
         return responseApi(res, [], null, "Server error....", 1);
     }
 };
+
+
+export const checkUsername = async(req, res) => {
+    try {
+        const username = req.params.username;
+        const userData = await UsersModels.findAll({
+            where: {
+                username: username
+            }
+        })
+
+        if (userData.length > 0) {
+            return responseApi(
+                res,
+                [],
+                null,
+                "Sorry Username is cannot be used",
+                1
+            );
+        }
+
+        return responseApi(
+            res,
+            [],
+            null,
+            "Your Username can be used",
+            0
+        );
+    } catch (error) {
+        console.log("error check username", error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+}

@@ -47,7 +47,8 @@ export {
     getDetailUser,
     followUser,
     updateDataUser,
-    checkExistingDataUser
+    checkExistingDataUser,
+    checkUsername
 } from "./controllers/UsersControllers.js";
 export {
     createPostContentDetail,

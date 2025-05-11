@@ -76,4 +76,6 @@ api.get("/api/like/post/profile/:username", verifyToken, PostControllers.getLike
 api.get("/api/comment/post/profile/:username", verifyToken, PostControllers.getCommentPostContentDetail)
 api.get("/api/moment/post/profile/:username", verifyToken, PostControllers.getMomentPostContentDetail)
 api.get("/api/followers/post/profile/:username", PostControllers.getFollowerOnProfile)
+
+api.get("/api/check/username/:username", verifyToken, UsersControllers.checkUsername)
 export default api;
