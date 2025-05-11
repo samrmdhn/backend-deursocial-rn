@@ -850,21 +850,20 @@ export const getFollowerOnProfile = async (req, res) => {
         const offset = (page - 1) * limit;
         const usernameUser = req.params.username;
 
-        const getDataUsersModels = await UsersModels.findOne({
-            where: {
-                username: usernameUser,
-            },
+        const targetUser = await UsersModels.findOne({
+            where: { username: usernameUser },
         });
 
-        if (!getDataUsersModels) {
+        if (!targetUser) {
             return responseApi(res, [], null, "User not found", 1);
         }
-        const isOwner = Number(getDataUsersModels.id) === Number(getToken.tod);
 
-        const users_id = getDataUsersModels.id;
+        const isOwner = Number(targetUser.id) === Number(getToken.tod);
+        const users_id = targetUser.id;
 
         const replacements = {
             users_id,
+            viewer_id: getToken.tod,
             limit,
             offset,
         };
@@ -874,24 +873,17 @@ export const getFollowerOnProfile = async (req, res) => {
                 u.id,
                 u.display_name,
                 u.username,
-                u.photo as image,
-                (
-                    CASE 
-                        WHEN EXISTS (
-                            SELECT 1
-                            FROM ir_following_users ifs
-                            WHERE 
-                            ${isOwner ?
-                                `ifs.users_id = ${getToken.tod}` : `ifs.users_id = u.id`
-                            }
-                        ) THEN true
-                        ELSE false
-                    END
-                ) AS followed_user
+                u.photo AS image,
+                CASE 
+                    WHEN EXISTS (
+                        SELECT 1 FROM ir_following_users ifs
+                        WHERE ifs.users_id = :viewer_id AND ifs.following_id = u.id
+                    ) THEN true
+                    ELSE false
+                END AS followed_user
             FROM ir_following_users f
-            JOIN ir_users u ON u.id = f.following_id
-            WHERE f.users_id = :users_id
-            AND f.following_id = u.id
+            JOIN ir_users u ON u.id = f.users_id
+            WHERE f.following_id = :users_id
             LIMIT :limit OFFSET :offset
         `;
 
@@ -902,8 +894,8 @@ export const getFollowerOnProfile = async (req, res) => {
 
         const countQuery = `
             SELECT COUNT(*) AS total_count
-            FROM ir_following_users 
-            WHERE users_id = :users_id
+            FROM ir_following_users
+            WHERE following_id = :users_id
         `;
 
         const totalResult = await db.query(countQuery, {
@@ -916,7 +908,10 @@ export const getFollowerOnProfile = async (req, res) => {
 
         return responseApi(
             res,
-            data,
+            data.map(user => ({
+                ...user,
+                image: user.image ? process.env.APP_BUCKET_IMAGE + user.image : null,
+            })),
             {
                 assets_image_url: process.env.APP_BUCKET_IMAGE,
                 pagination: {
@@ -934,4 +929,5 @@ export const getFollowerOnProfile = async (req, res) => {
         return responseApi(res, [], null, "Internal server error", 1);
     }
 };
+
 
