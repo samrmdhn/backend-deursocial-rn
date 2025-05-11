@@ -22,7 +22,11 @@ const ContentModels = db.define(
         },
         status: {
             type: TYPES.TINYINT,
-            defaultValue: 1,
+            defaultValue: 0,
+            description: "0: non active, 1: active",
+            validate: {
+                isIn: [[0, 1]], // Hanya boleh 1, 2 (1: men, 2: women)
+            }
         },
         display_types_id: {
             type: TYPES.BIGINT,
