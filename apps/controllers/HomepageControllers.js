@@ -154,11 +154,13 @@ export const createContents = async (req, res) => {
         await ContentModels.create({
             title: title,
             status: status,
+            slug: convertToSlug(title)+makeRandomString(3),
             display_types_id: display_types_id,
             created_at: makeEpocTime(),
         });
         return responseApi(res, [], null, "Data Success Saved", 0);
     } catch (error) {
+        console.log("error create content", error)
         return responseApi(res, [], null, "Server Error....", 1);
     }
 };
