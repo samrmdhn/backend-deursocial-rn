@@ -832,11 +832,11 @@ export const deleteGroup = withTransaction(async (req, res) => {
         }
 
         const groups_id = groupsData.id;
-        GroupsModels.destroy({ where: { id: groups_id } })
         await Promise.all([
             GroupMembersModels.destroy({ where: { groups_id } }),
-            ChatGroupsModels.destroy({ where: { groups_id } }),
             ChatStatusGroupsModels.destroy({ where: { groups_id } }),
+            ChatGroupsModels.destroy({ where: { groups_id } }),
+            GroupsModels.destroy({ where: { id: groups_id } })
         ]);
 
         return responseApi(res, [], null, "Data has been deleted", 0);
