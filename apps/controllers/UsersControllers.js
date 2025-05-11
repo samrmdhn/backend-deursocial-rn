@@ -12,10 +12,10 @@ import { signVisitorToken } from "../../libs/JwtHandlers.js";
 
 const Op = Sequelize.Op;
 export const getDetailUser = async (req, res) => {
-    const getToken = await getDataUserUsingToken(req, res);
     try {
+        const getToken = await getDataUserUsingToken(req, res);
         const usernameUser = req.params.username;
-        const replacements = { usernameUser };
+
         const userData = await UsersModels.findOne({
             where: { username: usernameUser },
         });
@@ -25,28 +25,6 @@ export const getDetailUser = async (req, res) => {
         }
 
         const isOwner = Number(userData.id) === Number(getToken.tod);
-        const queryFollowedUser = `
-            (
-                CASE 
-                    WHEN EXISTS (
-                        SELECT 1
-                        FROM ir_following_users ifs
-                        WHERE 
-                        ifs.users_id = ${getToken.tod}
-                        AND ifs.following_id = ${userData.id}
-                    ) THEN true
-                    ELSE false
-                END
-            ) AS followed_user,
-            (
-                SELECT COUNT(*)
-                FROM ir_following_users f
-                WHERE 
-                ${isOwner ?
-                `f.users_id = ${getToken.tod}` : `f.users_id = u.id`
-            }
-                
-            ) AS total_followers,`;
 
         const query = `
             SELECT
@@ -56,21 +34,28 @@ export const getDetailUser = async (req, res) => {
                 u.description,
                 u.photo,
                 u.phone,
+                CASE 
+                    WHEN u.gender = 1 THEN 'male'
+                    WHEN u.gender = 2 THEN 'female'
+                    ELSE 'unisex'
+                END AS gender,
+                CASE 
+                    WHEN u.is_anonymous = 0 THEN 'non active'
+                    WHEN u.is_anonymous = 1 THEN 'active'
+                    ELSE 'unisex'
+                END AS anonymous,
+                CASE 
+                    WHEN EXISTS (
+                        SELECT 1 FROM ir_following_users ifs
+                        WHERE ifs.users_id = :viewerId AND ifs.following_id = u.id
+                    ) THEN true
+                    ELSE false
+                END AS followed_user,
                 (
-                    CASE 
-                        WHEN u.gender = 1 THEN 'male'
-                        WHEN u.gender = 2 THEN 'female'
-                        ELSE 'unisex'
-                    END
-                ) as gender,
-                (
-                    CASE 
-                        WHEN u.is_anonymous = 0 THEN 'non active'
-                        WHEN u.is_anonymous = 1 THEN 'active'
-                        ELSE 'unisex'
-                    END
-                ) as anonymous,
-                ${queryFollowedUser}
+                    SELECT COUNT(*)
+                    FROM ir_following_users f
+                    WHERE f.following_id = u.id
+                ) AS total_followers,
                 (
                     SELECT COUNT(*)
                     FROM ir_content_detail_followers cdf
@@ -82,12 +67,15 @@ export const getDetailUser = async (req, res) => {
                     WHERE pcds.users_id = u.id
                 ) AS total_post
             FROM ir_users u
-            WHERE username = :usernameUser
+            WHERE u.username = :usernameUser
             GROUP BY u.id;
         `;
 
         const queryUser = await db.query(query, {
-            replacements,
+            replacements: {
+                usernameUser,
+                viewerId: getToken.tod,
+            },
             type: db.QueryTypes.SELECT,
             plain: true,
         });
@@ -100,10 +88,12 @@ export const getDetailUser = async (req, res) => {
             display_name: queryUser.display_name,
             username: queryUser.username,
             description: queryUser.description,
-            image: process.env.APP_BUCKET_IMAGE + queryUser.photo,
+            image: queryUser.photo
+                ? process.env.APP_BUCKET_IMAGE + queryUser.photo
+                : null,
             followers: queryUser.followers || [],
             total_followers: queryUser.total_followers || 0,
-            followed_user: !isOwner ? queryUser.followed_user : false,
+            followed_user: isOwner ? false : queryUser.followed_user,
             total_post: queryUser.total_post,
             total_event_followed: queryUser.total_event_followed,
         };
@@ -114,6 +104,7 @@ export const getDetailUser = async (req, res) => {
         return responseApi(res, [], null, "Server error", 1);
     }
 };
+
 
 export const followUser = async (req, res) => {
     try {
@@ -339,7 +330,7 @@ export const checkExistingDataUser = async (req, res) => {
 };
 
 
-export const checkUsername = async(req, res) => {
+export const checkUsername = async (req, res) => {
     try {
         const username = req.params.username;
         const userData = await UsersModels.findAll({
