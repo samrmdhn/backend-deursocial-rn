@@ -634,6 +634,11 @@ export const deleteDetailPostPerContentDetail = withTransaction(
                     post_content_details_id: getIdPostContentDetail.id,
                 },
             });
+            const checkAnySegmentedPostContentDetail = await SegmentedPostContentDetailModels.findOne({
+                where: {
+                    post_content_details_id: getIdPostContentDetail.id,
+                },
+            });
             if (!getIdPostContentDetail && checkAnyLike && checkAnyComment) {
                 return responseApi(res, [], null, "Server error....", 400);
             }
@@ -643,6 +648,9 @@ export const deleteDetailPostPerContentDetail = withTransaction(
                 }
                 if (checkAnyComment) {
                     await checkAnyComment.destroy();
+                }
+                if (checkAnySegmentedPostContentDetail) {
+                    await checkAnySegmentedPostContentDetail.destroy();
                 }
                 await getIdPostContentDetail.destroy();
             }
