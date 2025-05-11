@@ -877,7 +877,7 @@ export const getFollowerOnProfile = async (req, res) => {
                 CASE 
                     WHEN EXISTS (
                         SELECT 1 FROM ir_following_users ifs
-                        WHERE ifs.users_id = :viewer_id AND ifs.following_id = u.id
+                        WHERE ifs.following_id = :viewer_id AND ifs.users_id = u.id
                     ) THEN true
                     ELSE false
                 END AS followed_user
