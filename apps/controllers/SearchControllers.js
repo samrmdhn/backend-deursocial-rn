@@ -212,8 +212,8 @@ const dataEvent = async (req, res) => {
                 cd.image AS "image",
                 CASE WHEN cd.is_trending = 1 THEN true ELSE false END AS "is_trending",
                 CASE 
-                    WHEN cd.is_trending = 0 THEN 'ended' 
-                    WHEN cd.is_trending = 1 THEN 'ongoing' 
+                    WHEN cd.status = 0 THEN 'ended' 
+                    WHEN cd.status = 1 THEN 'ongoing' 
                     ELSE 'upcoming' 
                 END AS "status",
                 json_build_object(

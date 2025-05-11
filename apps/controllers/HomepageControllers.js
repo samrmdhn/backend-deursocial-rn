@@ -258,7 +258,7 @@ export const getContents = async (req, res) => {
                         'description', cd.description,
                         'image', cd.image,
                         'is_trending', CASE WHEN cd.is_trending = 1 THEN true ELSE false END,
-                        'status', CASE WHEN cd.is_trending = 0 THEN 'ended' WHEN cd.is_trending = 1 THEN 'ongoing' ELSE 'upcoming' END,
+                        'status', CASE WHEN cd.status = 0 THEN 'ended' WHEN cd.status = 1 THEN 'ongoing' ELSE 'upcoming' END,
                         'type_content_details', json_build_object(
                             'id', tcd.id,
                             'name', tcd.name
