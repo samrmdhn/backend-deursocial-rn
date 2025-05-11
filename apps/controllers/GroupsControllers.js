@@ -1,6 +1,7 @@
 import { Where } from "sequelize/lib/utils";
 import db from "../../configs/Database.js";
 import {
+    getDataUsersUsingReqAndRes,
     getDataUserUsingToken,
     makeEpocTime,
     withTransaction,
@@ -34,6 +35,20 @@ export const createGroups = async (req, res) => {
         const getContentDetail = await ContentDetailsModels.findOne({
             where: { slug: slug },
         });
+        if (is_anonymous) {
+            const dataUser = await getDataUsersUsingReqAndRes(req, res);
+            if (dataUser.status) {
+                if (dataUser.data.is_anonymous === 0) {
+                    return responseApi(
+                        res,
+                        [],
+                        null,
+                        "Sorry you cannot be create groups, change to anonymous mode!",
+                        1
+                    );
+                }
+            }
+        }
         if (!getContentDetail) {
             return responseApi(
                 res,
