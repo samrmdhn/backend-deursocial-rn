@@ -47,14 +47,14 @@ export const getDetailUser = async (req, res) => {
                 CASE 
                     WHEN EXISTS (
                         SELECT 1 FROM ir_following_users ifs
-                        WHERE ifs.users_id = :viewerId AND ifs.following_id = u.id
+                        WHERE ifs.following_id = :viewerId AND ifs.users_id = u.id
                     ) THEN true
                     ELSE false
                 END AS followed_user,
                 (
                     SELECT COUNT(*)
                     FROM ir_following_users f
-                    WHERE f.following_id = u.id
+                    WHERE f.users_id = u.id
                 ) AS total_followers,
                 (
                     SELECT COUNT(*)
