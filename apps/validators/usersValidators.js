@@ -6,7 +6,7 @@ export const validationRegisterUsers = (userData) => {
         .required()
         .min(3)
         .max(50)
-        .pattern(/^[a-zA-Z0-9]+$/)
+        .pattern(/^[a-zA-Z0-9\s]+$/)
         .messages({
             "string.pattern.base": "Display name not valid",
         }),

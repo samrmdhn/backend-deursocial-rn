@@ -361,7 +361,7 @@ export const getGroupsMessages = async (req, res) => {
 
         // WHERE clause secara dinamis
         let whereClause = `
-            WHERE (g.is_gender IN (0${dataUser?.gender ? `, ${dataUser.gender}` : ''}) OR g.users_id = :userToken)
+            WHERE (gm.users_id = :userToken OR g.users_id = :userToken)
         `;
 
         if (title) {
@@ -468,7 +468,7 @@ export const getGroupsMessages = async (req, res) => {
             LEFT JOIN ir_content_details cds ON cds.id = g.content_details_id
             LEFT JOIN ir_users u ON u.id = g.users_id
             LEFT JOIN ir_citys c ON c.id = g.citys_id
-            LEFT JOIN ir_group_members gm ON gm.groups_id = g.id AND gm.status = 1 AND gm.users_id = :userToken
+            LEFT JOIN ir_group_members gm ON gm.groups_id = g.id AND gm.status = 1 AND g.is_gender IN (0${dataUser?.gender ? `, ${dataUser.gender}` : ''})
             ${whereClause}
             ORDER BY GREATEST(COALESCE(gm.created_at, g.created_at), g.created_at) DESC
             LIMIT :limit OFFSET :offset;
