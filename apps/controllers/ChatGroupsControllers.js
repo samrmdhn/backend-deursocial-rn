@@ -236,7 +236,7 @@ export const sendMessageToGroup = async (req, res) => {
 
     const groupSlugs = req.params.groupSlugs;
 
-    if (!message || !users_id) {
+    if (!users_id) {
         return res.status(400).send("Invalid request payload");
     }
 
