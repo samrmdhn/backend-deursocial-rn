@@ -37,7 +37,7 @@ const ChatStatusGroupsModels = db.define("ir_chat_groups_status", {
         allowNull: true,
         defaultValue: 1,
         validate: {
-            isIn: [[0, 1]], // Hanya boleh 0, 1, 3 (0: read, 1: unread)
+            isIn: [[0, 1]], // Hanya boleh 0, 1 (0: read, 1: unread)
         },
     },
     created_at: {
