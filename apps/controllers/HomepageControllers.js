@@ -154,7 +154,7 @@ export const createContents = async (req, res) => {
         await ContentModels.create({
             title: title,
             status: status,
-            slug: convertToSlug(title)+makeRandomString(3),
+            slug: convertToSlug(title)+"_"+makeRandomString(3),
             display_types_id: display_types_id,
             created_at: makeEpocTime(),
         });

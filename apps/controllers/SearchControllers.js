@@ -57,7 +57,7 @@ export const dataGroupEvent = async (req, res) => {
                     ) THEN 'waiting approval'
                     ELSE 'not joined'
                 END AS is_joined,
-                LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug,
+                g.slug,
                 g.title,
                 g.description,
                 json_build_object(

@@ -12,6 +12,11 @@ const GroupsModels = db.define("ir_groups", {
         type: TYPES.STRING(100),
         allowNull: false,
     },
+    slug: {
+        type: TYPES.STRING(100),
+        allowNull: false,
+        unique: true
+    },
     users_id: {
         type: TYPES.BIGINT,
         allowNull: false,
@@ -86,7 +91,7 @@ const GroupsModels = db.define("ir_groups", {
         type: TYPES.BIGINT,
         allowNull: true,
     },
-},     {
+}, {
     freezeTableName: true,
     timestamps: false,
 });
