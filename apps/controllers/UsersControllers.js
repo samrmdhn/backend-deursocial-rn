@@ -35,6 +35,7 @@ export const getDetailUser = async (req, res) => {
                 u.display_name,
                 u.email,
                 u.description,
+                TO_CHAR(TO_TIMESTAMP(u.date_of_birth), 'YYYY-MM-DD') AS date_of_birth,
                 u.photo,
                 u.phone,
                 CASE 
@@ -93,6 +94,7 @@ export const getDetailUser = async (req, res) => {
             email: queryUser.email,
             phone: queryUser.phone,
             gender: queryUser.gender,
+            date_of_birth: queryUser.date_of_birth,
             anonymous: queryUser.anonymous,
             birthday: queryUser.birthday,
             display_name: queryUser.display_name,
