@@ -59,6 +59,10 @@ const UsersModels = db.define(
                 isIn: [[1, 2]], // Hanya boleh 1, 2 (1: men, 2: women)
             }
         },
+        date_of_birth: {
+            type: TYPES.BIGINT,
+            allowNull: true,
+        },
         referal_code: {
             type: TYPES.STRING(5),
             allowNull: true,

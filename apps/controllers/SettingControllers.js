@@ -1,5 +1,6 @@
 import {
     createNameFile,
+    dateToEpochTime,
     downloadImage,
     formatString,
     getExtension,
@@ -210,11 +211,10 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
             username,
             gender,
             image,
+            date_of_birth
         } = req.body;
         const file = req.files && req.files.image;
         let filesNamed = "";
-        console.log("wkwkwkwk");
-
         if (file) {
             const fileDate = new Date();
             filesNamed = fileDate.getTime() + getExtension(file.name);
@@ -227,7 +227,8 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
             description,
             email,
             username,
-            gender
+            gender,
+            date_of_birth
         });
 
         if (!validationResult.valid) {
@@ -253,7 +254,6 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
                     }
                 ],
             });
-            // return responseApi(res, [], null, messageValidation, 422);
         }
         const query = `SELECT 
         CONCAT(
@@ -307,6 +307,7 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
                 password: hashedPassword,
                 gender: gender,
                 created_at: makeEpocTime(),
+                date_of_birth: dateToEpochTime(date_of_birth)
             },
             { transaction }
         );
