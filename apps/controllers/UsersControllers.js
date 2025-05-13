@@ -25,7 +25,10 @@ export const getDetailUser = async (req, res) => {
         }
 
         const isOwner = Number(userData.id) === Number(getToken.tod);
-
+        const dateFor = req.headers['x-date-for']
+            ? new Date(req.headers['x-date-for'])
+            : new Date();
+        const formattedDateFor = dateFor.toISOString();
         const query = `
             SELECT
                 u.username,
@@ -65,7 +68,12 @@ export const getDetailUser = async (req, res) => {
                     SELECT COUNT(*)
                     FROM ir_post_content_details pcds
                     WHERE pcds.users_id = u.id
-                ) AS total_post
+                ) AS total_post,
+                CASE
+                    WHEN EXTRACT(MONTH FROM TO_TIMESTAMP(u.date_of_birth)) = EXTRACT(MONTH FROM :dateFor::timestamp)
+                        AND EXTRACT(DAY FROM TO_TIMESTAMP(u.date_of_birth)) = EXTRACT(DAY FROM :dateFor::timestamp) THEN true
+                    ELSE false
+                END AS birthday
             FROM ir_users u
             WHERE u.username = :usernameUser
             GROUP BY u.id;
@@ -75,6 +83,7 @@ export const getDetailUser = async (req, res) => {
             replacements: {
                 usernameUser,
                 viewerId: getToken.tod,
+                dateFor: formattedDateFor,
             },
             type: db.QueryTypes.SELECT,
             plain: true,
@@ -85,6 +94,7 @@ export const getDetailUser = async (req, res) => {
             phone: queryUser.phone,
             gender: queryUser.gender,
             anonymous: queryUser.anonymous,
+            birthday: queryUser.birthday,
             display_name: queryUser.display_name,
             username: queryUser.username,
             description: queryUser.description,
