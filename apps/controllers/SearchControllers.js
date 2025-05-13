@@ -388,8 +388,33 @@ export const dataUser = async (req, res) => {
             image: process.env.APP_BUCKET_IMAGE + user.photo,
             followed_user: user.followed_user
         }));
-
-        return responseApi(res, response, null, "Data has been retrieved", 0);
+        const countQuery = `
+            SELECT COUNT(*) AS total_count
+            FROM ir_users u
+            ${whereClause}
+        `;
+        const totalCountResult = await db.query(countQuery, {
+            replacements,
+            type: db.QueryTypes.SELECT,
+        });
+        const totalCount = totalCountResult[0].total_count;
+        const totalPages = Math.ceil(totalCount / limit);
+        
+        return responseApi(
+            res,
+            response,
+            {
+                assets_image_url: process.env.APP_BUCKET_IMAGE,
+                pagination: {
+                    current_page: parseInt(page),
+                    per_page: parseInt(limit),
+                    total: totalCount,
+                    total_page: totalPages,
+                },
+            },
+            "Data Success Saved",
+            0
+        );
     } catch (error) {
         console.error("Error:", error);
         return responseApi(res, [], null, "Server error", 1);
