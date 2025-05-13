@@ -1,6 +1,7 @@
 import { Where } from "sequelize/lib/utils";
 import db from "../../configs/Database.js";
 import {
+    convertToSlug,
     dateToEpochTime,
     getDataUsersUsingReqAndRes,
     getDataUserUsingToken,
@@ -13,8 +14,6 @@ import ContentDetailsModels from "../models/ContentDetailsModels.js";
 import GroupMembersModels from "../models/GroupMembersModels.js";
 import GroupsModels from "../models/GroupsModels.js";
 import UsersModels from "../models/UsersModels.js";
-import { where } from "sequelize";
-import { decrypt } from "../../helpers/CustomShortEncrypt.js";
 import ChatGroupsModels from "../models/ChatGroupsModels.js";
 import ChatStatusGroupsModels from "../models/ChatStatusGroupsModels.js";
 
@@ -62,6 +61,7 @@ export const createGroups = async (req, res) => {
         const contentDetailsId = getContentDetail.id;
         await GroupsModels.create({
             title: title,
+            slug: convertToSlug(title.substring(0, 35))+"_"+makeRandomString(3),
             users_id: users_id,
             description: description,
             citys_id: citys_id,
@@ -89,11 +89,11 @@ export const joinMemberToGroups = async (req, res) => {
         let statusMember = 1;
 
         let whereClause =
-            "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs";
+            "WHERE g.slug :groupSlugs";
 
         const query = `
             SELECT
-                LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slugs,
+                g.slug AS slugs,
                 g.title,
                 g.id,
                 g.is_gender,
@@ -293,7 +293,7 @@ export const getGroups = async (req, res) => {
                     ) THEN 'waiting approval'
                     ELSE 'not joined'
                 END AS is_joined,
-                LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug,
+                g.slug,
                 g.title,
                 g.description,
                 json_build_object(
@@ -439,7 +439,7 @@ export const getGroupsDetail = async (req, res) => {
         const groupSlugs = req.params.slugs;
         const replacements = {};
         let whereClause =
-            "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs";
+            "WHERE g.slug = :groupSlugs";
         replacements.groupSlugs = groupSlugs;
         const queryValidation = `
             SELECT
@@ -475,7 +475,7 @@ export const getGroupsDetail = async (req, res) => {
         }
         const query = `
             SELECT
-                LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slugs,
+                g.slug AS slugs,
                 g.title,
                 TO_CHAR(TO_TIMESTAMP(g.created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_group,
                 cds.title AS event_title,
@@ -684,7 +684,7 @@ export const approveMember = async (req, res) => {
 
         const groupSlugs = req.params.slug;
         const replacements = {};
-        let whereClause = `WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs 
+        let whereClause = `WHERE g.slug = :groupSlugs 
             AND g.users_id = :userToken AND u.username = :username`;
         replacements.groupSlugs = groupSlugs;
         replacements.userToken = getToken.tod;
@@ -833,7 +833,7 @@ export const deleteGroup = withTransaction(async (req, res) => {
         const groupSlugs = req.params.slugGroup;
         const query = `
         SELECT g.id, g.users_id FROM ir_groups g
-        WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs
+        WHERE g.slug = :groupSlugs
         GROUP BY g.id;
       `;
 
@@ -880,7 +880,7 @@ export const leaveGroup = withTransaction(async (req, res) => {
         const username = dataUser.username;
         const groupSlugs = req.params.slugGroup;
         const replacements = {};
-        let whereClause = `WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs 
+        let whereClause = `WHERE g.slug = :groupSlugs 
             AND gm.users_id = :userToken`;
         replacements.groupSlugs = groupSlugs;
         replacements.userToken = getToken.tod;

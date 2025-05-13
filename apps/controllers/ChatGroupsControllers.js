@@ -35,7 +35,7 @@ export const initializeSocket = (io) => {
 
                 // Prepare WHERE clause to match the slug
                 let whereClause =
-                    "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupsSlug";
+                    "WHERE g.slug = :groupsSlug";
                 replacements.groupsSlug = groupsSlug;
 
                 // Main query using the slug for fetching messages
@@ -48,7 +48,7 @@ export const initializeSocket = (io) => {
                         cg.messages,
                         cg.file as image_messages,
                         CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
-                        LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
+                        g.slug
                     FROM
                         ir_chat_groups cg
                         INNER JOIN ir_users u ON u.id = cg.users_id
@@ -115,13 +115,13 @@ export const initializeSocket = (io) => {
                         cg.file as image_messages,
                         TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                         CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
-                        LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
+                        g.slug
                     FROM
                         ir_chat_groups cg
                         INNER JOIN ir_users u ON u.id = cg.users_id
                         INNER JOIN ir_groups g ON g.id = cg.groups_id
                     WHERE
-                        LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupsSlug
+                        g.slug = :groupsSlug
                         ORDER BY cg.id DESC
                     LIMIT :limit OFFSET :offset;
                 `;
@@ -159,7 +159,7 @@ export const initializeSocket = (io) => {
             try {
                 const replacements = {};
                 let whereClause =
-                    "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupsSlug";
+                    "WHERE g.slug = :groupsSlug";
                 replacements.groupsSlug = groupsSlug;
                 const query = `
                     SELECT
@@ -170,7 +170,7 @@ export const initializeSocket = (io) => {
                         cg.messages,
                         cg.file as image_messages,
                         CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
-                        LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
+                        g.slug
                     FROM
                         ir_chat_groups cg
                         INNER JOIN ir_users u ON u.id = cg.users_id
@@ -249,7 +249,7 @@ export const sendMessageToGroup = async (req, res) => {
         const groupQuery = `
             SELECT g.id
             FROM ir_groups g
-            WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs
+            WHERE g.slug = :groupSlugs
         `;
 
         const groupResult = await db.query(groupQuery, {
@@ -273,7 +273,7 @@ export const sendMessageToGroup = async (req, res) => {
 
         let replacements = {};
         let whereClause =
-            "WHERE LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) = :groupSlugs";
+            "WHERE g.slug = :groupSlugs";
         replacements.groupSlugs = groupSlugs;
         if (chat.id) {
             whereClause = "AND cg.id = :idCg";
@@ -290,7 +290,7 @@ export const sendMessageToGroup = async (req, res) => {
                 cg.file as image_messages,
                 TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                 CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
-                LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug
+                g.slug
             FROM
                 ir_chat_groups cg
                 INNER JOIN ir_users u ON u.id = cg.users_id
@@ -389,7 +389,7 @@ export const getGroupsMessages = async (req, res) => {
                     WHEN cds.status = 2 THEN 'upcoming' 
                     ELSE 'not joined'
                 END AS event_status,
-                LOWER(REPLACE(g.title, ' ', '-') || '-' || g.id) AS slug,
+                g.slug,
                 g.title,
                 g.description,
                 json_build_object(
