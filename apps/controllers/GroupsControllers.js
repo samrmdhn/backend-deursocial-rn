@@ -90,7 +90,7 @@ export const joinMemberToGroups = async (req, res) => {
         let statusMember = 1;
 
         let whereClause =
-            "WHERE g.slug :groupSlugs";
+            "WHERE g.slug = :groupSlugs";
 
         const query = `
             SELECT
