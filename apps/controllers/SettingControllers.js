@@ -218,7 +218,13 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
         if (file) {
             const fileDate = new Date();
             filesNamed = fileDate.getTime() + getExtension(file.name);
-            filesNamed = createNameFile(filesNamed);
+        } else {
+            if (image) {
+                const result = await downloadImage(image);
+                if (result) {
+                    filesNamed = result.image;
+                }
+            }
         }
         const password = email;
 
@@ -287,19 +293,13 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
                 { transaction }
             );
         }
-        if (image) {
-            const result = await downloadImage(image);
-            if (result) {
-                filesNamed = result.image;
-            }
-        }
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = await UsersModels.create(
             {
                 display_name: fullname,
                 display_name_anonymous: anonName,
                 description: description,
-                photo: filesNamed !== "" ? filesNamed : "",
+                photo: createNameFile(filesNamed),
                 email: email,
                 phone: null,
                 username: username,
@@ -416,13 +416,13 @@ export const checkAuth = async (req, res) => {
         const userResponse = await axios.get(
             'https://www.googleapis.com/oauth2/v3/userinfo',
             {
-              headers: {
-                Authorization: `Bearer ${token}`
-              }
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
             }
-          );
-          const userDetails = userResponse.data;
-          console.log('User Details:', userDetails);
+        );
+        const userDetails = userResponse.data;
+        console.log('User Details:', userDetails);
 
         const getExistingUser = await UsersModels.findOne({
             where: {
