@@ -2,13 +2,16 @@ import { responseApi } from "../../libs/RestApiHandler.js";
 import { Sequelize } from "sequelize";
 import UsersModels from "../models/UsersModels.js";
 import {
+    createNameFile,
     dateToEpochTime,
     getDataUserUsingToken,
+    getExtension,
     makeDataJwt,
 } from "../../helpers/customHelpers.js";
 import FollowingUsersModels from "../models/FollowingUsersModels.js";
 import db from "../../configs/Database.js";
 import { signVisitorToken } from "../../libs/JwtHandlers.js";
+import { uploadFile } from "../../helpers/FileUpload.js";
 
 const Op = Sequelize.Op;
 export const getDetailUser = async (req, res) => {
@@ -171,6 +174,13 @@ export const updateDataUser = async (req, res) => {
             anonymous,
             phone,
         } = req.body;
+        const file = req.files && req.files.image;
+        let filesNamed = "";
+        if (file) {
+            const fileDate = new Date();
+            filesNamed = fileDate.getTime() + getExtension(file.name);
+        }
+
 
         const getToken = await getDataUserUsingToken(req, res);
         const userFind = await UsersModels.findOne({
@@ -231,24 +241,34 @@ export const updateDataUser = async (req, res) => {
                 );
             }
         }
-
-        await UsersModels.update(
-            {
-                display_name: display_name,
-                description: description,
-                email: email,
-                photo: photo,
-                username: username,
-                gender: gender,
-                is_anonymous: anonymous,
-                phone: phone,
-            },
+        let objUpdate = {
+            display_name: display_name,
+            description: description,
+            email: email,
+            photo: photo,
+            username: username,
+            gender: gender,
+            is_anonymous: anonymous,
+            phone: phone
+        }
+        if (file) {
+            objUpdate = {
+                ...objUpdate,
+                photo: createNameFile(filesNamed)
+            };
+        }
+        await UsersModels.update(objUpdate,
             {
                 where: {
                     id: getToken.tod,
                 },
             }
         );
+        if (file) {
+            const fileDestination =
+                process.env.APP_LOCATION_FILE + createNameFile(filesNamed);
+            await uploadFile(file, fileDestination);
+        }
         let visitorToken = "";
         if (userFind) {
             const userUpdated = await UsersModels.findOne({
