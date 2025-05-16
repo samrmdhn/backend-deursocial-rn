@@ -78,4 +78,7 @@ api.get("/api/moment/post/profile/:username", verifyToken, PostControllers.getMo
 api.get("/api/followers/post/profile/:username", PostControllers.getFollowerOnProfile)
 
 api.get("/api/check/username/:username", verifyToken, UsersControllers.checkUsername)
+app.get('/pink', (req, res) => {
+  res.send({ message: 'ponk' });
+});
 export default api;
