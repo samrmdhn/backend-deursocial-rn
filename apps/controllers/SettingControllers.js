@@ -206,7 +206,6 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
     try {
         const {
             fullname,
-            description,
             email,
             username,
             gender,
@@ -230,7 +229,6 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
 
         const validationResult = validationRegisterUsers({
             fullname,
-            description,
             email,
             username,
             gender,
@@ -298,7 +296,6 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
             {
                 display_name: fullname,
                 display_name_anonymous: anonName,
-                description: description,
                 photo: createNameFile(filesNamed),
                 email: email,
                 phone: null,
