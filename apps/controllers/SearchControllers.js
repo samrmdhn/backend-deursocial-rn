@@ -7,7 +7,7 @@ import ContentDetailsModels from "../models/ContentDetailsModels.js";
 export const searchData = (req, res) => {
     try {
         const searchType = req.params.type;
-        const { page = 1, search_text = "" } = req.body;
+        const { page = 1, search_text = "" } = req.query;
         if (search_text) {
             if (searchType === "event") {
                 return dataEvent(req, res);
@@ -27,7 +27,7 @@ export const searchData = (req, res) => {
 export const dataGroupEvent = async (req, res) => {
     try {
         const getToken = getDataUserUsingToken(req, res);
-        const { page = 1, search_text = "" } = req.body;
+        const { page = 1, search_text = "" } = req.query;
         const limit = 10;
         const offset = (page - 1) * limit;
 
