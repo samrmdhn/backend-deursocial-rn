@@ -7,12 +7,15 @@ import ContentDetailsModels from "../models/ContentDetailsModels.js";
 export const searchData = (req, res) => {
     try {
         const searchType = req.params.type;
-        if (searchType === "event") {
-            return dataEvent(req, res);
-        } else if (searchType === "users") {
-            return dataUser(req, res);
-        } else if (searchType === "groupEvent") {
-            return dataGroupEvent(req, res);
+        const { page = 1, search_text = "" } = req.body;
+        if (search_text) {
+            if (searchType === "event") {
+                return dataEvent(req, res);
+            } else if (searchType === "users") {
+                return dataUser(req, res);
+            } else if (searchType === "groupEvent") {
+                return dataGroupEvent(req, res);
+            }
         }
         return responseApi(res, [], null, "Data has been retrieved", 0);
     } catch (error) {
