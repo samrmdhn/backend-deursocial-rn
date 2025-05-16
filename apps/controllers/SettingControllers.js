@@ -214,14 +214,17 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
         } = req.body;
         const file = req.files && req.files.image;
         let filesNamed = "";
+        let putPhotoOnTable = "";
         if (file) {
             const fileDate = new Date();
             filesNamed = fileDate.getTime() + getExtension(file.name);
+            putPhotoOnTable = createNameFile(filesNamed);
         } else {
             if (image) {
                 const result = await downloadImage(image);
                 if (result) {
                     filesNamed = result.image;
+                    putPhotoOnTable = filesNamed
                 }
             }
         }
@@ -236,10 +239,13 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
         });
 
         if (!validationResult.valid) {
-            return res.status(422).json({
-                success: "false",
-                errors: validationResult.errors,
-            });
+            return responseApi(
+                res,
+                validationResult.errors,
+                null,
+                "sorry any something wrong ...!",
+                422
+            );
         }
 
         const { messageValidation, statusValidation, labelValidation } =
@@ -249,15 +255,16 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
                 [username, email]
             );
         if (statusValidation == 1) {
-            return res.status(422).json({
-                success: false,
-                errors: [
-                    {
-                        message: messageValidation,
-                        label: labelValidation
-                    }
-                ],
-            });
+            return responseApi(
+                res,
+                {
+                    message: messageValidation,
+                    label: labelValidation
+                },
+                null,
+                messageValidation,
+                422
+            );
         }
         const query = `SELECT 
         CONCAT(
@@ -296,7 +303,7 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
             {
                 display_name: fullname,
                 display_name_anonymous: anonName,
-                photo: createNameFile(filesNamed),
+                photo: putPhotoOnTable,
                 email: email,
                 phone: null,
                 username: username,
