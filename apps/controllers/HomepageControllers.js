@@ -939,7 +939,7 @@ export const getContentDetails = async (req, res) => {
                                 WHERE fpcds.post_content_details_id = pcds.id
                                 
                             ),
-                            'created_at', TO_CHAR(TO_TIMESTAMP(pcds.created_at), 'YYYY-MM-DD HH24:MI:SS'),
+                            'created_at', TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS'),
                             'user', json_build_object(
                                 'display_name', pcds.display_name,
                                 'image', pcds.photo,
