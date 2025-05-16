@@ -25,7 +25,6 @@ export const validationRegisterUsers = (userData) => {
             .messages({
                 "string.pattern.base": "Display name not valid",
             }),
-        description: Joi.string().optional().max(100),
         email: Joi.string().email().required(),
         username: Joi.string()
             .required()
