@@ -212,7 +212,7 @@ export const getLikePostContentDetail = async (req, res) => {
                 cds.slug AS event_slug,
                 pcds.caption_post AS caption,
                 pcds.slug AS slug,
-                TO_CHAR(TO_TIMESTAMP(pcds.created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at,
+                TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                 (
                     SELECT EXISTS (
                         SELECT 1
