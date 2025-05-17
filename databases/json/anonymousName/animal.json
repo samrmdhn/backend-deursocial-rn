@@ -48,7 +48,7 @@
     { "name": "Banteng" },
     { "name": "Gajah Laut" },
     { "name": "Elang Laut" },
-    { "name": "Domba" },
+    { "name": "Unta" },
     { "name": "Ayam" },
     { "name": "Kangguru" },
     { "name": "Kuda Laut" },
@@ -68,7 +68,7 @@
     { "name": "Kuda" },
     { "name": "Gorila" },
     { "name": "Rubah" },
-    { "name": "Ikan Hiu" },
+    { "name": "Kasuari" },
     { "name": "Kura-Kura" },
     { "name": "Ayam" },
     { "name": "Kucing Rimba" },
@@ -101,5 +101,7 @@
     { "name": "Burung Merak" },
     { "name": "Bunglon" },
     { "name": "Capung" },
-    { "name": "Semut" }
+    { "name": "Semut" },
+    { "name": "Capybara" },
+    { "name": "Kaura" }
 ]

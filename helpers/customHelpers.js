@@ -198,7 +198,7 @@ export const isValidJwt = (tokenUser) => {
 };
 
 export const cuttingString = (text, length) => {
-    return text.length > length ? text.slice(0, length) + ' ...' : text;
+    return text ? text.length : 0 > length ? text.slice(0, length) + ' ...' : text;
 }
 
 
