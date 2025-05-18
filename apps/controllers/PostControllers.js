@@ -1036,7 +1036,7 @@ export const getFollowingEventOnProfile = async (req, res) => {
             return responseApi(res, [], null, "User not found", 1);
         }
 
-        const users_id = getToken.tod;
+        const users_id = targetUser.id;
 
         const replacements = {
             users_id,
