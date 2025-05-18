@@ -61,7 +61,8 @@ export {
     getLikePostContentDetail,
     getCommentPostContentDetail,
     getMomentPostContentDetail,
-    getFollowerOnProfile
+    getFollowerOnProfile,
+    getFollowingOnProfile
 } from "./controllers/PostControllers.js";
 
 export {

@@ -895,6 +895,95 @@ export const getFollowerOnProfile = async (req, res) => {
         const countQuery = `
             SELECT COUNT(*) AS total_count
             FROM ir_following_users
+            WHERE users_id = :users_id
+        `;
+
+        const totalResult = await db.query(countQuery, {
+            type: db.QueryTypes.SELECT,
+            replacements,
+        });
+
+        const total = parseInt(totalResult[0]?.total_count || 0, 10);
+        const totalPages = Math.ceil(total / limit);
+
+        return responseApi(
+            res,
+            data.map(user => ({
+                ...user,
+                image: user.image ? process.env.APP_BUCKET_IMAGE + user.image : null,
+            })),
+            {
+                assets_image_url: process.env.APP_BUCKET_IMAGE,
+                pagination: {
+                    current_page: page,
+                    per_page: limit,
+                    total,
+                    total_page: totalPages,
+                },
+            },
+            "Data has been retrieved",
+            0
+        );
+    } catch (error) {
+        console.error("Error getFollowerOnProfile:", error.message);
+        return responseApi(res, [], null, "Internal server error", 1);
+    }
+};
+
+export const getFollowingOnProfile = async (req, res) => {
+    try {
+        const getToken = await getDataUserUsingToken(req, res);
+
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 10;
+        const offset = (page - 1) * limit;
+        const usernameUser = req.params.username;
+
+        const targetUser = await UsersModels.findOne({
+            where: { username: usernameUser },
+        });
+
+        if (!targetUser) {
+            return responseApi(res, [], null, "User not found", 1);
+        }
+
+        const isOwner = Number(targetUser.id) === Number(getToken.tod);
+        const users_id = targetUser.id;
+
+        const replacements = {
+            users_id,
+            viewer_id: getToken.tod,
+            limit,
+            offset,
+        };
+
+        const query = `
+            SELECT 
+                u.id,
+                u.display_name,
+                u.username,
+                u.photo AS image,
+                CASE 
+                    WHEN EXISTS (
+                        SELECT 1 FROM ir_following_users ifs
+                        WHERE ifs.users_id = :viewer_id AND ifs.following_id = u.id
+                    ) THEN true
+                    ELSE false
+                END AS followed_user
+            FROM ir_following_users f
+            JOIN ir_users u ON u.id = f.following_id
+            WHERE f.following_id = :users_id
+            LIMIT :limit OFFSET :offset
+        `;
+
+        const data = await db.query(query, {
+            type: db.QueryTypes.SELECT,
+            replacements,
+        });
+
+        const countQuery = `
+            SELECT COUNT(*) AS total_count
+            FROM ir_following_users
             WHERE following_id = :users_id
         `;
 
