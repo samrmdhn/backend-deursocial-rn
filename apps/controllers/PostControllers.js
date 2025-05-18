@@ -971,7 +971,7 @@ export const getFollowingOnProfile = async (req, res) => {
                     ELSE false
                 END AS followed_user
             FROM ir_following_users f
-            JOIN ir_users u ON u.id = f.following_id
+            JOIN ir_users u ON u.id = f.users_id
             WHERE f.following_id = :users_id
             LIMIT :limit OFFSET :offset
         `;
