@@ -1019,4 +1019,154 @@ export const getFollowingOnProfile = async (req, res) => {
     }
 };
 
+export const getFollowingEventOnProfile = async (req, res) => {
+    try {
+        const getToken = await getDataUserUsingToken(req, res);
+
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 10;
+        const offset = (page - 1) * limit;
+        const usernameUser = req.params.username;
+
+        const targetUser = await UsersModels.findOne({
+            where: { username: usernameUser },
+        });
+
+        if (!targetUser) {
+            return responseApi(res, [], null, "User not found", 1);
+        }
+
+        const users_id = getToken.tod;
+
+        const replacements = {
+            users_id,
+            limit,
+            offset,
+        };
+
+        const query = `
+            SELECT 
+                cd.title AS title,
+                cd.slug AS slug,
+                TO_CHAR( TO_TIMESTAMP( cd.schedule_start ), 'YYYY-MM-DD HH24:MI:SS' ) AS schedule_start,
+                TO_CHAR( TO_TIMESTAMP( cd.schedule_end ), 'YYYY-MM-DD HH24:MI:SS' ) AS schedule_end,
+                TO_CHAR( TO_TIMESTAMP( cd.date_start ), 'YYYY-MM-DD HH24:MI:SS' ) AS date_start,
+                TO_CHAR( TO_TIMESTAMP( cd.date_end ), 'YYYY-MM-DD HH24:MI:SS' ) AS date_end,
+                cd.description AS description,
+                cd.image AS image,
+            CASE    
+                 WHEN cd.is_trending = 1 THEN
+                TRUE ELSE FALSE 
+                END AS is_trending,
+            CASE  
+                    WHEN cd.status = 0 THEN
+                    'ended' 
+                    WHEN cd.status = 1 THEN
+                    'ongoing' ELSE 'upcoming' 
+                END AS status,
+                json_build_object(
+                    'id', tcd.id,
+                    'name', tcd.name
+                ) AS type_content_details,
+                json_build_object(
+                    'id', eo.id,
+                    'name', eo.name,
+                    'image', eo.image
+                ) AS event_organizers,
+                ( SELECT COUNT ( * ) FROM ir_content_detail_followers cdf WHERE cdf.content_details_id = cd.id AND cdf.users_id = :users_id ) AS followers_count,
+                ( SELECT COUNT ( * ) FROM ir_segmented_post_content_details gp WHERE gp.content_details_id = cd.id ) AS total_posts,
+                ( SELECT COUNT ( * ) FROM ir_groups G WHERE G.content_details_id = cd.id ) AS total_groups,
+                (
+                    SELECT json_build_object(
+                        'total_followers', COUNT(*),
+                        'users', (
+                            SELECT json_agg(
+                                json_build_object(
+                                    'id', u.id,
+                                    'display_name', u.display_name,
+                                    'image', u.photo
+                                )
+                            )
+                            FROM ir_content_detail_followers cdf
+                            JOIN ir_users u ON cdf.users_id = u.id
+                            WHERE cdf.content_details_id = cd.id
+                            LIMIT 3
+                        )
+                    )
+                    FROM ir_content_detail_followers cdf
+                    WHERE cdf.content_details_id = cd.id
+                ) AS followers,
+                json_build_object(
+                    'region', json_build_object(
+                        'id', co.id,
+                        'name', co.title
+                    ),
+                    'city', json_build_object(
+                        'id', ci.id,
+                        'name', ci.title
+                    ),
+                    'venue', json_build_object(
+                        'id', v.id,
+                        'name', v.title
+                    )
+                ) as location
+            FROM
+                ir_content_detail_followers cdf
+                JOIN ir_content_details cd ON cd.id = cdf.content_details_id
+                JOIN ir_contents C ON C.id = cd.contents_id
+                JOIN ir_display_types dt ON C.display_types_id = dt.id 
+                JOIN ir_type_content_details tcd ON cd.type_content_details_id = tcd.id 
+                JOIN ir_event_organizers eo ON cd.event_organizers_id = eo.id 
+                JOIN ir_vanues v ON cd.vanues_id = v.id 
+                JOIN ir_citys ci ON v.citys_id = ci.id 
+                JOIN ir_provinces p ON v.provinces_id = p.id 
+                JOIN ir_countries co ON v.countries_id = co.id 
+            WHERE
+                cdf.users_id = :users_id 
+            ORDER BY
+                c.id
+            LIMIT :limit OFFSET :offset
+        `;
+
+        const data = await db.query(query, {
+            type: db.QueryTypes.SELECT,
+            replacements,
+        });
+
+        const countQuery = `
+            SELECT COUNT(*) AS total_count
+            FROM
+                ir_content_detail_followers cdf
+            WHERE cdf.users_id = :users_id;
+        `;
+
+        const totalResult = await db.query(countQuery, {
+            type: db.QueryTypes.SELECT,
+            replacements,
+        });
+
+        const total = parseInt(totalResult[0]?.total_count || 0, 10);
+        const totalPages = Math.ceil(total / limit);
+
+        return responseApi(
+            res,
+            data,
+            {
+                assets_image_url: process.env.APP_BUCKET_IMAGE,
+                pagination: {
+                    current_page: page,
+                    per_page: limit,
+                    total,
+                    total_page: totalPages,
+                },
+            },
+            "Data has been retrieved",
+            0
+        );
+    } catch (error) {
+        console.error("Error getFollowerOnProfile:", error.message);
+        return responseApi(res, [], null, "Internal server error", 1);
+    }
+};
+
 
