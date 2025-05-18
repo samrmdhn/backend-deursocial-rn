@@ -65,6 +65,11 @@ export const getDetailUser = async (req, res) => {
                 ) AS total_followers,
                 (
                     SELECT COUNT(*)
+                    FROM ir_following_users f
+                    WHERE f.following_id = u.id
+                ) AS total_following,
+                (
+                    SELECT COUNT(*)
                     FROM ir_content_detail_followers cdf
                     WHERE cdf.users_id = u.id
                 ) AS total_event_followed,
@@ -108,6 +113,7 @@ export const getDetailUser = async (req, res) => {
                 : null,
             followers: queryUser.followers || [],
             total_followers: queryUser.total_followers || 0,
+            total_following: queryUser.total_following || 0,
             followed_user: isOwner ? false : queryUser.followed_user,
             total_post: queryUser.total_post,
             total_event_followed: queryUser.total_event_followed,
