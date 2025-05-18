@@ -52,7 +52,7 @@ export const visitorToken = async (req, res) => {
             visitorToken = signVisitorToken(datas);
             try {
                 await UsersAccessAppsModels.create({
-                    created_at: makeEpocTime(),
+                    created_at: dateToEpochTime(req.headers["x-date-for"]),
                     user_ip: forwarded,
                     user_agent: agent,
                     mark_user_id: 0,
@@ -310,7 +310,7 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
                 username_anonymous: await encrypt(formatString(anonName), "rahasia123"),
                 password: hashedPassword,
                 gender: gender,
-                created_at: makeEpocTime(),
+                created_at: dateToEpochTime(req.headers["x-date-for"]),
                 date_of_birth: dateToEpochTime(date_of_birth)
             },
             { transaction }

@@ -28,6 +28,12 @@ const validateToken = (req, res, next) => {
 };
 
 export const verifyToken = (req, res, next) => {
+    console.log("req.headers", req.headers["x-date-for"]);
+    if (!req.headers["x-date-for"]) {
+        return res
+            .status(403)
+            .json({ message: "Whats wrong dude? jajajajaja" });
+    }
     const excludedUrls = ["/api/kadieu"];
     if (excludedUrls.includes(req.originalUrl)) {
         return next();
