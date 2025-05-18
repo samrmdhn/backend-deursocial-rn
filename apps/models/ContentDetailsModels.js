@@ -70,6 +70,7 @@ const ContentDetailsModels = db.define(
         is_trending: {
             type: TYPES.TINYINT,
             allowNull: true, // Kolom ini bisa null
+            defaultValue: 0,
             validate: {
                 isIn: [[0, 1]], // Hanya boleh 0 atau 1 (0: no trending, 1: yes trending)
             },
@@ -77,6 +78,7 @@ const ContentDetailsModels = db.define(
         status: {
             type: TYPES.TINYINT,
             allowNull: true, // Kolom ini bisa null
+            defaultValue: 2,
             validate: {
                 isIn: [[0, 1, 2]], // Hanya boleh 0, 1, atau 2 (0: ended, 1: ongoing, 2: upcoming)
             },
