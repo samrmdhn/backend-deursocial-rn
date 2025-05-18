@@ -52,7 +52,7 @@ export const visitorToken = async (req, res) => {
             visitorToken = signVisitorToken(datas);
             try {
                 await UsersAccessAppsModels.create({
-                    created_at: dateToEpochTime(req.headers["x-date-for"]),
+                    created_at: !req.headers["x-date-for"] ? makeEpocTime() : dateToEpochTime(req.headers["x-date-for"]),
                     user_ip: forwarded,
                     user_agent: agent,
                     mark_user_id: 0,
