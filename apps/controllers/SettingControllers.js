@@ -25,6 +25,7 @@ import bcrypt from "bcrypt";
 import { validationRegisterUsers } from "../validators/usersValidators.js";
 import axios from "axios";
 import { encrypt } from "../../helpers/CustomShortEncrypt.js";
+import AboutModels from "../models/AboutModels.js";
 
 const Op = Sequelize.Op;
 
@@ -464,3 +465,50 @@ export const checkAuth = async (req, res) => {
         return responseApi(res, [], null, "Server error....", 1);
     }
 };
+
+export const createAbout = withTransaction(async (req, res) => {
+    try {
+        const {
+            description,
+            type
+        } = req.body;
+        await AboutModels.create({
+            created_at: !req.headers["x-date-for"] ? makeEpocTime() : dateToEpochTime(req.headers["x-date-for"]),
+            description,
+            type
+        })
+        return responseApi(
+            res,
+            [],
+            null,
+            null,
+            0
+        );
+    } catch (error) {
+        console.error("[Error] create about:", error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+})
+export const getAbout = async (req, res) => {
+    try {
+        const {
+            type
+        } = req.query;
+        const data = await AboutModels.findOne({
+            attributes: ["type", "description"],
+            where: {
+                type: type
+            },
+        })
+        return responseApi(
+            res,
+            data,
+            null,
+            null,
+            0
+        );
+    } catch (error) {
+        console.error("[Error] get about:", error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+}

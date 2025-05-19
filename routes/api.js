@@ -80,6 +80,8 @@ api.get("/api/following/post/profile/:username", PostControllers.getFollowingOnP
 api.get("/api/following/event/post/profile/:username", PostControllers.getFollowingEventOnProfile)
 
 api.get("/api/check/username/:username", verifyToken, UsersControllers.checkUsername)
+api.post("/api/create/about", verifyToken, SettingControllers.createAbout)
+api.get("/api/about", verifyToken, SettingControllers.getAbout)
 api.get('/pink', (req, res) => {
   res.send({ message: 'ponk' });
 });
