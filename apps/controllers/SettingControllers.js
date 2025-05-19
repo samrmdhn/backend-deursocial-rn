@@ -522,8 +522,8 @@ export const getAnyNotif = async (req, res) => {
         const data = await NotificationModels.findOne({
             attributes: ["id"],
             where: {
-                users_id: 2,
-                // users_id: userId,
+                // users_id: 2,
+                users_id: userId,
                 is_read: 0
             },
         })
@@ -563,7 +563,8 @@ export const getNotification = async (req, res) => {
                 ius.photo AS image,
                 TO_CHAR(TO_TIMESTAMP(ins.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created,
                 '/profile/' || ius.username AS link,
-                ins.message
+                ins.message,
+                ins.is_read
             FROM ir_notifications ins
             JOIN ir_following_users ifus ON ifus.id = ins.source_id
             JOIN ir_users ius ON ius.id = ifus.following_id
@@ -578,7 +579,8 @@ export const getNotification = async (req, res) => {
                 usl.photo AS image,
                 TO_CHAR(TO_TIMESTAMP(ins.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created,
                 '/m/' || ipcd.slug AS link,
-                ins.message
+                ins.message,
+                ins.is_read
             FROM ir_notifications ins
             JOIN ir_like_post_content_details ilcd ON ilcd.id = ins.source_id
 						JOIN ir_post_content_details ipcd ON ipcd.id = ilcd.post_content_details_id
@@ -594,7 +596,8 @@ export const getNotification = async (req, res) => {
                 usl.photo AS image,
                 TO_CHAR(TO_TIMESTAMP(ins.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created,
                 '/m/' || ipcd.slug AS link,
-                ins.message
+                ins.message,
+                ins.is_read
             FROM ir_notifications ins
             JOIN ir_comment_post_content_details icpcd ON icpcd.id = ins.source_id
             JOIN ir_post_content_details ipcd ON ipcd.id = icpcd.post_content_details_id
@@ -609,13 +612,14 @@ export const getNotification = async (req, res) => {
                 usl.photo AS image,
                 TO_CHAR(TO_TIMESTAMP(ins.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created,
                 '/event/' || icds.slug || '/group/' || igs.slug  AS link,
-                ins.message
+                ins.message,
+                ins.is_read
             FROM ir_notifications ins
             JOIN ir_group_members igms ON igms.id = ins.source_id
             JOIN ir_groups igs ON igs.id = igms.groups_id
             JOIN ir_content_details icds ON icds.id = igs.content_details_id
             JOIN ir_users usl ON usl.id = igms.users_id
-            WHERE ins.users_id = :user
+            WHERE ins.users_id = :users_id
             AND (ins.type = 5 OR ins.type = 1)
             ORDER BY notification_id DESC
             LIMIT :limit OFFSET :offset;
@@ -650,6 +654,32 @@ export const getNotification = async (req, res) => {
                     total_page: totalPages,
                 },
             },
+            "Data has been retrieved",
+            0
+        );
+    } catch (error) {
+        console.error("[Error] get any notif:", error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+}
+
+export const updateStatusNotification = async (req, res) => {
+    try {
+        const notif_id = req.params.id;
+        await NotificationModels.update(
+            {
+                is_read: 1,
+            },
+            {
+                where: {
+                    id: notif_id,
+                },
+            }
+        );
+        return responseApi(
+            res,
+            {},
+            null,
             "Data has been retrieved",
             0
         );
