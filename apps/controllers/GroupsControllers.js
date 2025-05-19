@@ -17,6 +17,7 @@ import GroupsModels from "../models/GroupsModels.js";
 import UsersModels from "../models/UsersModels.js";
 import ChatGroupsModels from "../models/ChatGroupsModels.js";
 import ChatStatusGroupsModels from "../models/ChatStatusGroupsModels.js";
+import { generateNotificationMessage } from "../../helpers/notification.js";
 
 export const createGroups = async (req, res) => {
     try {
@@ -62,7 +63,7 @@ export const createGroups = async (req, res) => {
         const contentDetailsId = getContentDetail.id;
         await GroupsModels.create({
             title: title,
-            slug: convertToSlug(title.substring(0, 35))+"_"+makeRandomString(3),
+            slug: convertToSlug(title.substring(0, 35)) + "_" + makeRandomString(3),
             users_id: users_id,
             description: description,
             citys_id: citys_id,
@@ -97,6 +98,7 @@ export const joinMemberToGroups = async (req, res) => {
                 g.slug AS slugs,
                 g.title,
                 g.id,
+                g.users_id,
                 g.is_gender,
                 g.max_members,
                 g.is_anonymous,
@@ -209,15 +211,28 @@ export const joinMemberToGroups = async (req, res) => {
                         },
                     }
                 );
+                await generateNotificationMessage({
+                    source_id: dataGroupMember.id,
+                    users_id: groupsData.users_id,
+                    created_at: dateToEpochTime(req.headers["x-date-for"]),
+                    type: statusMember == 2 ? 5 : 1
+                })
                 return responseApi(res, [], null, "You have successfully Joined.", 0);
             }
         }
-        await GroupMembersModels.create({
+        const groupMembersData = await GroupMembersModels.create({
             users_id: users_id,
             groups_id: groups_id,
             status: statusMember,
             created_at: makeEpocTime(),
         });
+
+        await generateNotificationMessage({
+            source_id: groupMembersData.id,
+            users_id: groupsData.users_id,
+            created_at: dateToEpochTime(req.headers["x-date-for"]),
+            type: statusMember == 2 ? 5 : 1
+        })
 
         return responseApi(res, [], null, "Data Success Saved", 0);
     } catch (error) {
