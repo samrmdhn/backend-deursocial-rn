@@ -156,7 +156,6 @@ export const followUser = async (req, res) => {
                 created_at: dateToEpochTime(req.headers["x-date-for"]),
             });
             await generateNotificationMessage({
-                username:usernameUser,
                 source_id: followingData.id,
                 users_id: getDataUsersModels.id,
                 created_at: dateToEpochTime(req.headers["x-date-for"]),

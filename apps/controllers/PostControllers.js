@@ -17,6 +17,7 @@ import db from "../../configs/Database.js";
 import { uploadFile } from "../../helpers/FileUpload.js";
 import SegmentedPostContentDetailModels from "../models/SegmentedPostContentDetailModels.js";
 import UsersModels from "../models/UsersModels.js";
+import { generateNotificationMessage } from "../../helpers/notification.js";
 
 export const getPost = async (req, res) => {
     try {
@@ -167,7 +168,7 @@ export const likePostPerContentDetail = withTransaction(
             if (checkAnyLike) {
                 await checkAnyLike.destroy();
             } else {
-                await LikePostContentDetailModels.create(
+                const dataLikePost = await LikePostContentDetailModels.create(
                     {
                         users_id: users_id,
                         created_at: dateToEpochTime(req.headers["x-date-for"]),
@@ -175,6 +176,14 @@ export const likePostPerContentDetail = withTransaction(
                     },
                     { transaction }
                 );
+                if (getIdPostContentDetail.users_id !== users_id) {
+                    await generateNotificationMessage({
+                        source_id: dataLikePost.id,
+                        users_id: getIdPostContentDetail.users_id,
+                        created_at: dateToEpochTime(req.headers["x-date-for"]),
+                        type: 2
+                    })
+                }
             }
 
             return responseApi(res, [], null, "Data has been saved", 0);
@@ -332,7 +341,7 @@ export const commentPostPerContentDetail = withTransaction(
             if (comment_post.length > 100) {
                 return responseApi(res, [], null, "Comment to long", 400);
             }
-            await CommentPostContentDetailModels.create(
+            const commentPostData = await CommentPostContentDetailModels.create(
                 {
                     users_id: users_id,
                     post_content_details_id: getIdPostContentDetail.id,
@@ -341,6 +350,14 @@ export const commentPostPerContentDetail = withTransaction(
                 },
                 { transaction }
             );
+                if (getIdPostContentDetail.users_id !== users_id) {
+                    await generateNotificationMessage({
+                        source_id: commentPostData.id,
+                        users_id: getIdPostContentDetail.users_id,
+                        created_at: dateToEpochTime(req.headers["x-date-for"]),
+                        type: 3
+                    })
+                }
             return responseApi(res, [], null, "Data has been saved", 0);
         } catch (error) {
             console.log("error post", error);

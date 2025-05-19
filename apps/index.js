@@ -29,7 +29,9 @@ export {
     loginUsers,
     checkAuth,
     createAbout,
-    getAbout
+    getAbout,
+    getAnyNotif,
+    getNotification
 } from "./controllers/SettingControllers.js";
 
 export {
