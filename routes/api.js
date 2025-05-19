@@ -84,6 +84,7 @@ api.post("/api/create/about", verifyToken, SettingControllers.createAbout)
 api.get("/api/about", verifyToken, SettingControllers.getAbout)
 api.get("/api/any/notif", verifyToken, SettingControllers.getAnyNotif)
 api.get("/api/notification", verifyToken, SettingControllers.getNotification)
+api.post("/api/notification/:id", verifyToken, SettingControllers.updateStatusNotification)
 
 api.get('/pink', (req, res) => {
   res.send({ message: 'ponk' });

@@ -31,7 +31,8 @@ export {
     createAbout,
     getAbout,
     getAnyNotif,
-    getNotification
+    getNotification,
+    updateStatusNotification
 } from "./controllers/SettingControllers.js";
 
 export {
