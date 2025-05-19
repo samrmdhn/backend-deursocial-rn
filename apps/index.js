@@ -28,6 +28,8 @@ export {
     createUsers,
     loginUsers,
     checkAuth,
+    createAbout,
+    getAbout
 } from "./controllers/SettingControllers.js";
 
 export {
