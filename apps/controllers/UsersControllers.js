@@ -12,6 +12,7 @@ import FollowingUsersModels from "../models/FollowingUsersModels.js";
 import db from "../../configs/Database.js";
 import { signVisitorToken } from "../../libs/JwtHandlers.js";
 import { uploadFile } from "../../helpers/FileUpload.js";
+import { generateNotificationMessage } from "../../helpers/notification.js";
 
 const Op = Sequelize.Op;
 export const getDetailUser = async (req, res) => {
@@ -149,11 +150,18 @@ export const followUser = async (req, res) => {
         if (follow) {
             await follow.destroy();
         } else {
-            await FollowingUsersModels.create({
+            const followingData = await FollowingUsersModels.create({
                 users_id: Number(getDataUsersModels.id),
                 following_id: Number(dataTokenUser.tod),
                 created_at: dateToEpochTime(req.headers["x-date-for"]),
             });
+            await generateNotificationMessage({
+                username:usernameUser,
+                source_id: followingData.id,
+                users_id: getDataUsersModels.id,
+                created_at: dateToEpochTime(req.headers["x-date-for"]),
+                type: 4
+            })
         }
         return responseApi(
             res,

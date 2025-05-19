@@ -1,0 +1,52 @@
+import NotificationModels from "../apps/models/NotificationModels.js";
+
+/**
+ * 
+ * const username = 'john_doe'; // Username pengguna yang menerima notifikasi
+ * const type; // Tipe notifikasi (1 =  join groups, 2 =  liked moment, 3 = comment moment, 4 = Follow)
+ * const message = generateNotificationMessage(type, username);
+ */
+export const generateNotificationMessage = async ({ type, username, users_id, source_id, created_at }) => {
+    try {
+        let message = "";
+
+        switch (type) {
+            case 1: // Join groups
+                message = ` joined your group.`;
+                break;
+            case 2: // Like moments
+                message = ` liked your post.`;
+                break;
+            case 3: // Comment moments
+                message = ` commented on your post.`;
+                break;
+            case 4: // Follow
+                message = ` started following you.`;
+                break;
+            default:
+                message = "Unknown notification type.";
+                break;
+        }
+        const validation = await NotificationModels.findOne({
+            where: {
+                users_id: users_id,
+                source_id: source_id,
+            }
+        })
+        if (!validation) {
+            await NotificationModels.create({
+                users_id: users_id,
+                source_id: source_id,
+                message: username + message,
+                type: type,
+                created_at: created_at
+            })
+        }
+        return true;
+
+    } catch (error) {
+        console.log("[ERROR] generate notification", error)
+        return false
+    }
+}
+

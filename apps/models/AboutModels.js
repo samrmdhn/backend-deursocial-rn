@@ -15,10 +15,7 @@ const AboutModels = db.define("ir_abouts", {
     type: {
         type: TYPES.TINYINT,
         defaultValue: 1,
-        description: "1: Terms & condition, 2: privacy policy",
-        validate: {
-            isIn: [[1, 2]]
-        }
+        description: "1: Terms & condition, 2: privacy policy"
     },
     created_at: {
         type: TYPES.BIGINT,
