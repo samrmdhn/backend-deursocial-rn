@@ -553,8 +553,8 @@ export const getNotification = async (req, res) => {
             limit: parseInt(limit),
             offset: parseInt(offset),
         };
-        // replacements.users_id = userId;
-        replacements.users_id = 2;
+        replacements.users_id = userId;
+        // replacements.users_id = 2;
         const query = `
             -- Notifikasi type = 4 (follow_notifications)
             SELECT
@@ -567,7 +567,7 @@ export const getNotification = async (req, res) => {
             FROM ir_notifications ins
             JOIN ir_following_users ifus ON ifus.id = ins.source_id
             JOIN ir_users ius ON ius.id = ifus.following_id
-            WHERE ins.users_id = 2
+            WHERE ins.users_id = :users_id
             AND ins.type = 4
             -- END Notifikasi type = 1 (follow_notifications)
             UNION ALL
@@ -583,7 +583,7 @@ export const getNotification = async (req, res) => {
             JOIN ir_like_post_content_details ilcd ON ilcd.id = ins.source_id
 						JOIN ir_post_content_details ipcd ON ipcd.id = ilcd.post_content_details_id
 						JOIN ir_users usl ON usl.id = ilcd.users_id
-            WHERE ins.users_id = 2
+            WHERE ins.users_id = :users_id
             AND ins.type = 2
 			-- END Notifikasi type = 2 (like_posts_notification)
             UNION ALL
@@ -599,7 +599,7 @@ export const getNotification = async (req, res) => {
             JOIN ir_comment_post_content_details icpcd ON icpcd.id = ins.source_id
             JOIN ir_post_content_details ipcd ON ipcd.id = icpcd.post_content_details_id
             JOIN ir_users usl ON usl.id = icpcd.users_id
-            WHERE ins.users_id = 2
+            WHERE ins.users_id = :users_id
             AND ins.type = 3
             UNION ALL
             -- Notifikasi type = 5 and type = 1 (join_groups_private_notification and join_groups_notification)
@@ -612,10 +612,10 @@ export const getNotification = async (req, res) => {
                 ins.message
             FROM ir_notifications ins
             JOIN ir_group_members igms ON igms.id = ins.source_id
-						JOIN ir_groups igs ON igs.id = igms.groups_id
-						JOIN ir_content_details icds ON icds.id = igs.content_details_id
+            JOIN ir_groups igs ON igs.id = igms.groups_id
+            JOIN ir_content_details icds ON icds.id = igs.content_details_id
             JOIN ir_users usl ON usl.id = igms.users_id
-            WHERE ins.users_id = 2
+            WHERE ins.users_id = :user
             AND (ins.type = 5 OR ins.type = 1)
             ORDER BY notification_id DESC
             LIMIT :limit OFFSET :offset;
@@ -627,7 +627,7 @@ export const getNotification = async (req, res) => {
         const countQuery = `
             SELECT COUNT(*) AS total_count
             FROM ir_notifications ins
-            WHERE ins.users_id = 2;
+            WHERE ins.users_id = :users_id;
         `;
 
         const totalCountResult = await db.query(countQuery, {
