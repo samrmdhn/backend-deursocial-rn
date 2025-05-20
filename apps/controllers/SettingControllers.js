@@ -570,7 +570,7 @@ export const getNotification = async (req, res) => {
             JOIN ir_users ius ON ius.id = ifus.following_id
             WHERE ins.users_id = :users_id
             AND ins.type = 4
-            -- END Notifikasi type = 1 (follow_notifications)
+            -- END Notifikasi type = 4 (follow_notifications)
             UNION ALL
             -- Notifikasi type = 2 (like_posts_notification)
             SELECT
@@ -641,6 +641,17 @@ export const getNotification = async (req, res) => {
 
         const totalCount = parseInt(totalCountResult[0]?.total_count || 0, 10);
         const totalPages = Math.ceil(totalCount / limit);
+        await NotificationModels.update(
+            {
+                is_read: 1,
+            },
+            {
+                where: {
+                    users_id: userId,
+                    is_read: 0
+                },
+            }
+        );
 
         return responseApi(
             res,
@@ -666,16 +677,16 @@ export const getNotification = async (req, res) => {
 export const updateStatusNotification = async (req, res) => {
     try {
         const notif_id = req.params.id;
-        await NotificationModels.update(
-            {
-                is_read: 1,
-            },
-            {
-                where: {
-                    id: notif_id,
-                },
-            }
-        );
+        // await NotificationModels.update(
+        //     {
+        //         is_read: 1,
+        //     },
+        //     {
+        //         where: {
+        //             id: notif_id,
+        //         },
+        //     }
+        // );
         return responseApi(
             res,
             {},

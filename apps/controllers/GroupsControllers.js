@@ -493,7 +493,7 @@ export const getGroupsDetail = async (req, res) => {
             SELECT
                 g.slug AS slugs,
                 g.title,
-                TO_CHAR(TO_TIMESTAMP(g.created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_group,
+                TO_CHAR(TO_TIMESTAMP(g.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS created_group,
                 cds.title AS event_title,
                 cds.slug AS event_slug,
                 CASE
