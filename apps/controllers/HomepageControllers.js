@@ -324,7 +324,7 @@ export const getContents = async (req, res) => {
             JOIN ir_countries co ON v.countries_id = co.id
             ${whereClause}
             GROUP BY c.id, dt.title
-            ORDER BY c.id
+            ORDER BY c.id DESC
             LIMIT :limit OFFSET :offset;
         `;
 
