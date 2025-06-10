@@ -488,9 +488,10 @@ export const createPostContentDetail = withTransaction(
             if (!getIdContentDetail) {
                 throw new Error("Event not found!");
             }
-            if (isMoreThanOneMonthFromTimestamp(getIdContentDetail.end_date)) {
+            if (isMoreThanOneMonthFromTimestamp(getIdContentDetail.date_end)) {
                 return responseApi(res, [], null, "Opsss.....!, jajajajaja", 1);
             }
+            return responseApi(res, [getIdContentDetail], null, "Opsss.....!, jajajajaja", 1);
 
             const usersToken = getDataUserUsingToken(req, res);
             const users_id = usersToken.tod;
