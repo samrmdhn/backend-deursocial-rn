@@ -3,6 +3,7 @@ import {
     dateToEpochTime,
     getDataUserUsingToken,
     getExtension,
+    isMoreThanOneMonthFromTimestamp,
     makeRandomString,
     withTransaction,
 } from "../../helpers/customHelpers.js";
@@ -350,14 +351,14 @@ export const commentPostPerContentDetail = withTransaction(
                 },
                 { transaction }
             );
-                if (getIdPostContentDetail.users_id !== users_id) {
-                    await generateNotificationMessage({
-                        source_id: commentPostData.id,
-                        users_id: getIdPostContentDetail.users_id,
-                        created_at: dateToEpochTime(req.headers["x-date-for"]),
-                        type: 3
-                    })
-                }
+            if (getIdPostContentDetail.users_id !== users_id) {
+                await generateNotificationMessage({
+                    source_id: commentPostData.id,
+                    users_id: getIdPostContentDetail.users_id,
+                    created_at: dateToEpochTime(req.headers["x-date-for"]),
+                    type: 3
+                })
+            }
             return responseApi(res, [], null, "Data has been saved", 0);
         } catch (error) {
             console.log("error post", error);
@@ -478,9 +479,21 @@ export const getDetailPostPerContentDetail = async (req, res) => {
 export const createPostContentDetail = withTransaction(
     async (req, res, transaction) => {
         try {
+            const { caption_post, event_slug, post_type } = req.body;
+            const getIdContentDetail = await ContentDetailsModels.findOne({
+                where: {
+                    slug: event_slug,
+                },
+            });
+            if (!getIdContentDetail) {
+                throw new Error("Event not found!");
+            }
+            if (isMoreThanOneMonthFromTimestamp(getIdContentDetail.end_date)) {
+                return responseApi(res, [], null, "Opsss.....!, jajajajaja", 1);
+            }
+
             const usersToken = getDataUserUsingToken(req, res);
             const users_id = usersToken.tod;
-            const { caption_post, event_slug, post_type } = req.body;
             const file = req.files && req.files.image;
             let filesNamed = "";
             if (file) {
@@ -534,7 +547,7 @@ export const createPostContentDetail = withTransaction(
                     },
                 });
                 if (!getIdContentDetail) {
-                    throw new Error("Content detail not found!");
+                    throw new Error("Event not found!");
                 }
                 await SegmentedPostContentDetailModels.create(
                     {

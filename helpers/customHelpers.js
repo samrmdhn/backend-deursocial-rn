@@ -223,9 +223,22 @@ export const getDataUsersUsingReqAndRes = async (req, res) => {
                 id: userId,
             },
         });
-        return {status: true, data: dataUser};
+        return { status: true, data: dataUser };
     } catch (error) {
         console.log("[ERROR on getDataUsers helper]:", error)
-        return {status: false, data: {}};
+        return { status: false, data: {} };
     }
+}
+
+/**
+ * function check if more then 1 month
+ * @param {*} timestampInSeconds 
+ * @returns 
+ */
+export const isMoreThanOneMonthFromTimestamp = (timestampInSeconds) => {
+    const timestampDate = new Date(timestampInSeconds * 1000);
+    const oneMonthAfter = new Date(timestampDate);
+    oneMonthAfter.setMonth(oneMonthAfter.getMonth() + 1);
+    const now = new Date();
+    return now > oneMonthAfter;
 }
