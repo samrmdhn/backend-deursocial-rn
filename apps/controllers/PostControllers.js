@@ -15,7 +15,7 @@ import ImpressionPostContentDetailModels from "../models/ImpressionPostContentDe
 import CommentPostContentDetailModels from "../models/CommentPostContentDetailModels.js";
 import PostContentDetailModels from "../models/PostContentDetailModels.js";
 import db from "../../configs/Database.js";
-import { uploadFile } from "../../helpers/FileUpload.js";
+import { deleteFile, uploadFile } from "../../helpers/FileUpload.js";
 import SegmentedPostContentDetailModels from "../models/SegmentedPostContentDetailModels.js";
 import UsersModels from "../models/UsersModels.js";
 import { generateNotificationMessage } from "../../helpers/notification.js";
@@ -669,6 +669,11 @@ export const deleteDetailPostPerContentDetail = withTransaction(
                     post_content_details_id: getIdPostContentDetail.id,
                 },
             });
+            const checkAnyFilePostContentDetailModels = await FilePostContentDetailModels.findOne({
+                where: {
+                    post_content_details_id: getIdPostContentDetail.id,
+                },
+            });
             if (!getIdPostContentDetail && checkAnyLike && checkAnyComment) {
                 return responseApi(res, [], null, "Server error....", 400);
             }
@@ -681,6 +686,10 @@ export const deleteDetailPostPerContentDetail = withTransaction(
                 }
                 if (checkAnySegmentedPostContentDetail) {
                     await checkAnySegmentedPostContentDetail.destroy();
+                }
+                if (checkAnyFilePostContentDetailModels) {
+                    await checkAnyFilePostContentDetailModels.destroy();
+                    await deleteFile(process.env.APP_LOCATION_FILE + checkAnyFilePostContentDetailModels.file)
                 }
                 await getIdPostContentDetail.destroy();
             }
