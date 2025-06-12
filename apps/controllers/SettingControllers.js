@@ -529,7 +529,7 @@ export const getAnyNotif = async (req, res) => {
         })
         return responseApi(
             res,
-            { any: data.id ? true : false },
+            { any: data?.id ? true : false },
             null,
             null,
             0
