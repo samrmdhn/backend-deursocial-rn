@@ -15,7 +15,7 @@ import ImpressionPostContentDetailModels from "../models/ImpressionPostContentDe
 import CommentPostContentDetailModels from "../models/CommentPostContentDetailModels.js";
 import PostContentDetailModels from "../models/PostContentDetailModels.js";
 import db from "../../configs/Database.js";
-import { deleteFile, uploadFile } from "../../helpers/FileUpload.js";
+import { deleteFile, fileExists, uploadFile } from "../../helpers/FileUpload.js";
 import SegmentedPostContentDetailModels from "../models/SegmentedPostContentDetailModels.js";
 import UsersModels from "../models/UsersModels.js";
 import { generateNotificationMessage } from "../../helpers/notification.js";
@@ -712,13 +712,17 @@ export const deleteDetailPostPerContentDetail = withTransaction(
                 }
                 if (checkAnyFilePostContentDetailModels) {
                     await checkAnyFilePostContentDetailModels.destroy();
-                    await deleteFile(process.env.APP_LOCATION_FILE + checkAnyFilePostContentDetailModels.file)
+                    const filePath = process.env.APP_LOCATION_FILE + checkAnyFilePostContentDetailModels.file;
+                    const existFile = fileExists(filePath);
+                    if (existFile) {
+                        await deleteFile(filePath)
+                    }
                 }
                 await getIdPostContentDetail.destroy();
             }
             return responseApi(res, [], null, "Data has been deleted", 0);
         } catch (error) {
-            console.log("error post", error);
+            console.log("error delete post", error);
             return responseApi(res, [], null, "Server error....", 1);
         }
     }
