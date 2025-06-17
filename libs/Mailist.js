@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
 
 export const sendMail = async (to, subject, html) => {
   const mailOptions = {
-    from: '"deursocial" <mindeur@deursocial.com>',
+    from: '"Mindeur" <mindeur@deursocial.com>',
     to, subject, html
   }
   try {
