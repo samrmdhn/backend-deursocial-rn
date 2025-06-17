@@ -19,6 +19,8 @@ import { deleteFile, uploadFile } from "../../helpers/FileUpload.js";
 import SegmentedPostContentDetailModels from "../models/SegmentedPostContentDetailModels.js";
 import UsersModels from "../models/UsersModels.js";
 import { generateNotificationMessage } from "../../helpers/notification.js";
+import { Sequelize } from "sequelize";
+const Op = Sequelize.Op;
 
 export const getPost = async (req, res) => {
     try {
@@ -479,6 +481,29 @@ export const getDetailPostPerContentDetail = async (req, res) => {
 export const createPostContentDetail = withTransaction(
     async (req, res, transaction) => {
         try {
+            const usersToken = getDataUserUsingToken(req, res);
+            const users_id = usersToken.tod;
+            const xDateFor = req.headers["x-date-for"];
+            const userDate = new Date(xDateFor);
+            if (isNaN(userDate.getTime())) {
+                return responseApi(res, [], null, "Whats wrong dude? jajajajaja", 400);
+            }
+
+            const startOfDay = new Date(userDate.getFullYear(), userDate.getMonth(), userDate.getDate()).getTime() / 1000;
+            const endOfDay = startOfDay + 86400 - 1;
+
+            const jumlahPostHariIni = await PostContentDetailModels.count({
+                where: {
+                    users_id: users_id,
+                    created_at: {
+                        [Op.between]: [startOfDay, endOfDay],
+                    },
+                },
+            });
+            if (jumlahPostHariIni >= 5) {
+                return responseApi(res, [], null, "Kamu sudah mencapai batas menyimpan momentmu hari ini", 429);
+            }
+
             const { caption_post, event_slug, post_type } = req.body;
             const getIdContentDetail = await ContentDetailsModels.findOne({
                 where: {
@@ -492,8 +517,6 @@ export const createPostContentDetail = withTransaction(
                 return responseApi(res, [], null, "Opsss.....!, jajajajaja", 1);
             }
 
-            const usersToken = getDataUserUsingToken(req, res);
-            const users_id = usersToken.tod;
             const file = req.files && req.files.image;
             let filesNamed = "";
             if (file) {
