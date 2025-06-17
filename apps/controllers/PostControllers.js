@@ -700,6 +700,10 @@ export const deleteDetailPostPerContentDetail = withTransaction(
             if (!getIdPostContentDetail && checkAnyLike && checkAnyComment) {
                 return responseApi(res, [], null, "Server error....", 400);
             }
+            if (getIdPostContentDetail.users_id !== users_id) {
+                console.log("cannot be deleted because you arent owner of this image! ")
+                throw new Error("User Not Same!");
+            }
             if (getIdPostContentDetail) {
                 if (checkAnyLike) {
                     await checkAnyLike.destroy();
