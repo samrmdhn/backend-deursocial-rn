@@ -4,7 +4,6 @@ import {
     getDataUserUsingToken,
     getExtension,
     isMoreThanOneMonthFromTimestamp,
-    makeRandomString,
     withTransaction,
 } from "../../helpers/customHelpers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
@@ -19,6 +18,7 @@ import { deleteFile, fileExists, uploadFile } from "../../helpers/FileUpload.js"
 import SegmentedPostContentDetailModels from "../models/SegmentedPostContentDetailModels.js";
 import UsersModels from "../models/UsersModels.js";
 import { generateNotificationMessage } from "../../helpers/notification.js";
+import { sendMail, templateHtmlRequestPost } from "../../libs/Mailist.js";
 import { Sequelize } from "sequelize";
 const Op = Sequelize.Op;
 
@@ -29,7 +29,7 @@ export const getPost = async (req, res) => {
         const { page = 1, limit = 10 } = req.query;
         const offset = (page - 1) * limit;
         const { event_slug } = req.query;
-        let whereClause = "";
+        let whereClause = "where pcds.is_accepted = 1";
 
         let replacements = {
             usersId: users_id,
@@ -37,7 +37,7 @@ export const getPost = async (req, res) => {
             offset: parseInt(offset, 10),
         };
         if (typeof event_slug !== "undefined") {
-            whereClause += ` WHERE cds.slug = :slugContentDetail`;
+            whereClause += ` AND cds.slug = :slugContentDetail`;
             replacements.slugContentDetail = event_slug;
         }
 
@@ -505,6 +505,8 @@ export const createPostContentDetail = withTransaction(
             }
 
             const { caption_post, event_slug, post_type } = req.body;
+            let eventName = ''
+            let eventId = 0
             const getIdContentDetail = await ContentDetailsModels.findOne({
                 where: {
                     slug: event_slug,
@@ -569,6 +571,8 @@ export const createPostContentDetail = withTransaction(
                         slug: event_slug,
                     },
                 });
+                eventName = getIdContentDetail.title
+                eventId = getIdContentDetail.id
                 if (!getIdContentDetail) {
                     throw new Error("Event not found!");
                 }
@@ -587,8 +591,9 @@ export const createPostContentDetail = withTransaction(
                 const fileDestination =
                     process.env.APP_LOCATION_FILE + filesNamed;
                 await uploadFile(file, fileDestination);
-                console.log("filesNamed", filesNamed);
             }
+
+            await sendMail('deursocial@gmail.com', 'Need Accepted post', templateHtmlRequestPost({ image: filesNamed, eventName: eventName, username: usersToken.username, slugPost: dataPost.slug, idPost: dataPost.id, eventId: eventId }))
             return responseApi(res, [{ "post_slug": dataPost.slug }], null, "Data has been saved", 0);
         } catch (error) {
             console.log("error post", error);
