@@ -1012,7 +1012,6 @@ export const getContentDetails = async (req, res) => {
                     SELECT COUNT(*) AS total_posts
                     FROM ir_post_content_details pcds
                     LEFT JOIN ir_segmented_post_content_details spcds ON pcds.id = spcds.post_content_details_id
-                    JOIN ir_post_content_details pcds on gp.post_content_details_id = pcds.id 
                     WHERE spcds.content_details_id = cd.id AND pcds.is_accepted = 1
                 ) AS total_posts,
                 (
