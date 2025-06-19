@@ -78,3 +78,7 @@ export {
 export {
     getDataCity
 } from "./controllers/RegionalsControllers.js";
+
+export {
+    changePostMoment
+} from "./controllers/EmailControllers.js";

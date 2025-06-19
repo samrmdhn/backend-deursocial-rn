@@ -882,7 +882,7 @@ export const getContentDetails = async (req, res) => {
     try {
         const usersToken = getDataUserUsingToken(req, res);
         const contentDetailsSlug = req.params.slug;
-        const users_id = usersToken.tod;
+        const users_id = usersToken?.tod;
 
         const replacements = {};
         let whereClause = "WHERE cd.slug = :contentDetailsSlug";
@@ -1001,7 +1001,7 @@ export const getContentDetails = async (req, res) => {
                         LEFT JOIN ir_users u ON pcds.users_id = u.id
                         LEFT JOIN ir_segmented_post_content_details spcds ON pcds.id = spcds.post_content_details_id
                         LEFT JOIN ir_file_post_content_details fpcds ON pcds.id = fpcds.post_content_details_id
-                        WHERE spcds.content_details_id = cd.id
+                        WHERE spcds.content_details_id = cd.id and pcds.is_accepted = 1
                         ORDER BY total_likes DESC, total_comments, total_impression DESC
                         LIMIT 3
                     ) AS pcds
@@ -1101,7 +1101,7 @@ export const getContentDetails = async (req, res) => {
             0
         );
     } catch (error) {
-        console.error("Error fetching content details:", error); // Penanganan error lebih spesifik
+        console.error("Error fetching post content details:", error); // Penanganan error lebih spesifik
         return responseApi(res, [], null, "Server error....", 1);
     }
 };

@@ -6,7 +6,9 @@ import * as ChatGroupsControllers from "../apps/index.js";
 import * as PostControllers from "../apps/index.js";
 import * as UsersControllers from "../apps/index.js";
 import * as SearchControllers from "../apps/index.js";
+import * as EmailControllers from "../apps/index.js";
 import { verifyToken } from "../apps/middlewares/verifyToken.js";
+// import { generateDinamicBodyEmail, generateWelcomeEmail, sendMail } from "../libs/Mailist.js";
 
 const api = express.Router();
 api.get("/api/kadieu", verifyToken, SettingControllers.visitorToken);
@@ -53,7 +55,7 @@ api.post("/api/sendMessage/:groupSlugs", ChatGroupsControllers.sendMessageToGrou
 api.get("/api/group/messages", verifyToken, ChatGroupsControllers.getGroupsMessages);
 
 
-api.post("/api/user/existing/:type", verifyToken,UsersControllers.checkExistingDataUser);
+api.post("/api/user/existing/:type", verifyToken, UsersControllers.checkExistingDataUser);
 api.get("/api/user/detail/:username", verifyToken, UsersControllers.getDetailUser);
 api.post("/api/user", verifyToken, UsersControllers.updateDataUser);
 api.post("/api/follow/:username", verifyToken, UsersControllers.followUser);
@@ -85,8 +87,9 @@ api.get("/api/about", verifyToken, SettingControllers.getAbout)
 api.get("/api/any/notif", verifyToken, SettingControllers.getAnyNotif)
 api.get("/api/notification", verifyToken, SettingControllers.getNotification)
 api.post("/api/notification/:id", verifyToken, SettingControllers.updateStatusNotification)
+api.get("/api/change/status/moment/:slug_post", EmailControllers.changePostMoment)
 
-api.get('/pink', (req, res) => {
+api.get('/pink', async (req, res) => {
   res.send({ message: 'ponk' });
 });
 export default api;
