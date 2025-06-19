@@ -5,6 +5,7 @@ import {
     getExtension,
     isMoreThanOneMonthFromTimestamp,
     makeRandomString,
+    templateHtmlRequestPost,
     withTransaction,
 } from "../../helpers/customHelpers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
@@ -19,6 +20,7 @@ import { deleteFile, uploadFile } from "../../helpers/FileUpload.js";
 import SegmentedPostContentDetailModels from "../models/SegmentedPostContentDetailModels.js";
 import UsersModels from "../models/UsersModels.js";
 import { generateNotificationMessage } from "../../helpers/notification.js";
+import { sendMail } from "../../libs/Mailist.js";
 
 export const getPost = async (req, res) => {
     try {
@@ -27,7 +29,7 @@ export const getPost = async (req, res) => {
         const { page = 1, limit = 10 } = req.query;
         const offset = (page - 1) * limit;
         const { event_slug } = req.query;
-        let whereClause = "";
+        let whereClause = "where pcds.is_accepted = 1";
 
         let replacements = {
             usersId: users_id,
@@ -35,7 +37,7 @@ export const getPost = async (req, res) => {
             offset: parseInt(offset, 10),
         };
         if (typeof event_slug !== "undefined") {
-            whereClause += ` WHERE cds.slug = :slugContentDetail`;
+            whereClause += ` AND cds.slug = :slugContentDetail`;
             replacements.slugContentDetail = event_slug;
         }
 
@@ -480,6 +482,7 @@ export const createPostContentDetail = withTransaction(
     async (req, res, transaction) => {
         try {
             const { caption_post, event_slug, post_type } = req.body;
+            let eventName = ''
             const getIdContentDetail = await ContentDetailsModels.findOne({
                 where: {
                     slug: event_slug,
@@ -546,6 +549,7 @@ export const createPostContentDetail = withTransaction(
                         slug: event_slug,
                     },
                 });
+                eventName = getIdContentDetail.title
                 if (!getIdContentDetail) {
                     throw new Error("Event not found!");
                 }
@@ -564,8 +568,8 @@ export const createPostContentDetail = withTransaction(
                 const fileDestination =
                     process.env.APP_LOCATION_FILE + filesNamed;
                 await uploadFile(file, fileDestination);
-                console.log("filesNamed", filesNamed);
             }
+            await sendMail('deursocial@gmail.com', 'Need Accepted post', templateHtmlRequestPost(filesNamed, eventName, usersToken.username))
             return responseApi(res, [{ "post_slug": dataPost.slug }], null, "Data has been saved", 0);
         } catch (error) {
             console.log("error post", error);
