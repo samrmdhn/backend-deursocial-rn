@@ -144,13 +144,13 @@ export const getPost = async (req, res) => {
         return responseApi(res, [], null, "Server error....", 1);
     }
 };
-export const getMyPendingPost = async (req, res) => {
+export const getMyAllPost = async (req, res) => {
     try {
         const usersToken = getDataUserUsingToken(req, res);
         const users_id = usersToken.tod;
-        const { page = 1, limit = 10} = req.query;
+        const { page = 1, limit = 10, post_ = 1} = req.query;
         const offset = (page - 1) * limit;
-        let whereClause = `where pcds.is_accepted = 2`;
+        let whereClause = `where pcds.is_accepted = ${post_}`;
 
         let replacements = {
             usersId: users_id,
