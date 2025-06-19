@@ -26,10 +26,9 @@ export const getPost = async (req, res) => {
     try {
         const usersToken = getDataUserUsingToken(req, res);
         const users_id = usersToken.tod;
-        const { page = 1, limit = 10 } = req.query;
+        const { page = 1, limit = 10, event_slug = '', post_ = 1} = req.query;
         const offset = (page - 1) * limit;
-        const { event_slug } = req.query;
-        let whereClause = "where pcds.is_accepted = 1";
+        let whereClause = `where pcds.is_accepted = ${post_}`;
 
         let replacements = {
             usersId: users_id,
