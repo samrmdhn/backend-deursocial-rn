@@ -66,6 +66,7 @@ api.post("/api/comment/post/:slugPostContentDetail", verifyToken, PostController
 api.get("/api/comment/post/:slugPostContentDetail", verifyToken, PostControllers.commentGetPerContentDetail);
 api.post("/api/like/post/:slugPostContentDetail", verifyToken, PostControllers.likePostPerContentDetail);
 api.get("/api/post", PostControllers.getPost);
+api.get("/api/my/pending/post", PostControllers.getMyPendingPost);
 api.delete("/api/detail/post/:slugPostContentDetail", verifyToken, PostControllers.deleteDetailPostPerContentDetail);
 api.get("/api/detail/post/:slugPostContentDetail", verifyToken, PostControllers.getDetailPostPerContentDetail);
 

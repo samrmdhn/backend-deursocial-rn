@@ -26,9 +26,9 @@ export const getPost = async (req, res) => {
     try {
         const usersToken = getDataUserUsingToken(req, res);
         const users_id = usersToken.tod;
-        const { page = 1, limit = 10, event_slug = '', post_ = 1} = req.query;
+        const { page = 1, limit = 10, event_slug = ''} = req.query;
         const offset = (page - 1) * limit;
-        let whereClause = `where pcds.is_accepted = ${post_}`;
+        let whereClause = `where pcds.is_accepted = 1`;
 
         let replacements = {
             usersId: users_id,
@@ -38,6 +38,127 @@ export const getPost = async (req, res) => {
         if (typeof event_slug !== "undefined") {
             whereClause += ` AND cds.slug = :slugContentDetail`;
             replacements.slugContentDetail = event_slug;
+        }
+
+        const query = `
+            SELECT
+                pcds.caption_post AS caption,
+                pcds.slug,
+                cds.title AS event_name,
+                cds.slug AS event_slug,
+                CASE 
+                    WHEN cds.is_trending = 0 THEN 'ended'
+                    WHEN cds.is_trending = 1 THEN 'ongoing'
+                    ELSE 'upcoming' 
+                END AS event_status,
+                CASE 
+                    WHEN pcds.type = 0 THEN 'global'
+                    WHEN pcds.type = 1 THEN 'event'
+                    ELSE 'ticket' 
+                END AS event_type,
+                (
+                    SELECT COUNT(*)
+                    FROM ir_impression_post_content_details ipcds
+                    WHERE ipcds.post_content_details_id = pcds.id
+                ) AS total_impressions,
+                (
+                    SELECT COUNT(*)
+                    FROM ir_like_post_content_details lpcds
+                    WHERE lpcds.post_content_details_id = pcds.id
+                ) AS total_likes,
+                (
+                    SELECT COUNT(*)
+                    FROM ir_comment_post_content_details cpcds
+                    WHERE cpcds.post_content_details_id = pcds.id
+                ) AS total_comments,
+                TO_CHAR(TO_TIMESTAMP(pcds.created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at,
+                json_build_object(
+                    'name', u.display_name,
+                    'image', u.photo,
+                    'username', u.username
+                ) AS user,
+                (
+                    SELECT COALESCE(json_agg(
+                        json_build_object(
+                            'image', fpcds.file
+                        )
+                    ), '[]') AS members
+                    FROM ir_file_post_content_details fpcds
+                    WHERE fpcds.post_content_details_id = pcds.id
+                ) AS images,
+                (
+                    SELECT EXISTS (
+                        SELECT 1
+                        FROM ir_like_post_content_details l
+                        WHERE l.post_content_details_id = pcds.id
+                        AND l.users_id = ${users_id}
+                    )
+                ) AS post_liked
+            FROM
+                ir_post_content_details pcds
+                LEFT JOIN ir_segmented_post_content_details spcds ON pcds.ID = spcds.post_content_details_id
+	            LEFT JOIN ir_content_details cds ON spcds.content_details_id = cds.id
+                LEFT JOIN ir_users u ON pcds.users_id = u.id
+            ${whereClause}
+            LIMIT :limit OFFSET :offset;
+        `;
+        const executeQuery = await db.query(query, {
+            type: db.QueryTypes.SELECT,
+            replacements,
+        });
+        const countQuery = `
+            SELECT COUNT(*) AS total_count
+            FROM
+                ir_post_content_details pcds
+                LEFT JOIN ir_segmented_post_content_details spcds ON pcds.ID = spcds.post_content_details_id
+	            LEFT JOIN ir_content_details cds ON spcds.content_details_id = cds.id
+                LEFT JOIN ir_users u ON pcds.users_id = u.id
+                LEFT JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
+            ${whereClause}
+        `;
+        const totalCountResult = await db.query(countQuery, {
+            replacements,
+            type: db.QueryTypes.SELECT,
+        });
+
+        const totalCount = totalCountResult[0].total_count;
+        const totalPages = Math.ceil(totalCount / limit);
+
+        return responseApi(
+            res,
+            executeQuery,
+            {
+                assets_image_url: process.env.APP_BUCKET_IMAGE,
+                pagination: {
+                    current_page: parseInt(page, 10),
+                    per_page: parseInt(limit, 10),
+                    total: totalCount,
+                    total_page: totalPages,
+                },
+            },
+            "Data has been retrived",
+            0
+        );
+    } catch (error) {
+        console.log("error post", error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+};
+export const getMyPendingPost = async (req, res) => {
+    try {
+        const usersToken = getDataUserUsingToken(req, res);
+        const users_id = usersToken.tod;
+        const { page = 1, limit = 10} = req.query;
+        const offset = (page - 1) * limit;
+        let whereClause = `where pcds.is_accepted = 2`;
+
+        let replacements = {
+            usersId: users_id,
+            limit: parseInt(limit, 10),
+            offset: parseInt(offset, 10),
+        };
+        if (users_id) {
+            whereClause += ` AND pcds.users_id = :usersId`;
         }
 
         const query = `
