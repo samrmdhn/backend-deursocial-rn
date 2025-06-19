@@ -161,6 +161,24 @@ export const likePostPerContentDetail = withTransaction(
             if (!getIdPostContentDetail) {
                 return responseApi(res, [], null, "Server error....", 400);
             }
+            if (getIdPostContentDetail.is_accepted == 0) {
+                return responseApi(
+                    res,
+                    [],
+                    null,
+                    "Something wrong in your post, stay tune yaah :)",
+                    500
+                );
+            }
+            if (getIdPostContentDetail.is_accepted == 2) {
+                return responseApi(
+                    res,
+                    [],
+                    null,
+                    "Something wrong in your post",
+                    500
+                );
+            }
             const checkAnyLike = await LikePostContentDetailModels.findOne({
                 where: {
                     users_id: users_id,
@@ -339,6 +357,24 @@ export const commentPostPerContentDetail = withTransaction(
                     null,
                     "You can't comment this post....",
                     400
+                );
+            }
+            if (getIdPostContentDetail.is_accepted == 0) {
+                return responseApi(
+                    res,
+                    [],
+                    null,
+                    "Something wrong in your post, stay tune yaah :)",
+                    500
+                );
+            }
+            if (getIdPostContentDetail.is_accepted == 2) {
+                return responseApi(
+                    res,
+                    [],
+                    null,
+                    "Something wrong in your post",
+                    500
                 );
             }
             if (comment_post.length > 100) {
