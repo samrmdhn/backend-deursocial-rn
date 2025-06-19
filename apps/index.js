@@ -58,6 +58,7 @@ export {
 export {
     createPostContentDetail,
     getPost,
+    getMyPendingPost,
     commentPostPerContentDetail,
     likePostPerContentDetail,
     getDetailPostPerContentDetail,
