@@ -4,8 +4,6 @@ import {
     getDataUserUsingToken,
     getExtension,
     isMoreThanOneMonthFromTimestamp,
-    makeRandomString,
-    templateHtmlRequestPost,
     withTransaction,
 } from "../../helpers/customHelpers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
@@ -20,7 +18,7 @@ import { deleteFile, uploadFile } from "../../helpers/FileUpload.js";
 import SegmentedPostContentDetailModels from "../models/SegmentedPostContentDetailModels.js";
 import UsersModels from "../models/UsersModels.js";
 import { generateNotificationMessage } from "../../helpers/notification.js";
-import { sendMail } from "../../libs/Mailist.js";
+import { sendMail, templateHtmlRequestPost } from "../../libs/Mailist.js";
 
 export const getPost = async (req, res) => {
     try {
@@ -483,6 +481,7 @@ export const createPostContentDetail = withTransaction(
         try {
             const { caption_post, event_slug, post_type } = req.body;
             let eventName = ''
+            let eventId = 0
             const getIdContentDetail = await ContentDetailsModels.findOne({
                 where: {
                     slug: event_slug,
@@ -550,6 +549,7 @@ export const createPostContentDetail = withTransaction(
                     },
                 });
                 eventName = getIdContentDetail.title
+                eventId = getIdContentDetail.id
                 if (!getIdContentDetail) {
                     throw new Error("Event not found!");
                 }
@@ -569,7 +569,8 @@ export const createPostContentDetail = withTransaction(
                     process.env.APP_LOCATION_FILE + filesNamed;
                 await uploadFile(file, fileDestination);
             }
-            await sendMail('deursocial@gmail.com', 'Need Accepted post', templateHtmlRequestPost(filesNamed, eventName, usersToken.username))
+
+            await sendMail('deursocial@gmail.com', 'Need Accepted post', templateHtmlRequestPost({ image: filesNamed, eventName: eventName, username: usersToken.username, slugPost: dataPost.slug, idPost: dataPost.id, eventId: eventId }))
             return responseApi(res, [{ "post_slug": dataPost.slug }], null, "Data has been saved", 0);
         } catch (error) {
             console.log("error post", error);

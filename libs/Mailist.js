@@ -82,7 +82,7 @@ export const generateWelcomeEmail = (name = 'Pengguna') => `
  * @param {*} param0 
  * @returns 
  */
-export const generateDinamicBodyEmail = ({ name = 'Pengguna', title = 'Selamat Datang di Deursocial', body='' }) => `
+export const generateDinamicBodyEmail = ({ name = 'Pengguna', title = 'Selamat Datang di Deursocial', body = '' }) => `
 <!DOCTYPE html>
 <html>
   <head>
@@ -115,9 +115,124 @@ export const generateDinamicBodyEmail = ({ name = 'Pengguna', title = 'Selamat D
         <p style="font-size: 16px; color: #555;">
           Hai <strong>${name}</strong>,
         </p>
-        <p style="font-size: 16px; color: #555;">${body}</p>
+        ${body}
       </div>
     </div>
   </body>
 </html>
 `;
+
+export const templateHtmlRequestPost = ({ image = '', eventName = '', username = '', slugPost = '', idPost = '', eventId = '' }) => {
+  return `<div style="max-width: 400px; margin: auto; font-family: Arial, sans-serif; text-align: center;">
+        <a href="https://neundeun.deursocial.com${image}" target="_blank">
+            <img 
+            src="https://neundeun.deursocial.com${image}" 
+            alt="Gambar dari Deursocial" 
+            style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);" 
+            />
+        </a>
+
+        <h2 style="margin: 20px 0 10px; color: #222;">Permintaan Postingan Baru dari ${username}</h2>
+
+        <p style="font-size: 14px; color: #555; margin-bottom: 20px;">
+            ${eventName}
+        </p>
+        <p style="font-size: 14px; color: #555; margin-bottom: 20px;">
+            Seorang pengguna baru saja mengajukan postingan berisi gambar seperti yang ditampilkan di atas.
+            Silakan tinjau dan pilih apakah ingin <strong>menerima</strong> atau <strong>menolak</strong> postingan ini.
+        </p>
+
+        <div style="display: flex; justify-content: center; gap: 12px;">
+            <a href="https://seuneu.deursocial.com/api/change/status/moment/${slugPost}?post_id=${idPost}&accepted=yes&username=${username}&event_id=${eventId}"
+            style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+            Accept
+            </a>
+            <a href="https://seuneu.deursocial.com/api/change/status/moment/${slugPost}?post_id=${idPost}&accepted=no&username=${username}&event_id=${eventId}"
+            style="padding: 10px 20px; background-color: #F44336; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+            Reject
+            </a>
+        </div>
+        </div>`
+}
+
+
+export const templateHtmlCongratUploadMomen = ({ nameUser = '', link = '', eventName }) => {
+  return `
+  <!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Momenmu Sudah Tampil</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #ffffff;
+        margin: 0;
+        padding: 0;
+        color: #333;
+      }
+      .container {
+        max-width: 600px;
+        margin: 40px auto;
+        background-color: #ffffff;
+        padding: 32px;
+        border-radius: 12px;
+        box-shadow: 0 0 0 rgba(0,0,0,0); /* remove shadow */
+      }
+      .header {
+        font-size: 24px;
+        font-weight: 600;
+        color: #4a4a4a;
+        margin-bottom: 20px;
+      }
+      .greeting {
+        font-size: 16px;
+        margin-bottom: 16px;
+      }
+      .content {
+        font-size: 15px;
+        line-height: 1.6;
+        margin-bottom: 24px;
+      }
+      .cta-button {
+        display: inline-block;
+        padding: 12px 24px;
+        background-color: #7c3aed;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 500;
+      }
+      .footer {
+        margin-top: 32px;
+        font-size: 14px;
+        color: #999;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">🎉 Congrats! Momenmu di Event ${eventName} sudah tampil!</div>
+
+      <div class="greeting">Halo ${nameUser},</div>
+
+      <div class="content">
+        Sistem telah menyelesaikan proses peninjauan terhadap unggahanmu di event <strong>${eventName}</strong> dan telah menyetujui untuk ditampilkan di halaman event! 🎉
+        <br /><br />
+        Terima kasih sudah berbagi momen seru di event <strong>${eventName}</strong>. Unggahan kamu sekarang bisa dilihat oleh pengguna lain yang juga hadir atau follow event ini.
+      </div>
+
+      <a href="${link}" class="cta-button">📍 Lihat Unggahan Kamu</a>
+
+      <div class="content" style="margin-top: 24px;">
+        Sistem akan terus membantu menjaga agar setiap konten tetap aman, nyaman, dan seru buat semua pengguna.
+        Kalau masih ada momen lain yang mau kamu bagikan, ditunggu yaa 🙌
+      </div>
+
+      <div class="footer">Salam,<br />Deursocial</div>
+    </div>
+  </body>
+</html>
+  `
+}

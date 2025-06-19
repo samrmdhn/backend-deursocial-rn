@@ -6,8 +6,9 @@ import * as ChatGroupsControllers from "../apps/index.js";
 import * as PostControllers from "../apps/index.js";
 import * as UsersControllers from "../apps/index.js";
 import * as SearchControllers from "../apps/index.js";
+import * as EmailControllers from "../apps/index.js";
 import { verifyToken } from "../apps/middlewares/verifyToken.js";
-import { generateDinamicBodyEmail, generateWelcomeEmail, sendMail } from "../libs/Mailist.js";
+// import { generateDinamicBodyEmail, generateWelcomeEmail, sendMail } from "../libs/Mailist.js";
 
 const api = express.Router();
 api.get("/api/kadieu", verifyToken, SettingControllers.visitorToken);
@@ -86,15 +87,9 @@ api.get("/api/about", verifyToken, SettingControllers.getAbout)
 api.get("/api/any/notif", verifyToken, SettingControllers.getAnyNotif)
 api.get("/api/notification", verifyToken, SettingControllers.getNotification)
 api.post("/api/notification/:id", verifyToken, SettingControllers.updateStatusNotification)
+api.get("/api/change/status/moment/:slug_post", EmailControllers.changePostMoment)
 
 api.get('/pink', async (req, res) => {
-  // await sendMail('trondolbalap@gmail.com', '🎉 Selamat Datang di Deursocial!', generateWelcomeEmail("trondolbalap"));
-  await sendMail('trondolbalap@gmail.com', 'Ssst ada hal baru buat kamu', generateDinamicBodyEmail({
-    name: "trondolbalap", 
-    body: "mindeur mau spil dikit nih, mindeur mau ngadain giveaway archive moment di deursocial",
-    title: "Ssst hal baru buat kamu"
-  }));
-
   res.send({ message: 'ponk' });
 });
 export default api;

@@ -242,36 +242,3 @@ export const isMoreThanOneMonthFromTimestamp = (timestampInSeconds) => {
     const now = new Date();
     return now > oneMonthAfter;
 }
-
-export const templateHtmlRequestPost = (image, eventName, username) => {
-    return `<div style="max-width: 400px; margin: auto; font-family: Arial, sans-serif; text-align: center;">
-        <a href="https://neundeun.deursocial.com${image}" target="_blank">
-            <img 
-            src="https://neundeun.deursocial.com${image}" 
-            alt="Gambar dari Deursocial" 
-            style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);" 
-            />
-        </a>
-
-        <h2 style="margin: 20px 0 10px; color: #222;">Permintaan Postingan Baru dari ${username}</h2>
-
-        <p style="font-size: 14px; color: #555; margin-bottom: 20px;">
-            ${eventName}
-        </p>
-        <p style="font-size: 14px; color: #555; margin-bottom: 20px;">
-            Seorang pengguna baru saja mengajukan postingan berisi gambar seperti yang ditampilkan di atas.
-            Silakan tinjau dan pilih apakah ingin <strong>menerima</strong> atau <strong>menolak</strong> postingan ini.
-        </p>
-
-        <div style="display: flex; justify-content: center; gap: 12px;">
-            <a href="https://ruangapp.com/accept"
-            style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
-            Accept
-            </a>
-            <a href="https://ruangapp.com/reject"
-            style="padding: 10px 20px; background-color: #F44336; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
-            Reject
-            </a>
-        </div>
-        </div>`
-}
