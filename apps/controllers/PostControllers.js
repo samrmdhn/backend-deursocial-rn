@@ -144,6 +144,16 @@ export const getPost = async (req, res) => {
         return responseApi(res, [], null, "Server error....", 1);
     }
 };
+
+/**
+ * req query
+ * post_ is flag status post
+ * page is what on page
+ * limit is limitation get post
+ * @param {*} req 
+ * @param {*} res 
+ * @returns 
+ */
 export const getMyAllPost = async (req, res) => {
     try {
         const usersToken = getDataUserUsingToken(req, res);
