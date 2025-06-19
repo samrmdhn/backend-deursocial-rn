@@ -295,7 +295,9 @@ export const getContents = async (req, res) => {
 
                         'total_posts',(
                             SELECT COUNT(*) AS total_posts
-                            FROM ir_segmented_post_content_details gp WHERE gp.content_details_id = cd.id
+                            FROM ir_segmented_post_content_details gp 
+                            JOIN ir_post_content_details pcds on gp.post_content_details_id = pcds.id 
+                            WHERE gp.content_details_id = cd.id AND pcds.is_accepted = 1
                         ),
                         'total_groups',(
                             SELECT COUNT(*) AS total_groups

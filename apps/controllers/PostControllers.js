@@ -871,7 +871,7 @@ export const getMomentPostContentDetail = async (req, res) => {
             JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
             JOIN ir_segmented_post_content_details spcds ON spcds.post_content_details_id = pcds.id
             JOIN ir_users u ON pcds.users_id = u.id
-            WHERE pcds.users_id = :users_id
+            WHERE pcds.users_id = :users_id AND pcds.is_accepted = 1
             ORDER BY pcds.id DESC
             LIMIT :limit OFFSET :offset
         `;
