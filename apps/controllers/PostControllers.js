@@ -667,9 +667,12 @@ export const createPostContentDetail = withTransaction(
                     slug: event_slug,
                 },
             });
+            if (!getIdContentDetail) {
+                throw new Error("Event not found!");
+            }
             const jumlahPostHariIni = await SegmentedPostContentDetailModels.count({
                 where: {
-                    content_details_id: getIdContentDetail,
+                    content_details_id: getIdContentDetail.id,
                     users_id: users_id,
                     created_at: {
                         [Op.between]: [startOfDay, endOfDay],
@@ -680,9 +683,7 @@ export const createPostContentDetail = withTransaction(
                 return responseApi(res, [], null, "Kamu sudah mencapai batas menyimpan momentmu hari ini", 429);
             }
 
-            if (!getIdContentDetail) {
-                throw new Error("Event not found!");
-            }
+
             if (isMoreThanOneMonthFromTimestamp(getIdContentDetail.date_end)) {
                 return responseApi(res, [], null, "Opsss.....!, jajajajaja", 1);
             }
