@@ -26,7 +26,7 @@ export const getPost = async (req, res) => {
     try {
         const usersToken = getDataUserUsingToken(req, res);
         const users_id = usersToken.tod;
-        const { page = 1, limit = 10, event_slug = ''} = req.query;
+        const { page = 1, limit = 10, event_slug = '' } = req.query;
         const offset = (page - 1) * limit;
         let whereClause = `where pcds.is_accepted = 1`;
 
@@ -158,7 +158,7 @@ export const getMyAllPost = async (req, res) => {
     try {
         const usersToken = getDataUserUsingToken(req, res);
         const users_id = usersToken.tod;
-        const { page = 1, limit = 10, post_ = 1} = req.query;
+        const { page = 1, limit = 10, post_ = 1 } = req.query;
         const offset = (page - 1) * limit;
         let whereClause = `where pcds.is_accepted = ${post_}`;
 
@@ -658,8 +658,18 @@ export const createPostContentDetail = withTransaction(
             const startOfDay = new Date(userDate.getFullYear(), userDate.getMonth(), userDate.getDate()).getTime() / 1000;
             const endOfDay = startOfDay + 86400 - 1;
 
-            const jumlahPostHariIni = await PostContentDetailModels.count({
+
+            const { caption_post, event_slug, post_type } = req.body;
+            let eventName = ''
+            let eventId = 0
+            const getIdContentDetail = await ContentDetailsModels.findOne({
                 where: {
+                    slug: event_slug,
+                },
+            });
+            const jumlahPostHariIni = await SegmentedPostContentDetailModels.count({
+                where: {
+                    content_details_id: getIdContentDetail,
                     users_id: users_id,
                     created_at: {
                         [Op.between]: [startOfDay, endOfDay],
@@ -670,14 +680,6 @@ export const createPostContentDetail = withTransaction(
                 return responseApi(res, [], null, "Kamu sudah mencapai batas menyimpan momentmu hari ini", 429);
             }
 
-            const { caption_post, event_slug, post_type } = req.body;
-            let eventName = ''
-            let eventId = 0
-            const getIdContentDetail = await ContentDetailsModels.findOne({
-                where: {
-                    slug: event_slug,
-                },
-            });
             if (!getIdContentDetail) {
                 throw new Error("Event not found!");
             }
