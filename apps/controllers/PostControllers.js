@@ -1049,7 +1049,7 @@ export const getMomentPostContentDetail = async (req, res) => {
         const countQuery = `
             SELECT COUNT(*) AS total_count
             FROM ir_post_content_details
-            WHERE users_id = :users_id
+            WHERE users_id = :users_id AND is_accepted = 1
         `;
 
         const totalResult = await db.query(countQuery, {
