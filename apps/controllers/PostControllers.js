@@ -1326,15 +1326,19 @@ export const getFollowingEventOnProfile = async (req, res) => {
                         'users', (
                             SELECT json_agg(
                                 json_build_object(
-                                    'id', u.id,
-                                    'display_name', u.display_name,
-                                    'image', u.photo
+                                    'id', limited_users.id,
+                                    'display_name', limited_users.display_name,
+                                    'image', limited_users.photo
                                 )
                             )
-                            FROM ir_content_detail_followers cdf
-                            JOIN ir_users u ON cdf.users_id = u.id
-                            WHERE cdf.content_details_id = cd.id
-                            LIMIT 3
+                            FROM (
+                                SELECT u.id, u.display_name, u.photo
+                                FROM ir_content_detail_followers cdf
+                                JOIN ir_users u ON cdf.users_id = u.id
+                                WHERE cdf.content_details_id = cd.id
+                                ORDER BY cdf.id DESC
+                                LIMIT 5
+                            ) AS limited_users
                         )
                     )
                     FROM ir_content_detail_followers cdf
