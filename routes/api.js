@@ -61,26 +61,26 @@ api.post("/api/user", verifyToken, UsersControllers.updateDataUser);
 api.post("/api/follow/:username", verifyToken, UsersControllers.followUser);
 
 
-api.post("/api/create/post", verifyToken, PostControllers.createPostContentDetail);
-api.post("/api/comment/post/:slugPostContentDetail", verifyToken, PostControllers.commentPostPerContentDetail);
-api.get("/api/comment/post/:slugPostContentDetail", verifyToken, PostControllers.commentGetPerContentDetail);
-api.post("/api/like/post/:slugPostContentDetail", verifyToken, PostControllers.likePostPerContentDetail);
-api.get("/api/post", PostControllers.getPost);
-api.get("/api/my/all/post", PostControllers.getMyAllPost);
-api.delete("/api/detail/post/:slugPostContentDetail", verifyToken, PostControllers.deleteDetailPostPerContentDetail);
-api.get("/api/detail/post/:slugPostContentDetail", verifyToken, PostControllers.getDetailPostPerContentDetail);
+api.post("/api/create/moment", verifyToken, PostControllers.createPostContentDetail);
+api.post("/api/comment/moment/:slugPostContentDetail", verifyToken, PostControllers.commentPostPerContentDetail);
+api.get("/api/comment/moment/:slugPostContentDetail", verifyToken, PostControllers.commentGetPerContentDetail);
+api.post("/api/like/moment/:slugPostContentDetail", verifyToken, PostControllers.likePostPerContentDetail);
+api.get("/api/moment", PostControllers.getPost);
+api.get("/api/my/all/moment", PostControllers.getMyAllPost);
+api.delete("/api/detail/moment/:slugPostContentDetail", verifyToken, PostControllers.deleteDetailPostPerContentDetail);
+api.get("/api/detail/moment/:slugPostContentDetail", verifyToken, PostControllers.getDetailPostPerContentDetail);
 
 
 api.get("/api/search/:type", verifyToken, SearchControllers.searchData);
 
 api.get("/api/city", SearchControllers.getDataCity);
 
-api.get("/api/like/post/profile/:username", verifyToken, PostControllers.getLikePostContentDetail)
-api.get("/api/comment/post/profile/:username", verifyToken, PostControllers.getCommentPostContentDetail)
-api.get("/api/moment/post/profile/:username", verifyToken, PostControllers.getMomentPostContentDetail)
-api.get("/api/followers/post/profile/:username", PostControllers.getFollowerOnProfile)
-api.get("/api/following/post/profile/:username", PostControllers.getFollowingOnProfile)
-api.get("/api/following/event/post/profile/:username", PostControllers.getFollowingEventOnProfile)
+api.get("/api/like/moment/profile/:username", verifyToken, PostControllers.getLikePostContentDetail)
+api.get("/api/comment/moment/profile/:username", verifyToken, PostControllers.getCommentPostContentDetail)
+api.get("/api/moment/profile/:username", verifyToken, PostControllers.getMomentPostContentDetail)
+api.get("/api/followers/moment/profile/:username", PostControllers.getFollowerOnProfile)
+api.get("/api/following/moment/profile/:username", PostControllers.getFollowingOnProfile)
+api.get("/api/following/event/moment/profile/:username", PostControllers.getFollowingEventOnProfile)
 
 api.get("/api/check/username/:username", verifyToken, UsersControllers.checkUsername)
 api.post("/api/create/about", verifyToken, SettingControllers.createAbout)
