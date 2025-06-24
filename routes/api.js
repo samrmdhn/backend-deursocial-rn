@@ -94,6 +94,8 @@ api.get("/api/change/status/moment/:slug_post", EmailControllers.changeMoment)
 
 api.get("/api/post", PostControllers.getPost)
 api.post("/api/create/post", verifyToken, PostControllers.createPostContentDetail)
+api.post("/api/create/topic", verifyToken, PostControllers.createTopicPost)
+api.get("/api/topic/post", verifyToken, PostControllers.getTopicPost)
 
 api.get('/pink', async (req, res) => {
   res.send({ message: 'ponk' });

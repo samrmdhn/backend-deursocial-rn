@@ -35,6 +35,8 @@ import ImpressionPostContentDetailModels from "../apps/models/ImpressionPostCont
 import SegmentedPostContentDetailModels from "../apps/models/SegmentedPostContentDetailModels.js";
 import AboutModels from "../apps/models/AboutModels.js";
 import NotificationModels from "../apps/models/NotificationModels.js";
+import TopicPostModels from "../apps/models/TopicPostModels.js";
+import TopicPostRelationsModels from "../apps/models/TopicPostRelationsModels.js";
 
 // Menggunakan force: true akan membuat ulang tabel setiap kali dijalankan contoh => Example.sync({ force: true })
 async function syncDatabase() {
@@ -111,8 +113,12 @@ async function syncDatabase() {
         // console.log("Table table segmented post content detail has been created.");
         // await AboutModels.sync({ force: false });
         // console.log("Table table segmented post content detail has been created.");
-        await NotificationModels.sync({ force: false });
-        console.log("Table table segmented post content detail has been created.");
+        // await NotificationModels.sync({ force: false });
+        // console.log("Table table segmented post content detail has been created.");
+        // await TopicPostModels.sync({ force: false });
+        // console.log("Table Topic Post has been created.");
+        await TopicPostRelationsModels.sync({ force: false });
+        console.log("Table Topic Post relations has been created.");
         await db.close();
     } catch (error) {
         console.error("Unable to connect to the database:", error);

@@ -7,6 +7,8 @@ import SegmentedPostContentDetailModels from "../models/SegmentedPostContentDeta
 import PostContentDetailModels from "../models/PostContentDetailModels.js";
 import FilePostContentDetailModels from "../models/FilePostContentDetailModels.js";
 import { parseToRichText } from "../../libs/ParseToRichText.js";
+import TopicPostModels from "../models/TopicPostModels.js";
+import TopicPostRelationsModels from "../models/TopicPostRelationsModels.js";
 
 
 export const getPost = async (req, res) => {
@@ -15,9 +17,8 @@ export const getPost = async (req, res) => {
         const users_id = usersToken.tod;
         const { page = 1, limit = 10 } = req.query;
         const offset = (page - 1) * limit;
-        let whereClause = `where pcds.is_accepted = 1 AND pcds.type = 0`;
 
-        let replacements = {
+        const replacements = {
             usersId: users_id,
             limit: parseInt(limit, 10),
             offset: parseInt(offset, 10),
@@ -58,7 +59,7 @@ export const getPost = async (req, res) => {
                         json_build_object(
                             'image', fpcds.file
                         )
-                    ), '[]') AS members
+                    ), '[]')
                     FROM ir_file_post_content_details fpcds
                     WHERE fpcds.post_content_details_id = pcds.id
                 ) AS images,
@@ -69,12 +70,23 @@ export const getPost = async (req, res) => {
                         WHERE l.post_content_details_id = pcds.id
                         AND l.users_id = :usersId
                     )
-                ) AS post_liked
+                ) AS post_liked,
+                COALESCE((
+                    SELECT json_build_object(
+                        'id', topic.id,
+                        'title', topic.text_title
+                    )
+                    FROM ir_topic_post_relations topic_rel
+                    LEFT JOIN ir_topic_posts topic ON topic.id = topic_rel.topic_posts_id
+                    WHERE topic_rel.post_content_details_id = pcds.id
+                    LIMIT 1
+                ), '{}'::json) AS topic
             FROM
                 ir_post_content_details pcds
                 JOIN ir_users u ON pcds.users_id = u.id
-                JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
-            ${whereClause}
+            WHERE
+                pcds.is_accepted = 1 AND pcds.type = 0
+            ORDER BY pcds.created_at DESC
             LIMIT :limit OFFSET :offset;
         `;
         const executeQuery = await db.query(query, {
@@ -83,14 +95,10 @@ export const getPost = async (req, res) => {
         });
         const countQuery = `
             SELECT COUNT(*) AS total_count
-            FROM
-                ir_post_content_details pcds
-                JOIN ir_users u ON pcds.users_id = u.id
-                JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
-            ${whereClause}
+            FROM ir_post_content_details pcds
+            WHERE pcds.is_accepted = 1 AND pcds.type = 0
         `;
         const totalCountResult = await db.query(countQuery, {
-            replacements,
             type: db.QueryTypes.SELECT,
         });
 
@@ -109,14 +117,15 @@ export const getPost = async (req, res) => {
                     total_page: totalPages,
                 },
             },
-            "Data has been retrived",
+            "Data has been retrieved",
             0
         );
     } catch (error) {
         console.log("error post", error);
         return responseApi(res, [], null, "Server error....", 1);
     }
-}
+};
+
 
 export const createPostContentDetail = withTransaction(
     async (req, res, transaction) => {
@@ -128,7 +137,7 @@ export const createPostContentDetail = withTransaction(
             if (isNaN(userDate.getTime())) {
                 return responseApi(res, [], null, "Whats wrong dude? jajajajaja", 400);
             }
-            const { caption_post, event_slug, post_type } = req.body;
+            const { caption_post, event_slug, post_type, topic_id } = req.body;
 
             const files = req.files && req.files.image;
             if (caption_post.length > 100) {
@@ -149,6 +158,15 @@ export const createPostContentDetail = withTransaction(
             const dataPost = await PostContentDetailModels.create(data, {
                 transaction,
             });
+            if (topic_id) {
+                await TopicPostRelationsModels.create({
+                    users_id: users_id,
+                    post_content_details_id: dataPost.id,
+                    topic_posts_id: topic_id
+                }, {
+                    transaction,
+                });
+            }
             if (files) {
                 if (files.length > 0) {
                     for (const file of files) {
@@ -180,3 +198,50 @@ export const createPostContentDetail = withTransaction(
         }
     }
 );
+
+export const createTopicPost = withTransaction(async (req, res, transaction) => {
+    try {
+        const { title } = req.body;
+        await TopicPostModels.create({
+            text_title: title,
+            created_at: dateToEpochTime(req.headers["x-date-for"]),
+        }, {
+            transaction,
+        });
+        return responseApi(res, null, null, "Data has been saved", 0);
+    } catch (error) {
+        console.log("error create Topic Post", error);
+        throw error;
+    }
+})
+
+export const getTopicPost = async (req, res) => {
+    try {
+        const { search_text, limit, page } = req.query;
+        let whereClause = '';
+        const offset = (page - 1) * limit;
+        const replacements = {
+            limit: parseInt(limit, 10),
+            offset: parseInt(offset, 10),
+        };
+        if (search_text) {
+            whereClause += `WHERE text_title ILIKE :title`;
+            replacements.title = `%${search_text}%`;
+        }
+        const query = `
+            SELECT 
+                id,
+                text_title as title
+            FROM ir_topic_posts ${whereClause}
+            LIMIT :limit OFFSET :offset;
+        `
+        const executeQuery = await db.query(query, {
+            replacements,
+            type: db.QueryTypes.SELECT,
+        });
+        return responseApi(res, executeQuery, null, "Data has been retrivied")
+    } catch (error) {
+        console.log("error get topic post", error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+}
