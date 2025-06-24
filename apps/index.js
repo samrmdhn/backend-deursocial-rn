@@ -87,5 +87,7 @@ export {
 
 export {
     getPost,
-    createPostContentDetail
+    createPostContentDetail,
+    createTopicPost,
+    getTopicPost
 } from "./controllers/PostControllers.js";
