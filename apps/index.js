@@ -56,21 +56,21 @@ export {
     checkUsername
 } from "./controllers/UsersControllers.js";
 export {
-    createPostContentDetail,
-    getPost,
-    getMyAllPost,
-    commentPostPerContentDetail,
-    likePostPerContentDetail,
-    getDetailPostPerContentDetail,
+    createMomentContentDetail,
+    getMoment,
+    getMyAllMoment,
+    commentMomentPerContentDetail,
+    likeMomentPerContentDetail,
+    getDetailMomentPerContentDetail,
     commentGetPerContentDetail,
-    deleteDetailPostPerContentDetail,
-    getLikePostContentDetail,
-    getCommentPostContentDetail,
-    getMomentPostContentDetail,
+    deleteDetailMomentPerContentDetail,
+    getLikeMomentContentDetail,
+    getCommentMomentContentDetail,
+    getMomentContentDetail,
     getFollowerOnProfile,
     getFollowingOnProfile,
     getFollowingEventOnProfile
-} from "./controllers/PostControllers.js";
+} from "./controllers/MomentControllers.js";
 
 export {
     searchData
@@ -81,5 +81,11 @@ export {
 } from "./controllers/RegionalsControllers.js";
 
 export {
-    changePostMoment
+    changeMoment
 } from "./controllers/EmailControllers.js";
+
+
+export {
+    getPost,
+    createPostContentDetail
+} from "./controllers/PostControllers.js";

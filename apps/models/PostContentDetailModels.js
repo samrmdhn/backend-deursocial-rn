@@ -12,6 +12,10 @@ const PostContentDetailModels = db.define("ir_post_content_details", {
         type: TYPES.TEXT("long"),
         allowNull: true,
     },
+    caption_post_raw: {
+        type: TYPES.TEXT("long"),
+        allowNull: true,
+    },
     slug: {
         type: TYPES.STRING(100),
         allowNull: false,

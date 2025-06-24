@@ -4,7 +4,7 @@ import ContentDetailsModels from "../models/ContentDetailsModels.js";
 import PostContentDetailModels from "../models/PostContentDetailModels.js";
 import UsersModels from "../models/UsersModels.js";
 
-export const changePostMoment = async (req, res) => {
+export const changeMoment = async (req, res) => {
     try {
         const slugPost = req.params.slug_post;
         const { post_id, accepted, username, event_id } = req.query;

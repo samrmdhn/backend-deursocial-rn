@@ -3,6 +3,7 @@ import * as SettingControllers from "../apps/index.js";
 import * as HomepageControllers from "../apps/index.js";
 import * as GroupsControllers from "../apps/index.js";
 import * as ChatGroupsControllers from "../apps/index.js";
+import * as MomentControllers from "../apps/index.js";
 import * as PostControllers from "../apps/index.js";
 import * as UsersControllers from "../apps/index.js";
 import * as SearchControllers from "../apps/index.js";
@@ -61,26 +62,26 @@ api.post("/api/user", verifyToken, UsersControllers.updateDataUser);
 api.post("/api/follow/:username", verifyToken, UsersControllers.followUser);
 
 
-api.post("/api/create/moment", verifyToken, PostControllers.createPostContentDetail);
-api.post("/api/comment/moment/:slugPostContentDetail", verifyToken, PostControllers.commentPostPerContentDetail);
-api.get("/api/comment/moment/:slugPostContentDetail", verifyToken, PostControllers.commentGetPerContentDetail);
-api.post("/api/like/moment/:slugPostContentDetail", verifyToken, PostControllers.likePostPerContentDetail);
-api.get("/api/moment", PostControllers.getPost);
-api.get("/api/my/all/moment", PostControllers.getMyAllPost);
-api.delete("/api/detail/moment/:slugPostContentDetail", verifyToken, PostControllers.deleteDetailPostPerContentDetail);
-api.get("/api/detail/moment/:slugPostContentDetail", verifyToken, PostControllers.getDetailPostPerContentDetail);
+api.post("/api/create/moment", verifyToken, MomentControllers.createMomentContentDetail);
+api.post("/api/comment/moment/:slugPostContentDetail", verifyToken, MomentControllers.commentMomentPerContentDetail);
+api.get("/api/comment/moment/:slugPostContentDetail", verifyToken, MomentControllers.commentGetPerContentDetail);
+api.post("/api/like/moment/:slugPostContentDetail", verifyToken, MomentControllers.likeMomentPerContentDetail);
+api.get("/api/moment", MomentControllers.getMoment);
+api.get("/api/my/all/moment", MomentControllers.getMyAllMoment);
+api.delete("/api/detail/moment/:slugPostContentDetail", verifyToken, MomentControllers.deleteDetailMomentPerContentDetail);
+api.get("/api/detail/moment/:slugPostContentDetail", verifyToken, MomentControllers.getDetailMomentPerContentDetail);
 
 
 api.get("/api/search/:type", verifyToken, SearchControllers.searchData);
 
 api.get("/api/city", SearchControllers.getDataCity);
 
-api.get("/api/like/moment/profile/:username", verifyToken, PostControllers.getLikePostContentDetail)
-api.get("/api/comment/moment/profile/:username", verifyToken, PostControllers.getCommentPostContentDetail)
-api.get("/api/moment/profile/:username", verifyToken, PostControllers.getMomentPostContentDetail)
-api.get("/api/followers/moment/profile/:username", PostControllers.getFollowerOnProfile)
-api.get("/api/following/moment/profile/:username", PostControllers.getFollowingOnProfile)
-api.get("/api/following/event/moment/profile/:username", PostControllers.getFollowingEventOnProfile)
+api.get("/api/like/moment/profile/:username", verifyToken, MomentControllers.getLikeMomentContentDetail)
+api.get("/api/comment/moment/profile/:username", verifyToken, MomentControllers.getCommentMomentContentDetail)
+api.get("/api/moment/profile/:username", verifyToken, MomentControllers.getMomentContentDetail)
+api.get("/api/followers/moment/profile/:username", MomentControllers.getFollowerOnProfile)
+api.get("/api/following/moment/profile/:username", MomentControllers.getFollowingOnProfile)
+api.get("/api/following/event/moment/profile/:username", MomentControllers.getFollowingEventOnProfile)
 
 api.get("/api/check/username/:username", verifyToken, UsersControllers.checkUsername)
 api.post("/api/create/about", verifyToken, SettingControllers.createAbout)
@@ -88,7 +89,11 @@ api.get("/api/about", verifyToken, SettingControllers.getAbout)
 api.get("/api/any/notif", verifyToken, SettingControllers.getAnyNotif)
 api.get("/api/notification", verifyToken, SettingControllers.getNotification)
 api.post("/api/notification/:id", verifyToken, SettingControllers.updateStatusNotification)
-api.get("/api/change/status/moment/:slug_post", EmailControllers.changePostMoment)
+api.get("/api/change/status/moment/:slug_post", EmailControllers.changeMoment)
+
+
+api.get("/api/post", PostControllers.getPost)
+api.post("/api/create/post", verifyToken, PostControllers.createPostContentDetail)
 
 api.get('/pink', async (req, res) => {
   res.send({ message: 'ponk' });
