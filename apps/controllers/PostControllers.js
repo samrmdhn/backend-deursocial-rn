@@ -11,6 +11,7 @@ import TopicPostModels from "../models/TopicPostModels.js";
 import TopicPostRelationsModels from "../models/TopicPostRelationsModels.js";
 import { generateNotificationMessage } from "../../helpers/notification.js";
 import CommentPostContentDetailModels from "../models/CommentPostContentDetailModels.js";
+import LikePostContentDetailModels from "../models/LikePostContentDetailModels.js";
 
 
 export const getPost = async (req, res) => {
