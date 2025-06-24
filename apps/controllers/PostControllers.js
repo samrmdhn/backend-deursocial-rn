@@ -139,7 +139,6 @@ export const createPostContentDetail = withTransaction(
             }
             const { caption_post, event_slug, post_type, topic_id } = req.body;
 
-            const files = req.files && req.files.image;
             if (caption_post.length > 100) {
                 return responseApi(res, [], null, "Caption to long", 400);
             }
@@ -167,27 +166,26 @@ export const createPostContentDetail = withTransaction(
                     transaction,
                 });
             }
+            const files = req.files && req.files.image;
             if (files) {
-                if (files.length > 0) {
-                    for (const file of files) {
-                        const fileDate = new Date();
-                        let filesNamed = fileDate.getTime() + getExtension(file.name);
-                        filesNamed = createNameFile(filesNamed);
-                        const ext = getExtension(file.name);
-                        if (ext !== ".jpg" && ext !== ".png") {
-                            return responseApi(res, [], null, "Image not valid", 400);
-                        }
-                        const fileDestination = process.env.APP_LOCATION_FILE + filesNamed;
-                        await FilePostContentDetailModels.create(
-                            {
-                                post_content_details_id: dataPost.id,
-                                file: filesNamed,
-                                created_at: dateToEpochTime(req.headers["x-date-for"]),
-                            },
-                            { transaction }
-                        );
-                        await uploadFile(file, fileDestination);
+                for (const file of files) {
+                    const fileDate = new Date();
+                    let filesNamed = fileDate.getTime() + getExtension(file.name);
+                    filesNamed = createNameFile(filesNamed);
+                    const ext = getExtension(file.name);
+                    if (ext !== ".jpg" && ext !== ".png") {
+                        return responseApi(res, [], null, "Image not valid", 400);
                     }
+                    const fileDestination = process.env.APP_LOCATION_FILE + filesNamed;
+                    await FilePostContentDetailModels.create(
+                        {
+                            post_content_details_id: dataPost.id,
+                            file: filesNamed,
+                            created_at: dateToEpochTime(req.headers["x-date-for"]),
+                        },
+                        { transaction }
+                    );
+                    await uploadFile(file, fileDestination);
                 }
             }
 
