@@ -137,10 +137,10 @@ export const createPostContentDetail = withTransaction(
             const users_id = usersToken.tod;
             const xDateFor = req.headers["x-date-for"];
             const userDate = new Date(xDateFor);
-            if (isNaN(userDate.getTime())) {
-                return responseApi(res, [], null, "Whats wrong dude? jajajajaja", 400);
+            if (users_id == 0) {
+                return responseApi(res, [], null, "Login needed", 400);
             }
-            
+
             const { caption_post, event_slug, post_type, topic_id } = req.body;
 
             if (caption_post.length > 100) {
@@ -153,7 +153,7 @@ export const createPostContentDetail = withTransaction(
                 created_at: dateToEpochTime(req.headers["x-date-for"]),
                 caption_post: parseToRichText(caption_post),
                 caption_post_raw: caption_post,
-                slug: btoa(dateToEpochTime(req.headers["x-date-for"])+"-"+makeRandomString(3)),
+                slug: btoa(dateToEpochTime(req.headers["x-date-for"]) + "-" + makeRandomString(3)),
                 users_id: users_id,
                 type: post_type,
                 is_accepted: 1
