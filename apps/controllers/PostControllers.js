@@ -169,7 +169,7 @@ export const createPostContentDetail = withTransaction(
                     transaction,
                 });
             }
-            const files = req.files && req.files.image;
+            const files = req.files && req.files.images;
             if (files) {
                 for (const file of files) {
                     const fileDate = new Date();
