@@ -135,19 +135,19 @@ export const createPostContentDetail = withTransaction(
         try {
             const usersToken = getDataUserUsingToken(req, res);
             const users_id = usersToken.tod;
-            const xDateFor = req.headers["x-date-for"];
-            const userDate = new Date(xDateFor);
             if (users_id == 0) {
                 return responseApi(res, [], null, "Login needed", 400);
             }
 
             const { caption_post, event_slug, post_type, topic_id } = req.body;
-
+            if (!topic_id) {
+                return responseApi(res, [], null, "What topic do you want to discuss?", 418);
+            }
             if (caption_post.length > 100) {
-                return responseApi(res, [], null, "Caption to long", 400);
+                return responseApi(res, [], null, "Caption to long", 418);
             }
             if (Number(post_type) == 2 && typeof event_slug === "undefined") {
-                throw new Error("Data wrong because event slug not valid!");
+                return responseApi(res, [], null, "What are you doing?", 418);
             }
             const data = {
                 created_at: dateToEpochTime(req.headers["x-date-for"]),
@@ -161,15 +161,13 @@ export const createPostContentDetail = withTransaction(
             const dataPost = await PostContentDetailModels.create(data, {
                 transaction,
             });
-            if (topic_id) {
-                await TopicPostRelationsModels.create({
-                    users_id: users_id,
-                    post_content_details_id: dataPost.id,
-                    topic_posts_id: topic_id
-                }, {
-                    transaction,
-                });
-            }
+            await TopicPostRelationsModels.create({
+                users_id: users_id,
+                post_content_details_id: dataPost.id,
+                topic_posts_id: topic_id
+            }, {
+                transaction,
+            });
             let files = req.files && req.files.images;
             if (files) {
                 if (!Array.isArray(files)) {
