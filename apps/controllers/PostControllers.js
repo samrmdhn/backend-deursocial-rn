@@ -1,4 +1,4 @@
-import { createNameFile, dateToEpochTime, getDataUserUsingToken, getExtension, isMoreThanOneMonthFromTimestamp, withTransaction } from "../../helpers/customHelpers.js";
+import { createNameFile, dateToEpochTime, getDataUserUsingToken, getExtension, isMoreThanOneMonthFromTimestamp, makeRandomString, withTransaction } from "../../helpers/customHelpers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
 import db from "../../configs/Database.js";
 import { uploadFile } from "../../helpers/FileUpload.js";
@@ -140,6 +140,7 @@ export const createPostContentDetail = withTransaction(
             if (isNaN(userDate.getTime())) {
                 return responseApi(res, [], null, "Whats wrong dude? jajajajaja", 400);
             }
+            
             const { caption_post, event_slug, post_type, topic_id } = req.body;
 
             if (caption_post.length > 100) {
@@ -152,7 +153,7 @@ export const createPostContentDetail = withTransaction(
                 created_at: dateToEpochTime(req.headers["x-date-for"]),
                 caption_post: parseToRichText(caption_post),
                 caption_post_raw: caption_post,
-                slug: btoa(dateToEpochTime(req.headers["x-date-for"])),
+                slug: btoa(dateToEpochTime(req.headers["x-date-for"])+"-"+makeRandomString(3)),
                 users_id: users_id,
                 type: post_type,
                 is_accepted: 1
