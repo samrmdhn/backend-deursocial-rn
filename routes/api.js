@@ -101,7 +101,7 @@ api.get("/api/comment/post/:slugPost", verifyToken, PostControllers.getCommentPo
 api.post("/api/like/post/:slugPost", verifyToken, PostControllers.likePostPerContentDetail);
 api.get("/api/detail/post/:slugPostContentDetail", verifyToken, PostControllers.getDetailPostPerContentDetail);
 api.delete("/api/detail/moment/:slugPostContentDetail", verifyToken, PostControllers.deletePostPerContentDetail);
-api.get("/api/all/topic/:topicTitle", verifyToken, PostControllers.getDetailPostPerContentDetailPerTopic);
+api.get("/api/post/topic/:topicTitle", verifyToken, PostControllers.getDetailPostPerContentDetailPerTopic);
 api.get("/api/post/profile/:username", verifyToken, PostControllers.getPostPerUsers)
 
 
