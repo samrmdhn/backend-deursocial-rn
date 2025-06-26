@@ -85,11 +85,6 @@ const UsersModels = db.define(
             defaultValue: 1,
             description: "0: non active, 1: active",
         },
-        is_verified: {
-            type: TYPES.TINYINT,
-            defaultValue: 0,
-            description: "0: non verified, 1: verified",
-        },
         is_anonymous: {
             type: TYPES.TINYINT,
             allowNull: true,
