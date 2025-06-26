@@ -11,6 +11,7 @@ const TopicPostModels = db.define("ir_topic_posts", {
     text_title: {
         type: TYPES.STRING(100),
         allowNull: false,
+        unique: true
     },
     created_at: {
         type: TYPES.BIGINT,

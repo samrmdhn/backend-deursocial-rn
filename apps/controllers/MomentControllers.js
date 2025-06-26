@@ -604,7 +604,7 @@ export const getDetailMomentPerContentDetail = async (req, res) => {
                 ) AS images
             FROM
                 ir_post_content_details pcds
-                LEFT JOIN ir_segmented_post_content_details spcds ON pcds.ID = spcds.post_content_details_id
+                LEFT JOIN ir_segmented_post_content_details spcds ON pcds.id = spcds.post_content_details_id
 	            LEFT JOIN ir_content_details cds ON spcds.content_details_id = cds.id
                 LEFT JOIN ir_users u ON pcds.users_id = u.id
             ${whereClause}

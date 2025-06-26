@@ -12,6 +12,7 @@ import TopicPostRelationsModels from "../models/TopicPostRelationsModels.js";
 import { generateNotificationMessage } from "../../helpers/notification.js";
 import CommentPostContentDetailModels from "../models/CommentPostContentDetailModels.js";
 import LikePostContentDetailModels from "../models/LikePostContentDetailModels.js";
+import ImpressionPostContentDetailModels from "../models/ImpressionPostContentDetailModels.js";
 
 
 export const getPost = async (req, res) => {
@@ -143,7 +144,7 @@ export const createPostContentDetail = withTransaction(
             if (!topic_id) {
                 return responseApi(res, [], null, "What topic do you want to discuss?", 418);
             }
-            if (caption_post.length > 100) {
+            if (caption_post.length > 300) {
                 return responseApi(res, [], null, "Caption to long", 418);
             }
             if (Number(post_type) == 2 && typeof event_slug === "undefined") {
@@ -454,3 +455,261 @@ export const likePostPerContentDetail = withTransaction(
         }
     }
 );
+
+export const deletePostPerContentDetail = withTransaction(
+    async (req, res) => {
+        try {
+            const usersToken = getDataUserUsingToken(req, res);
+            const users_id = usersToken.tod;
+            const slugPostContentDetail = req.params.slugPostContentDetail;
+            const getIdPostContentDetail = await PostContentDetailModels.findOne({
+                where: {
+                    slug: slugPostContentDetail,
+                },
+            });
+            const checkAnyLike = await LikePostContentDetailModels.findOne({
+                where: {
+                    post_content_details_id: getIdPostContentDetail.id,
+                },
+            });
+            const checkAnyComment = await CommentPostContentDetailModels.findOne({
+                where: {
+                    post_content_details_id: getIdPostContentDetail.id,
+                },
+            });
+            const checkAnySegmentedPostContentDetail = await SegmentedPostContentDetailModels.findOne({
+                where: {
+                    post_content_details_id: getIdPostContentDetail.id,
+                },
+            });
+            const checkAnyFilePostContentDetailModels = await FilePostContentDetailModels.findOne({
+                where: {
+                    post_content_details_id: getIdPostContentDetail.id,
+                },
+            });
+            const checkAnyTopicPostRelationsModels = await TopicPostRelationsModels.findOne({
+                where: {
+                    post_content_details_id: getIdPostContentDetail.id,
+                },
+            });
+            if (!getIdPostContentDetail && checkAnyLike && checkAnyComment && checkAnyTopicPostRelationsModels) {
+                return responseApi(res, [], null, "Server error....", 400);
+            }
+            if (getIdPostContentDetail.users_id !== users_id) {
+                console.log("cannot be deleted because you arent owner of this image! ")
+                throw new Error("User Not Same!");
+            }
+            if (getIdPostContentDetail) {
+                if (checkAnyFilePostContentDetailModels) {
+                    if (checkAnyTopicPostRelationsModels) {
+                        await checkAnyTopicPostRelationsModels.destroy();
+                    }
+                    if (checkAnyLike) {
+                        await checkAnyLike.destroy();
+                    }
+                    if (checkAnyComment) {
+                        await checkAnyComment.destroy();
+                    }
+                    if (checkAnySegmentedPostContentDetail) {
+                        await checkAnySegmentedPostContentDetail.destroy();
+                    }
+                    await checkAnyFilePostContentDetailModels.destroy();
+                    const filePath = process.env.APP_LOCATION_FILE + checkAnyFilePostContentDetailModels.file;
+                    const existFile = fileExists(filePath);
+                    if (existFile) {
+                        await deleteFile(filePath)
+                    }
+                }
+                await getIdPostContentDetail.destroy();
+            }
+            return responseApi(res, [], null, "Data has been deleted", 0);
+        } catch (error) {
+            console.log("error delete post", error);
+            return responseApi(res, [], null, "Server error....", 1);
+        }
+    }
+)
+
+export const getDetailPostPerContentDetail = async (req, res) => {
+    try {
+        const usersToken = getDataUserUsingToken(req, res);
+        const users_id = usersToken.tod;
+        const slugPostContentDetail = req.params.slugPostContentDetail;
+        let whereClause = `WHERE pcds.slug = :slugPostContentDetail`;
+
+        const replacements = {
+            slugPostContentDetail: slugPostContentDetail,
+        };
+
+        const query = `
+            SELECT
+                pcds.caption_post AS caption,
+                pcds.slug,
+                (
+                    SELECT EXISTS (
+                        SELECT 1
+                        FROM ir_like_post_content_details l
+                        WHERE l.post_content_details_id = pcds.id
+                        AND l.users_id = ${users_id}
+                    )
+                ) AS post_liked,
+                CAST(
+                    (
+                        SELECT COUNT(*)
+                        FROM ir_impression_post_content_details ipcds
+                        WHERE ipcds.post_content_details_id = pcds.id
+                    ) AS INT
+                ) AS total_impressions,
+                (
+                    SELECT COUNT(*)
+                    FROM ir_like_post_content_details lpcds
+                    WHERE lpcds.post_content_details_id = pcds.id
+                ) AS total_likes,
+                (
+                    SELECT COUNT(*)
+                    FROM ir_comment_post_content_details cpcds
+                    WHERE cpcds.post_content_details_id = pcds.id
+                ) AS total_comments,
+                TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
+                json_build_object(
+                    'name', u.display_name,
+                    'image', u.photo,
+                    'username', u.username
+                ) AS user,
+                (
+                    SELECT COALESCE(json_agg(
+                        json_build_object(
+                            'image', fpcds.file
+                        )
+                    ), '[]') AS members
+                    FROM ir_file_post_content_details fpcds
+                    WHERE fpcds.post_content_details_id = pcds.id
+                ) AS images
+            FROM
+                ir_post_content_details pcds
+                LEFT JOIN ir_users u ON pcds.users_id = u.id
+            ${whereClause}
+        `;
+
+        const executeQuery = await db.query(query, {
+            replacements,
+            type: db.QueryTypes.SELECT,
+            plain: true,
+        });
+
+        const getIdPostContentDetail = await PostContentDetailModels.findOne({
+            where: {
+                slug: slugPostContentDetail,
+            },
+        });
+        if (!getIdPostContentDetail) {
+            return responseApi(res, [], null, "Server error....", 400);
+        }
+        const getAnyImpressionPostContentDetailModels = await ImpressionPostContentDetailModels.findOne({
+            where: {
+                users_id: users_id,
+                post_content_details_id: getIdPostContentDetail.id,
+            },
+        });
+        if (Number(users_id) > 0) {
+            if (!getAnyImpressionPostContentDetailModels) {
+                ImpressionPostContentDetailModels.create({
+                    users_id: users_id,
+                    post_content_details_id: getIdPostContentDetail.id,
+                });
+            }
+        }
+
+        return responseApi(
+            res,
+            executeQuery,
+            null,
+            "Data has been retrived",
+            0
+        );
+    } catch (error) {
+        console.log("error get detail post", error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+};
+
+export const getDetailPostPerContentDetailPerTopic = async (req, res) => {
+    try {
+        const usersToken = getDataUserUsingToken(req, res);
+        const users_id = usersToken.tod;
+        const topicTitle = req.params.topicTitle;
+        let whereClause = `WHERE itp.text_title = :topicTitle`;
+
+        const replacements = {
+            topicTitle: topicTitle,
+        };
+
+        const query = `
+                 SELECT
+                pcds.caption_post AS caption,
+                pcds.slug,
+                (
+                    SELECT EXISTS (
+                        SELECT 1
+                        FROM ir_like_post_content_details l
+                        WHERE l.post_content_details_id = pcds.id
+                        AND l.users_id = ${users_id}
+                    )
+                ) AS post_liked,
+                CAST(
+                    (
+                        SELECT COUNT(*)
+                        FROM ir_impression_post_content_details ipcds
+                        WHERE ipcds.post_content_details_id = pcds.id
+                    ) AS INT
+                ) AS total_impressions,
+                (
+                    SELECT COUNT(*)
+                    FROM ir_like_post_content_details lpcds
+                    WHERE lpcds.post_content_details_id = pcds.id
+                ) AS total_likes,
+                (
+                    SELECT COUNT(*)
+                    FROM ir_comment_post_content_details cpcds
+                    WHERE cpcds.post_content_details_id = pcds.id
+                ) AS total_comments,
+                TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
+                json_build_object(
+                    'name', u.display_name,
+                    'image', u.photo,
+                    'username', u.username
+                ) AS user,
+                (
+                    SELECT COALESCE(json_agg(
+                        json_build_object(
+                            'image', fpcds.file
+                        )
+                    ), '[]') AS members
+                    FROM ir_file_post_content_details fpcds
+                    WHERE fpcds.post_content_details_id = pcds.id
+                ) AS images
+            FROM
+                ir_post_content_details pcds
+                LEFT JOIN ir_users u ON pcds.users_id = u.id
+                LEFT JOIN ir_topic_post_relations itpr ON itpr.post_content_details_id = pcds.id
+                JOIN ir_topic_posts itp ON itp.id = itpr.topic_posts_id
+            ${whereClause}
+        `;
+
+        const executeQuery = await db.query(query, {
+            replacements,
+            type: db.QueryTypes.SELECT,
+            plain: true,
+        });
+        return responseApi(
+            res,
+            executeQuery,
+            null,
+            "Data has been retrived",
+            0
+        );
+    } catch (error) {
+        console.log("error get detail post", error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+};

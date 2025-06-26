@@ -99,7 +99,9 @@ api.get("/api/topic/post", verifyToken, PostControllers.getTopicPost)
 api.post("/api/comment/post/:slugPost", verifyToken, PostControllers.commentPostPerContentDetail);
 api.get("/api/comment/post/:slugPost", verifyToken, PostControllers.getCommentPostPerContentDetail);
 api.post("/api/like/post/:slugPost", verifyToken, PostControllers.likePostPerContentDetail);
-
+api.get("/api/detail/post/:slugPostContentDetail", verifyToken, PostControllers.getDetailPostPerContentDetail);
+api.delete("/api/detail/moment/:slugPostContentDetail", verifyToken, PostControllers.deletePostPerContentDetail);
+api.get("/api/all/topic/:topicTitle", verifyToken, PostControllers.getDetailPostPerContentDetailPerTopic);
 
 api.get('/pink', async (req, res) => {
   res.send({ message: 'ponk' });
