@@ -597,7 +597,17 @@ export const getDetailPostPerContentDetail = async (req, res) => {
                     ), '[]') AS members
                     FROM ir_file_post_content_details fpcds
                     WHERE fpcds.post_content_details_id = pcds.id
-                ) AS images
+                ) AS images,
+                COALESCE((
+                    SELECT json_build_object(
+                        'id', topic.id,
+                        'title', topic.text_title
+                    )
+                    FROM ir_topic_post_relations topic_rel
+                    LEFT JOIN ir_topic_posts topic ON topic.id = topic_rel.topic_posts_id
+                    WHERE topic_rel.post_content_details_id = pcds.id
+                    LIMIT 1
+                ), '{}'::json) AS topic
             FROM
                 ir_post_content_details pcds
                 LEFT JOIN ir_users u ON pcds.users_id = u.id
