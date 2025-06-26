@@ -37,6 +37,10 @@ export const getDetailUser = async (req, res) => {
             SELECT
                 u.username,
                 u.display_name,
+                CASE 
+                    WHEN u.is_verified = 1 THEN true
+                    ELSE false
+                END AS verified,
                 u.email,
                 u.description,
                 TO_CHAR(TO_TIMESTAMP(u.date_of_birth), 'YYYY-MM-DD') AS date_of_birth,

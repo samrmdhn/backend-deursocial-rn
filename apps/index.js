@@ -66,7 +66,7 @@ export {
     deleteDetailMomentPerContentDetail,
     getLikeMomentContentDetail,
     getCommentMomentContentDetail,
-    getMomentContentDetail,
+    getMomentPerProfile,
     getFollowerOnProfile,
     getFollowingOnProfile,
     getFollowingEventOnProfile
@@ -95,5 +95,6 @@ export {
     likePostPerContentDetail,
     getDetailPostPerContentDetail,
     deletePostPerContentDetail,
-    getDetailPostPerContentDetailPerTopic
+    getDetailPostPerContentDetailPerTopic,
+    getPostPerUsers
 } from "./controllers/PostControllers.js";
