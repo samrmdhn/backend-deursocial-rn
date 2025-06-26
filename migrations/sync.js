@@ -115,8 +115,8 @@ async function syncDatabase() {
         // console.log("Table table segmented post content detail has been created.");
         // await NotificationModels.sync({ force: false });
         // console.log("Table table segmented post content detail has been created.");
-        // await TopicPostModels.sync({ force: false });
-        // console.log("Table Topic Post has been created.");
+        await TopicPostModels.sync({ force: false });
+        console.log("Table Topic Post has been created.");
         await TopicPostRelationsModels.sync({ force: false });
         console.log("Table Topic Post relations has been created.");
         await db.close();

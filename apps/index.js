@@ -92,5 +92,8 @@ export {
     getTopicPost,
     commentPostPerContentDetail,
     getCommentPostPerContentDetail,
-    likePostPerContentDetail
+    likePostPerContentDetail,
+    getDetailPostPerContentDetail,
+    deletePostPerContentDetail,
+    getDetailPostPerContentDetailPerTopic
 } from "./controllers/PostControllers.js";
