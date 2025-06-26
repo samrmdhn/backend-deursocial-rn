@@ -260,6 +260,9 @@ export const commentPostPerContentDetail = withTransaction(
             const { comment_post } = req.body;
             const usersToken = getDataUserUsingToken(req, res);
             const users_id = usersToken.tod;
+            if (users_id === 0) {
+                return responseApi(res, [], null, "What are you doing? You can login yaah", 418);
+            }
             const slugPostContentDetail = req.params.slugPost;
             const getIdPostContentDetail =
                 await PostContentDetailModels.findOne({
@@ -396,6 +399,9 @@ export const likePostPerContentDetail = withTransaction(
         try {
             const usersToken = getDataUserUsingToken(req, res);
             const users_id = usersToken.tod;
+            if (users_id === 0) {
+                return responseApi(res, [], null, "What are you doing? You can login yaah", 418);
+            }
             const slugPostContentDetail = req.params.slugPost;
             const getIdPostContentDetail =
                 await PostContentDetailModels.findOne({
