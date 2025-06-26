@@ -76,9 +76,9 @@ api.get("/api/search/:type", verifyToken, SearchControllers.searchData);
 
 api.get("/api/city", SearchControllers.getDataCity);
 
-api.get("/api/like/moment/profile/:username", verifyToken, MomentControllers.getLikeMomentContentDetail)
-api.get("/api/comment/moment/profile/:username", verifyToken, MomentControllers.getCommentMomentContentDetail)
-api.get("/api/moment/profile/:username", verifyToken, MomentControllers.getMomentContentDetail)
+api.get("/api/like/reaction/profile/:username", verifyToken, MomentControllers.getLikeMomentContentDetail)
+api.get("/api/comment/reaction/profile/:username", verifyToken, MomentControllers.getCommentMomentContentDetail)
+api.get("/api/moment/profile/:username", verifyToken, MomentControllers.getMomentPerProfile)
 api.get("/api/followers/moment/profile/:username", MomentControllers.getFollowerOnProfile)
 api.get("/api/following/moment/profile/:username", MomentControllers.getFollowingOnProfile)
 api.get("/api/following/event/moment/profile/:username", MomentControllers.getFollowingEventOnProfile)
@@ -102,6 +102,8 @@ api.post("/api/like/post/:slugPost", verifyToken, PostControllers.likePostPerCon
 api.get("/api/detail/post/:slugPostContentDetail", verifyToken, PostControllers.getDetailPostPerContentDetail);
 api.delete("/api/detail/moment/:slugPostContentDetail", verifyToken, PostControllers.deletePostPerContentDetail);
 api.get("/api/all/topic/:topicTitle", verifyToken, PostControllers.getDetailPostPerContentDetailPerTopic);
+api.get("/api/post/profile/:username", verifyToken, PostControllers.getPostPerUsers)
+
 
 api.get('/pink', async (req, res) => {
   res.send({ message: 'ponk' });

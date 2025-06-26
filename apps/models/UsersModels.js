@@ -59,6 +59,15 @@ const UsersModels = db.define(
                 isIn: [[1, 2]], // Hanya boleh 1, 2 (1: men, 2: women)
             }
         },
+        is_verified: {
+            type: TYPES.TINYINT,
+            allowNull: true,
+            description: "0: not verified, 1: verified",
+            defaultValue: 0,
+            validate: {
+                isIn: [[0, 1]]
+            }
+        },
         date_of_birth: {
             type: TYPES.BIGINT,
             allowNull: true,

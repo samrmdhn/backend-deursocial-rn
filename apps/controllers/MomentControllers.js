@@ -75,6 +75,9 @@ export const getMoment = async (req, res) => {
                 json_build_object(
                     'name', u.display_name,
                     'image', u.photo,
+                    'verified', CASE 
+                        WHEN u.is_verified = 1 THEN true
+                        ELSE false END,
                     'username', u.username
                 ) AS user,
                 (
@@ -160,7 +163,7 @@ export const getMyAllMoment = async (req, res) => {
         const users_id = usersToken.tod;
         const { page = 1, limit = 10, post_ = 1 } = req.query;
         const offset = (page - 1) * limit;
-        let whereClause = `where pcds.is_accepted = ${post_}`;
+        let whereClause = `where pcds.is_accepted = ${post_} AND pcds.type = 1`;
 
         let replacements = {
             usersId: users_id,
@@ -206,6 +209,9 @@ export const getMyAllMoment = async (req, res) => {
                 json_build_object(
                     'name', u.display_name,
                     'image', u.photo,
+                    'verified', CASE 
+                        WHEN u.is_verified = 1 THEN true
+                        ELSE false END,
                     'username', u.username
                 ) AS user,
                 (
@@ -391,6 +397,9 @@ export const getLikeMomentContentDetail = async (req, res) => {
                 json_build_object(
                     'name', u.display_name,
                     'image', u.photo,
+                    'verified', CASE 
+                        WHEN u.is_verified = 1 THEN true
+                        ELSE false END,
                     'username', u.username
                 ) AS user,
                 (
@@ -591,6 +600,9 @@ export const getDetailMomentPerContentDetail = async (req, res) => {
                 json_build_object(
                     'name', u.display_name,
                     'image', u.photo,
+                    'verified', CASE 
+                        WHEN u.is_verified = 1 THEN true
+                        ELSE false END,
                     'username', u.username
                 ) AS user,
                 (
@@ -994,7 +1006,7 @@ export const getCommentMomentContentDetail = async (req, res) => {
 };
 
 
-export const getMomentContentDetail = async (req, res) => {
+export const getMomentPerProfile = async (req, res) => {
     try {
         const page = parseInt(req.query.page, 10) || 1;
         const limit = parseInt(req.query.limit, 10) || 10;
@@ -1034,7 +1046,7 @@ export const getMomentContentDetail = async (req, res) => {
             JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
             JOIN ir_segmented_post_content_details spcds ON spcds.post_content_details_id = pcds.id
             JOIN ir_users u ON pcds.users_id = u.id
-            WHERE pcds.users_id = :users_id AND pcds.is_accepted = 1
+            WHERE pcds.users_id = :users_id AND pcds.is_accepted = 1 AND pcds.type = 1
             ORDER BY pcds.id DESC
             LIMIT :limit OFFSET :offset
         `;
