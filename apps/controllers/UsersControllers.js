@@ -106,6 +106,7 @@ export const getDetailUser = async (req, res) => {
         const response = {
             email: queryUser.email,
             phone: queryUser.phone,
+            verified: queryUser.verified,
             gender: queryUser.gender,
             date_of_birth: queryUser.date_of_birth,
             anonymous: queryUser.anonymous,
