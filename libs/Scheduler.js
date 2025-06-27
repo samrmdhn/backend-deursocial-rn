@@ -24,15 +24,14 @@ export async function sendNotifChatGroup() {
         });
 
         for (const user of users) {
-            const { email, username, title, eventSlug, groupSlug } = user;
-
+            const { email, username, title, eventslug, groupslug } = user;
             await sendMail(
                 email,
                 `Notifikasi Pesan Baru!`,
                 reminderAnyChatOnGroups({
-                    eventSlug: eventSlug,
+                    eventSlug: eventslug,
                     username: username,
-                    groupSlug: groupSlug,
+                    groupSlug: groupslug,
                     groupTitle: title,
                 })
             );
