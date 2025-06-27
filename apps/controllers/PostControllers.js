@@ -729,10 +729,9 @@ export const getDetailPostPerContentDetailPerTopic = async (req, res) => {
         const countQuery = `
             SELECT COUNT(*) AS total_count
             FROM ir_post_content_details pcds
-            LEFT JOIN ir_users u ON pcds.users_id = u.id
             LEFT JOIN ir_topic_post_relations itpr ON itpr.post_content_details_id = pcds.id
             JOIN ir_topic_posts itp ON itp.id = itpr.topic_posts_id
-            WHERE users_id = :users_id AND type = 0 AND itp.text_title = :topicTitle
+            WHERE type = 0 AND itp.text_title = :topicTitle
         `;
 
         const totalResult = await db.query(countQuery, {
