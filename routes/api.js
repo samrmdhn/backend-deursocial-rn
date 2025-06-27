@@ -89,6 +89,7 @@ api.get("/api/any/notif", verifyToken, SettingControllers.getAnyNotif)
 api.get("/api/notification", verifyToken, SettingControllers.getNotification)
 api.post("/api/notification/:id", verifyToken, SettingControllers.updateStatusNotification)
 api.get("/api/change/status/moment/:slug_post", EmailControllers.changePostMoment)
+api.get("/api/reminder/all/users", EmailControllers.reminderForUserManualSchedule)
 
 api.get('/pink', async (req, res) => {
   res.send({ message: 'ponk' });

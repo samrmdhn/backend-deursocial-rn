@@ -81,5 +81,6 @@ export {
 } from "./controllers/RegionalsControllers.js";
 
 export {
-    changePostMoment
+    changePostMoment,
+    reminderForUserManualSchedule
 } from "./controllers/EmailControllers.js";
