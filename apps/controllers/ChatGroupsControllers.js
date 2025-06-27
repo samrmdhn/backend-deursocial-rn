@@ -247,7 +247,7 @@ export const sendMessageToGroup = async (req, res) => {
     try {
         // Assuming you need to map the slug to group ID
         const groupQuery = `
-            SELECT g.id
+            SELECT g.id, g.users_id
             FROM ir_groups g
             WHERE g.slug = :groupSlugs
         `;
@@ -255,13 +255,14 @@ export const sendMessageToGroup = async (req, res) => {
         const groupResult = await db.query(groupQuery, {
             replacements: { groupSlugs },
             type: db.QueryTypes.SELECT,
+            plain: true
         });
 
         if (groupResult.length === 0) {
             return res.status(404).send("Group not found");
         }
 
-        const groupId = groupResult[0].id;
+        const groupId = groupResult.id;
 
         const chat = await ChatGroupsModels.create({
             groups_id: groupId,
@@ -319,12 +320,21 @@ export const sendMessageToGroup = async (req, res) => {
         const dataTotalMember = await db.query(queryGetTotalMember, {
             type: db.QueryTypes.SELECT,
         });
-        const saveStatusChat = dataTotalMember.map((member) => ({
-            groups_id: member.groups_id,
-            users_id: member.users_id,
-            chat_groups_id: dataMessages[0].chat_group_id,
-            created_at: dateToEpochTime(req.headers["x-date-for"]),
-        }));
+
+        const saveStatusChat = [
+            ...dataTotalMember.map((member) => ({
+                groups_id: member.groups_id,
+                users_id: member.users_id,
+                chat_groups_id: dataMessages[0].chat_group_id,
+                created_at: dateToEpochTime(req.headers["x-date-for"]),
+            })),
+            {
+                groups_id: groupId, // atau ganti sesuai kebutuhan
+                users_id: groupResult.users_id,
+                chat_groups_id: dataMessages[0].chat_group_id,
+                created_at: dateToEpochTime(req.headers["x-date-for"]),
+            },
+        ];
 
         await ChatStatusGroupsModels.bulkCreate(saveStatusChat)
             .then(() => {
