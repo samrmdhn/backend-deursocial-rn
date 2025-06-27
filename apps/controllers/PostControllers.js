@@ -53,7 +53,7 @@ export const getPost = async (req, res) => {
                     FROM ir_comment_post_content_details cpcds
                     WHERE cpcds.post_content_details_id = pcds.id
                 ) AS total_comments,
-                TO_CHAR(TO_TIMESTAMP(pcds.created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at,
+                TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                 json_build_object(
                     'name', u.display_name,
                     'image', u.photo,
