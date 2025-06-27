@@ -722,16 +722,40 @@ export const getDetailPostPerContentDetailPerTopic = async (req, res) => {
             ${whereClause}
         `;
 
-        const executeQuery = await db.query(query, {
+        const data = await db.query(query, {
             replacements,
             type: db.QueryTypes.SELECT,
-            plain: true,
         });
+        const countQuery = `
+            SELECT COUNT(*) AS total_count
+            FROM ir_post_content_details pcds
+            LEFT JOIN ir_users u ON pcds.users_id = u.id
+            LEFT JOIN ir_topic_post_relations itpr ON itpr.post_content_details_id = pcds.id
+            JOIN ir_topic_posts itp ON itp.id = itpr.topic_posts_id
+            WHERE users_id = :users_id AND type = 0 AND itp.text_title = :topicTitle
+        `;
+
+        const totalResult = await db.query(countQuery, {
+            type: db.QueryTypes.SELECT,
+            replacements,
+        });
+
+        const total = parseInt(totalResult[0]?.total_count || 0, 10);
+        const totalPages = Math.ceil(total / limit);
+
         return responseApi(
             res,
-            executeQuery,
-            null,
-            "Data has been retrived",
+            data,
+            {
+                assets_image_url: process.env.APP_BUCKET_IMAGE,
+                pagination: {
+                    current_page: page,
+                    per_page: limit,
+                    total,
+                    total_page: totalPages,
+                },
+            },
+            "Data has been retrieved",
             0
         );
     } catch (error) {
