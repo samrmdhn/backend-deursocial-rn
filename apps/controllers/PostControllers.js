@@ -658,6 +658,9 @@ export const getDetailPostPerContentDetail = async (req, res) => {
 
 export const getDetailPostPerContentDetailPerTopic = async (req, res) => {
     try {
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 10;
+        const offset = (page - 1) * limit;
         const usersToken = getDataUserUsingToken(req, res);
         const users_id = usersToken.tod;
         const topicTitle = req.params.topicTitle;
@@ -665,6 +668,8 @@ export const getDetailPostPerContentDetailPerTopic = async (req, res) => {
 
         const replacements = {
             topicTitle: topicTitle,
+            limit: limit,
+            offset: offset
         };
 
         const query = `
@@ -720,6 +725,8 @@ export const getDetailPostPerContentDetailPerTopic = async (req, res) => {
                 LEFT JOIN ir_topic_post_relations itpr ON itpr.post_content_details_id = pcds.id
                 JOIN ir_topic_posts itp ON itp.id = itpr.topic_posts_id
             ${whereClause}
+            ORDER BY pcds.id DESC
+            LIMIT :limit OFFSET :offset
         `;
 
         const data = await db.query(query, {
