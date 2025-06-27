@@ -236,3 +236,60 @@ export const templateHtmlCongratUploadMomen = ({ nameUser = '', link = '', event
 </html>
   `
 }
+
+export const reminderAnyChatOnGroups = ({ eventSlug = '', username = '', groupSlug='', groupTitle='' }) => {
+  return `
+  <!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Notifikasi Pesan Baru</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #ffffff;
+        color: #333333;
+        line-height: 1.6;
+        padding: 20px;
+      }
+      .container {
+        max-width: 600px;
+        margin: auto;
+        border: 1px solid #e0e0e0;
+        padding: 24px;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+      }
+      .highlight {
+        color: #7c3aed;
+        font-weight: bold;
+      }
+      .footer {
+        margin-top: 32px;
+        font-size: 13px;
+        color: #888888;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <p>Halo <span class="highlight">${username}</span>,</p>
+
+      <p>
+        Ada pesan baru yang menunggu kamu di grup chat <strong>${groupTitle}</strong>!<br />
+        Jangan sampai ketinggalan obrolan seru bersama teman-teman konsermu 🎶🔥
+      </p>
+
+      <p style="margin-top: 30px;">
+        <a href="https://deursocial.com/event/${eventSlug}/group/${groupSlug}" style="text-decoration: none; background-color: #7c3aed; color: #ffffff; padding: 12px 20px; border-radius: 6px;">Buka Chat Sekarang</a>
+      </p>
+
+      <div class="footer">
+        DeurSocial · A Place for Indonesia's Music Community Scene
+      </div>
+    </div>
+  </body>
+</html>
+  `
+}
