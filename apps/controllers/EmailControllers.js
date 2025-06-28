@@ -1,5 +1,6 @@
 import { generateDinamicBodyEmail, sendMail, templateHtmlCongratUploadMomen } from "../../libs/Mailist.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
+import { sendNotifChatGroup } from "../../libs/Scheduler.js";
 import ContentDetailsModels from "../models/ContentDetailsModels.js";
 import PostContentDetailModels from "../models/PostContentDetailModels.js";
 import UsersModels from "../models/UsersModels.js";
@@ -35,7 +36,7 @@ export const changeMoment = async (req, res) => {
                 id: event_id
             }
         })
-        
+
         if (accepted == "yes") {
             await sendMail(getDataUsers.email, `Congrats! Momenmu di Event ${event.title} sudah tampil!`, templateHtmlCongratUploadMomen({ eventName: event.title, nameUser: getDataUsers.username, link: `https://deursocial.com/m/${slugPost}` }))
         }
@@ -44,5 +45,15 @@ export const changeMoment = async (req, res) => {
     } catch (error) {
         console.log('error accept post moment', error)
         return responseApi(res, [], null, "Server error....", 1);
+    }
+}
+
+export const reminderForUserManualSchedule = async (req, res) => {
+    try {
+        await sendNotifChatGroup()
+        return responseApi(res, [], null, `Success send email`, 0);
+    } catch (error) {
+        console.log('error [reminderForUserManualSchedule]', error)
+        return responseApi(res, [], null, "Server error....[no Success send email]", 1);
     }
 }
