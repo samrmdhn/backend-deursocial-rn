@@ -15,6 +15,7 @@ const TopicPostRelationsModels = db.define("ir_topic_post_relations", {
             model: "ir_post_content_details",
             key: "id",
         },
+        onDelete: 'CASCADE',
     },
     users_id: {
         type: TYPES.BIGINT,
@@ -23,6 +24,7 @@ const TopicPostRelationsModels = db.define("ir_topic_post_relations", {
             model: "ir_users",
             key: "id",
         },
+        onDelete: 'CASCADE',
     },
     topic_posts_id: {
         type: TYPES.BIGINT,
@@ -31,6 +33,7 @@ const TopicPostRelationsModels = db.define("ir_topic_post_relations", {
             model: "ir_topic_posts",
             key: "id",
         },
+        onDelete: 'CASCADE',
     },
     created_at: {
         type: TYPES.BIGINT,
