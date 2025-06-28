@@ -711,7 +711,7 @@ export const deactiveAccount = async (req, res) => {
         const nextProcessed = acceptedProcessed.includes(req.headers.referer)
         const parseEncoding = atob(usernameEncoding).split('-')
         if (Number(userId) !== Number(parseEncoding[1])) {
-            return responseApi(res, {}, null, "Ha?", 418);
+            return responseApi(res, {}, null, "Haa?", 418);
         }
         if (!nextProcessed) {
             return responseApi(res, {}, null, "Ha?", 418);
