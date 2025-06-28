@@ -79,8 +79,8 @@ api.get("/api/city", SearchControllers.getDataCity);
 api.get("/api/like/reaction/profile/:username", verifyToken, MomentControllers.getLikeMomentContentDetail)
 api.get("/api/comment/reaction/profile/:username", verifyToken, MomentControllers.getCommentMomentContentDetail)
 api.get("/api/moment/profile/:username", verifyToken, MomentControllers.getMomentPerProfile)
-api.get("/api/followers/moment/profile/:username", MomentControllers.getFollowerOnProfile)
-api.get("/api/following/moment/profile/:username", MomentControllers.getFollowingOnProfile)
+api.get("/api/followers/profile/:username", MomentControllers.getFollowerOnProfile)
+api.get("/api/following/profile/:username", MomentControllers.getFollowingOnProfile)
 api.get("/api/following/event/moment/profile/:username", MomentControllers.getFollowingEventOnProfile)
 
 api.get("/api/check/username/:username", verifyToken, UsersControllers.checkUsername)
