@@ -93,11 +93,15 @@ const UsersModels = db.define(
                 isIn: [[0, 1]], // Hanya boleh 0, 1 (0: non active anonymous, 1: active anonymous)
             },
         },
-        created_by: {
+        created_at: {
             type: TYPES.BIGINT,
             allowNull: true,
         },
-        updated_by: {
+        updated_at: {
+            type: TYPES.BIGINT,
+            allowNull: true,
+        },
+        deleted_at: {
             type: TYPES.BIGINT,
             allowNull: true,
         },
