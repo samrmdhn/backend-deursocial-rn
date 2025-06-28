@@ -104,6 +104,7 @@ api.delete("/api/detail/post/:slugPostContentDetail", verifyToken, PostControlle
 api.get("/api/post/topic/:topicTitle", verifyToken, PostControllers.getDetailPostPerContentDetailPerTopic);
 api.get("/api/post/profile/:username", verifyToken, PostControllers.getPostPerUsers)
 
+api.get("/api/reminder/all/users", EmailControllers.reminderForUserManualSchedule)
 
 api.get('/pink', async (req, res) => {
   res.send({ message: 'ponk' });
