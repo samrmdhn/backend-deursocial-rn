@@ -47,7 +47,7 @@ const io = new Server(httpServer, {
     },
 });
 initializeSocket(io);
-await CronJobs()
+// await CronJobs()
 httpServer.listen(process.env.APP_PORT, process.env.APP_HOST, function () {
     console.log("Started application on port %d", process.env.APP_PORT);
 });
