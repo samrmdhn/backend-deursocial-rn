@@ -242,3 +242,13 @@ export const isMoreThanOneMonthFromTimestamp = (timestampInSeconds) => {
     const now = new Date();
     return now > oneMonthAfter;
 }
+
+
+export const escapeHtmlForXss = (text) => {
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}

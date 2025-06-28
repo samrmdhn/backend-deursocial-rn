@@ -2,6 +2,7 @@ import db from "../../configs/Database.js";
 import {
     createNameFile,
     dateToEpochTime,
+    escapeHtmlForXss,
     getDataUserUsingToken,
     getExtension,
 } from "../../helpers/customHelpers.js";
@@ -262,15 +263,21 @@ export const sendMessageToGroup = async (req, res) => {
         }
 
         const groupId = groupResult[0].id;
+        let parseMessage = escapeHtmlForXss(message);
+
 
         const chat = await ChatGroupsModels.create({
             groups_id: groupId,
-            messages: message,
+            messages: parseMessage,
             users_id: users_id,
             created_at: dateToEpochTime(req.headers["x-date-for"]),
             file: filesNamed
         });
 
+
+        if (/@([a-zA-Z0-9_]{1,30})/g.test(html)) {
+            console.log("halo");
+        }
         let replacements = {};
         let whereClause =
             "WHERE g.slug = :groupSlugs";
@@ -315,7 +322,7 @@ export const sendMessageToGroup = async (req, res) => {
                 : null,
         }));
 
-        const queryGetTotalMember = `  SELECT * FROM ir_group_members WHERE groups_id = ${groupId} AND users_id != ${users_id} `;
+        const queryGetTotalMember = `SELECT * FROM ir_group_members WHERE groups_id = ${groupId} AND users_id != ${users_id} `;
         const dataTotalMember = await db.query(queryGetTotalMember, {
             type: db.QueryTypes.SELECT,
         });
