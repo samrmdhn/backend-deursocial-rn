@@ -344,7 +344,10 @@ export const getCommentPostPerContentDetail = async (req, res) => {
                 json_build_object(
                         'name', u.display_name,
                         'image', u.photo,
-                        'username', u.username
+                        'username', u.username,
+                        'verified', CASE 
+                            WHEN u.is_verified = 1 THEN true
+                            ELSE false END,
                 ) AS user,
             TO_CHAR(TO_TIMESTAMP(cpcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at
             FROM 
