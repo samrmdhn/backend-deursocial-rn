@@ -8,6 +8,7 @@ import fileUpload from "express-fileupload";
 // const { Server } = require('socket.io');
 import { Server } from "socket.io";
 import { initializeSocket } from "./apps/controllers/ChatGroupsControllers.js";
+import { CronJobs } from "./libs/cron/index.js";
 
 dotenv.config({
     path: `./.env`,
@@ -46,7 +47,7 @@ const io = new Server(httpServer, {
     },
 });
 initializeSocket(io);
-
+await CronJobs()
 httpServer.listen(process.env.APP_PORT, process.env.APP_HOST, function () {
     console.log("Started application on port %d", process.env.APP_PORT);
 });
