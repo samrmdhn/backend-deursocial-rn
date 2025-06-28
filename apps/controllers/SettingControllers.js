@@ -707,7 +707,7 @@ export const deactiveAccount = async (req, res) => {
         const getToken = getDataUserUsingToken(req, res);
         const userId = getToken.tod;
         const usernameEncoding = req.params.usernameEncoding;
-        const acceptedProcessed = ['http://localhost:3000/', 'https://deursocial.com', 'https://www.deursocial.com']
+        const acceptedProcessed = ['http://localhost:3000/', 'https://deursocial.com/', 'https://www.deursocial.com/']
         const nextProcessed = acceptedProcessed.includes(req.headers.referer)
         const parseEncoding = atob(usernameEncoding).split('-')
         if (Number(userId) !== Number(parseEncoding[1])) {
