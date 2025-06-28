@@ -365,15 +365,15 @@ export const loginUsers = async (req, res) => {
 
         let user;
         if (/\S+@\S+\.\S+/.test(username)) {
-            user = await UsersModels.findOne({ where: { email: username } });
+            user = await UsersModels.findOne({ where: { email: username, deleted_at: null } });
         } else if (/^\d+$/.test(username)) {
-            user = await UsersModels.findOne({ where: { phone: username } });
+            user = await UsersModels.findOne({ where: { phone: username, deleted_at: null } });
         } else {
-            user = await UsersModels.findOne({ where: { username: username } });
+            user = await UsersModels.findOne({ where: { username: username, deleted_at: null } });
         }
 
         if (!user) {
-            return responseApi(res, [], null, "User not found", 1);
+            return responseApi(res, [], user, "User not found", 1);
         }
 
         const trimmedPassword = password.trim();
@@ -384,7 +384,6 @@ export const loginUsers = async (req, res) => {
         }
 
         let visitorToken = "";
-        console.log("ini user", user)
         if (user) {
             const { datas } = makeDataJwt(req, user.id);
             visitorToken = signVisitorToken({
@@ -429,13 +428,16 @@ export const checkAuth = async (req, res) => {
             }
         );
         const userDetails = userResponse.data;
-        console.log('User Details:', userDetails);
 
         const getExistingUser = await UsersModels.findOne({
             where: {
                 email: userDetails.email,
+                deleted_at: null
             },
         });
+        if (!getExistingUser) {
+            return responseApi(res, {}, null, "Sorry you is deactive", 418);
+        }
         let visitorToken = "";
         let dataToken = {};
         if (getExistingUser) {
@@ -697,5 +699,49 @@ export const updateStatusNotification = async (req, res) => {
     } catch (error) {
         console.error("[Error] get any notif:", error);
         return responseApi(res, [], null, "Server error....", 1);
+    }
+}
+
+export const deactiveAccount = async (req, res) => {
+    try {
+        const getToken = getDataUserUsingToken(req, res);
+        const userId = getToken.tod;
+        const usernameEncoding = req.params.usernameEncoding;
+        const acceptedProcessed = ['http://localhost:3000/', 'https://deursocial.com', 'https://www.deursocial.com']
+        const nextProcessed = acceptedProcessed.includes(req.headers.referer)
+        const parseEncoding = atob(usernameEncoding).split('-')
+        if (Number(userId) !== Number(parseEncoding[1])) {
+            return responseApi(res, {}, null, "Ha?", 418);
+        }
+        if (!nextProcessed) {
+            return responseApi(res, {}, null, "Ha?", 418);
+        }
+        const userFind = await UsersModels.findOne({
+            where: { id: userId },
+        });
+
+        if (!userFind) {
+            return responseApi(res, [], null, "Sorry data not found", 418);
+        }
+        let objUpdate = {
+            deleted_at: dateToEpochTime(req.headers["x-date-for"])
+        }
+        await UsersModels.update(objUpdate,
+            {
+                where: {
+                    id: getToken.tod,
+                },
+            }
+        );
+        return responseApi(
+            res,
+            {},
+            null,
+            "Success Deactive",
+            0
+        );
+    } catch (error) {
+        console.error("[Error] deactive account:", error);
+        return responseApi(res, [], null, "Server error....", 418);
     }
 }

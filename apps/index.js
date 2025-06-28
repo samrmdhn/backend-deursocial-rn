@@ -32,7 +32,8 @@ export {
     getAbout,
     getAnyNotif,
     getNotification,
-    updateStatusNotification
+    updateStatusNotification,
+    deactiveAccount
 } from "./controllers/SettingControllers.js";
 
 export {
