@@ -1,7 +1,7 @@
 import { createNameFile, dateToEpochTime, getDataUserUsingToken, getExtension, isMoreThanOneMonthFromTimestamp, makeRandomString, withTransaction } from "../../helpers/customHelpers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
 import db from "../../configs/Database.js";
-import { uploadFile } from "../../helpers/FileUpload.js";
+import { deleteFile, fileExists, uploadFile } from "../../helpers/FileUpload.js";
 import ContentDetailsModels from "../models/ContentDetailsModels.js";
 import SegmentedPostContentDetailModels from "../models/SegmentedPostContentDetailModels.js";
 import PostContentDetailModels from "../models/PostContentDetailModels.js";
@@ -791,27 +791,73 @@ export const getPostPerUsers = async (req, res) => {
             offset,
         };
 
-        const query = `SELECT 
+        const query = `
+            SELECT
+                pcds.caption_post AS caption,
                 pcds.slug,
                 CASE 
                     WHEN pcds.type = 0 THEN 'global'
                     WHEN pcds.type = 1 THEN 'event'
                     ELSE 'ticket' 
-                END AS type,
+                END AS event_type,
                 (
-                    SELECT fpcds.file
+                    SELECT COUNT(*)
+                    FROM ir_impression_post_content_details ipcds
+                    WHERE ipcds.post_content_details_id = pcds.id
+                ) AS total_impressions,
+                (
+                    SELECT COUNT(*)
+                    FROM ir_like_post_content_details lpcds
+                    WHERE lpcds.post_content_details_id = pcds.id
+                ) AS total_likes,
+                (
+                    SELECT COUNT(*)
+                    FROM ir_comment_post_content_details cpcds
+                    WHERE cpcds.post_content_details_id = pcds.id
+                ) AS total_comments,
+                TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
+                json_build_object(
+                    'name', u.display_name,
+                    'image', u.photo,
+                    'verified', CASE 
+                        WHEN u.is_verified = 1 THEN true
+                        ELSE false END,
+                    'username', u.username
+                ) AS user,
+                (
+                    SELECT COALESCE(json_agg(
+                        json_build_object(
+                            'image', fpcds.file
+                        )
+                    ), '[]')
                     FROM ir_file_post_content_details fpcds
                     WHERE fpcds.post_content_details_id = pcds.id
-                    ORDER BY fpcds.id ASC
+                ) AS images,
+                (
+                    SELECT EXISTS (
+                        SELECT 1
+                        FROM ir_like_post_content_details l
+                        WHERE l.post_content_details_id = pcds.id
+                        AND l.users_id = :users_id
+                    )
+                ) AS post_liked,
+                COALESCE((
+                    SELECT json_build_object(
+                        'id', topic.id,
+                        'title', topic.text_title
+                    )
+                    FROM ir_topic_post_relations topic_rel
+                    LEFT JOIN ir_topic_posts topic ON topic.id = topic_rel.topic_posts_id
+                    WHERE topic_rel.post_content_details_id = pcds.id
                     LIMIT 1
-                ) AS images
-            FROM ir_post_content_details pcds
-            JOIN ir_file_post_content_details fpcds ON fpcds.post_content_details_id = pcds.id
-            JOIN ir_segmented_post_content_details spcds ON spcds.post_content_details_id = pcds.id
-            JOIN ir_users u ON pcds.users_id = u.id
-            WHERE pcds.users_id = :users_id AND pcds.type = 0
-            ORDER BY pcds.id DESC
-            LIMIT :limit OFFSET :offset
+                ), '{}'::json) AS topic
+            FROM
+                ir_post_content_details pcds
+                JOIN ir_users u ON pcds.users_id = u.id
+            WHERE
+                pcds.users_id = :users_id AND pcds.type = 0
+            ORDER BY pcds.created_at DESC
+            LIMIT :limit OFFSET :offset;
         `;
         const data = await db.query(query, {
             type: db.QueryTypes.SELECT,

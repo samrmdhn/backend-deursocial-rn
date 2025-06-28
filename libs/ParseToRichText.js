@@ -19,8 +19,8 @@ function escapeHtml(text) {
 export function parseToRichText(caption) {
     if (!caption || typeof caption !== 'string') return '';
     let html = escapeHtml(caption);
-    html = html.replace(/#([a-zA-Z0-9_]{1,30})/g, '<a href="/d/$1" class="text-blue-500">#$1</a>');
-    html = html.replace(/@([a-zA-Z0-9_]{1,30})/g, '<a href="/profile/$1" class="text-purple-500">@$1</a>');
+    html = html.replace(/#([a-zA-Z0-9_]{1,30})/g, '<a href="/d/$1" class="text-blue-500 font-semibold ">#$1</a>');
+    html = html.replace(/@([a-zA-Z0-9_]{1,30})/g, '<a href="/profile/$1" class="text-blue-500 font-semibold">@$1</a>');
     html = html.replace(/\n/g, '<br>');
 
     return html;
