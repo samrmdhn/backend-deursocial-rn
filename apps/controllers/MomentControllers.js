@@ -379,6 +379,7 @@ export const getLikeMomentContentDetail = async (req, res) => {
             SELECT 
                 lpcd.id AS like_id,
                 lpcd.created_at AS like_created_at,
+                pcds.type AS type_post,
                 cds.title AS event_title,
                 cds.slug AS event_slug,
                 pcds.caption_post AS caption,
@@ -943,6 +944,7 @@ export const getCommentMomentContentDetail = async (req, res) => {
             SELECT
                 cpcds.comment_post,
                 pcds.slug AS post_slug,
+                pcds.type AS type_post,
                 json_build_object(
                     'caption_post', pcds.caption_post,
                     'slug', pcds.slug,
