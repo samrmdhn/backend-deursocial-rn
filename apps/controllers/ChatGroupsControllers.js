@@ -275,10 +275,6 @@ export const sendMessageToGroup = async (req, res) => {
             file: filesNamed
         });
 
-
-        if (/@([a-zA-Z0-9_]{1,30})/g.test(html)) {
-            console.log("halo");
-        }
         let replacements = {};
         let whereClause =
             "WHERE g.slug = :groupSlugs";
