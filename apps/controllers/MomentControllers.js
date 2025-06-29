@@ -539,7 +539,7 @@ export const commentMomentPerContentDetail = withTransaction(
                     source_id: commentPostData.id,
                     users_id: getIdPostContentDetail.users_id,
                     created_at: dateToEpochTime(req.headers["x-date-for"]),
-                    type: getIdPostContentDetail.type === 1 ? 3 : 7
+                    type: getIdPostContentDetail.type === 0 ? 7 : 3
                 })
             }
             return responseApi(res, [], null, "Data has been saved", 0);
