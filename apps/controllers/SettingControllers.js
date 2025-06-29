@@ -432,11 +432,10 @@ export const checkAuth = async (req, res) => {
         const getExistingUser = await UsersModels.findOne({
             where: {
                 email: userDetails.email,
-                deleted_at: null
             },
         });
-        if (!getExistingUser) {
-            return responseApi(res, {}, null, "Sorry you is deactive", 418);
+        if (getExistingUser.deleted_at !== null) {
+            return responseApi(res, {}, null, "Sorry your account is deactivated", 418);
         }
         let visitorToken = "";
         let dataToken = {};
