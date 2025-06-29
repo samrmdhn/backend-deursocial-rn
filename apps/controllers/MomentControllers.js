@@ -377,32 +377,30 @@ export const getLikeMomentContentDetail = async (req, res) => {
 
         const query = `
             SELECT 
+                lpcd.id AS like_id,
+                lpcd.created_at AS like_created_at,
                 cds.title AS event_title,
                 cds.slug AS event_slug,
                 pcds.caption_post AS caption,
                 pcds.slug AS slug,
-                TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
+                TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS created_at,
                 (
                     SELECT EXISTS (
                         SELECT 1
                         FROM ir_like_post_content_details l
                         WHERE l.post_content_details_id = pcds.id
-                          AND l.users_id = ${users_id}
+                        AND l.users_id = ${users_id}
                     )
                 ) AS post_liked,
-                CAST(
-                    (
-                        SELECT COUNT(*)
-                        FROM ir_impression_post_content_details ipcds
-                        WHERE ipcds.post_content_details_id = pcds.id
-                    ) AS INT
-                ) AS total_impressions,
+                CAST((
+                    SELECT COUNT(*)
+                    FROM ir_impression_post_content_details ipcds
+                    WHERE ipcds.post_content_details_id = pcds.id
+                ) AS INT) AS total_impressions,
                 json_build_object(
                     'name', u.display_name,
                     'image', u.photo,
-                    'verified', CASE 
-                        WHEN u.is_verified = 1 THEN true
-                        ELSE false END,
+                    'verified', CASE WHEN u.is_verified = 1 THEN true ELSE false END,
                     'username', u.username
                 ) AS user,
                 (
@@ -410,7 +408,7 @@ export const getLikeMomentContentDetail = async (req, res) => {
                         json_build_object(
                             'image', fpcds.file
                         )
-                    ), '[]') AS members
+                    ), '[]')
                     FROM ir_file_post_content_details fpcds
                     WHERE fpcds.post_content_details_id = pcds.id
                 ) AS images,
@@ -418,7 +416,7 @@ export const getLikeMomentContentDetail = async (req, res) => {
                     SELECT COUNT(*)
                     FROM ir_like_post_content_details lpcds
                     WHERE lpcds.post_content_details_id = pcds.id
-                ) AS total_likes,
+                ) AS total_likes,                
                 (
                     SELECT COUNT(*)
                     FROM ir_comment_post_content_details cpcds
@@ -427,8 +425,8 @@ export const getLikeMomentContentDetail = async (req, res) => {
             FROM ir_like_post_content_details lpcd
             JOIN ir_post_content_details pcds ON lpcd.post_content_details_id = pcds.id
             JOIN ir_users u ON pcds.users_id = u.id
-            JOIN ir_segmented_post_content_details spcds ON spcds.post_content_details_id = pcds.id
-            JOIN ir_content_details cds ON cds.id = spcds.content_details_id
+            LEFT JOIN ir_segmented_post_content_details spcds ON spcds.post_content_details_id = pcds.id
+            LEFT JOIN ir_content_details cds ON cds.id = spcds.content_details_id
             ${whereClause}
             ORDER BY lpcd.created_at DESC
             LIMIT :limit OFFSET :offset
