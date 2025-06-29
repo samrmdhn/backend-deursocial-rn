@@ -434,8 +434,10 @@ export const checkAuth = async (req, res) => {
                 email: userDetails.email,
             },
         });
-        if (getExistingUser.deleted_at !== null) {
-            return responseApi(res, {}, null, "Sorry your account is deactivated", 418);
+        if (getExistingUser) {
+            if (getExistingUser.deleted_at !== null) {
+                return responseApi(res, {}, null, "Sorry your account is deactivated", 418);
+            }
         }
         let visitorToken = "";
         let dataToken = {};
