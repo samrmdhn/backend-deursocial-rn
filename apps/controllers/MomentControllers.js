@@ -341,7 +341,7 @@ export const likeMomentPerContentDetail = withTransaction(
                         source_id: dataLikePost.id,
                         users_id: getIdPostContentDetail.users_id,
                         created_at: dateToEpochTime(req.headers["x-date-for"]),
-                        type: getIdPostContentDetail.type === 1 ? 2 : 6
+                        type: 2
                     })
                 }
             }
@@ -539,7 +539,7 @@ export const commentMomentPerContentDetail = withTransaction(
                     source_id: commentPostData.id,
                     users_id: getIdPostContentDetail.users_id,
                     created_at: dateToEpochTime(req.headers["x-date-for"]),
-                    type: getIdPostContentDetail.type === 0 ? 7 : 3
+                    type: 3
                 })
             }
             return responseApi(res, [], null, "Data has been saved", 0);
