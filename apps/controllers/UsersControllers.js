@@ -81,7 +81,7 @@ export const getDetailUser = async (req, res) => {
                 (
                     SELECT COUNT(*)
                     FROM ir_post_content_details pcds
-                    WHERE pcds.users_id = u.id AND pcds.is_accepted = 1 AND pcds.type = 0
+                    WHERE pcds.users_id = u.id AND pcds.is_accepted = 1 AND pcds.type = 1
                 ) AS total_post,
                 CASE
                     WHEN EXTRACT(MONTH FROM TO_TIMESTAMP(u.date_of_birth)) = EXTRACT(MONTH FROM :dateFor::timestamp)
