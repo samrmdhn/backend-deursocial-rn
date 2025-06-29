@@ -7,23 +7,29 @@ import NotificationModels from "../apps/models/NotificationModels.js";
  * 5 = join group private)
  * const message = generateNotificationMessage(type, username);
  */
-export const generateNotificationMessage = async ({ type, users_id, source_id, created_at, message="" }) => {
+export const generateNotificationMessage = async ({ type, users_id, source_id, created_at, message = "" }) => {
     try {
         switch (type) {
             case 1: // Join groups
                 message = `joined your group.`;
                 break;
             case 2: // Like moments
-                message = `liked your post.`;
+                message = `liked your moment.`;
                 break;
             case 3: // Comment moments
-                message = `commented on your post.`;
+                message = `commented on your moment.`;
                 break;
             case 4: // Follow
                 message = `started following you.`;
                 break;
             case 5: // Join Group Private
                 message = `need aproval join your group.`;
+                break;
+            case 6: // Like moments
+                message = `liked your post.`;
+                break;
+            case 7: // Comment moments
+                message = `commented on your post.`;
                 break;
             default:
                 message = "Unknown notification type.";
