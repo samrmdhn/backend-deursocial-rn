@@ -1,8 +1,8 @@
 function escapeHtml(text) {
     return text
-        .replace(/&/g, '&amp;')   
-        .replace(/</g, '&lt;')    
-        .replace(/>/g, '&gt;')    
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 }
@@ -20,7 +20,7 @@ export function parseToRichText(caption) {
     let html = escapeHtml(caption);
     html = html.replace(/#([a-zA-Z0-9_]{1,30})/g, '<a href="/d/$1" class="text-blue-500 font-semibold">#$1</a>');
     html = html.replace(/@([a-zA-Z0-9_]{1,30})/g, '<a href="/profile/$1" class="text-blue-500 font-semibold">@$1</a>');
+    html = html.replace(/\n{2,}/g, '\n');
     html = html.replace(/\n/g, '<br>');
-
     return html;
 }
