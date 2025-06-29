@@ -377,6 +377,16 @@ export const getLikeMomentContentDetail = async (req, res) => {
 
         const query = `
             SELECT 
+                COALESCE((
+                    SELECT json_build_object(
+                        'id', topic.id,
+                        'title', topic.text_title
+                    )
+                    FROM ir_topic_post_relations topic_rel
+                    LEFT JOIN ir_topic_posts topic ON topic.id = topic_rel.topic_posts_id
+                    WHERE topic_rel.post_content_details_id = pcds.id
+                    LIMIT 1
+                ), '{}'::json) AS topic,
                 lpcd.id AS like_id,
                 lpcd.created_at AS like_created_at,
                 pcds.type AS type_post,
