@@ -93,6 +93,10 @@ const UsersModels = db.define(
                 isIn: [[0, 1]], // Hanya boleh 0, 1 (0: non active anonymous, 1: active anonymous)
             },
         },
+        expired_verified: {
+            type: TYPES.BIGINT,
+            allowNull: true,
+        },
         created_at: {
             type: TYPES.BIGINT,
             allowNull: true,

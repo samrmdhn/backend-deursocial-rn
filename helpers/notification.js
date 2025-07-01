@@ -31,6 +31,9 @@ export const generateNotificationMessage = async ({ type, users_id, source_id, c
             case 7: // Comment moments
                 message = `commented on your post.`;
                 break;
+            case 8: // new messages group
+                message = `You have new messages on group.`;
+                break;
             default:
                 message = "Unknown notification type.";
                 break;

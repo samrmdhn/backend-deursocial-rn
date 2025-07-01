@@ -12,6 +12,7 @@ import { jwtDecode } from "jwt-decode";
 import ChatStatusGroupsModels from "../models/ChatStatusGroupsModels.js";
 import { uploadFile } from "../../helpers/FileUpload.js";
 import UsersModels from "../models/UsersModels.js";
+import { generateNotificationMessage } from "../../helpers/notification.js";
 
 let ioInstance;
 
@@ -338,7 +339,12 @@ export const sendMessageToGroup = async (req, res) => {
                 created_at: dateToEpochTime(req.headers["x-date-for"]),
             },
         ];
-
+        await generateNotificationMessage({
+            source_id: dataGroupMember.id,
+            users_id: groupsData.users_id,
+            created_at: dateToEpochTime(req.headers["x-date-for"]),
+            type: statusMember == 2 ? 5 : 1
+        })
         await ChatStatusGroupsModels.bulkCreate(saveStatusChat)
             .then(() => {
                 console.log("Data berhasil disimpan di ChatStatusGroupsModels");
