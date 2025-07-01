@@ -42,7 +42,8 @@ export const generateNotificationMessage = async ({ type, users_id, source_id, c
             where: {
                 users_id: users_id,
                 source_id: source_id,
-                type: type
+                type: type,
+                is_read: 1
             }
         })
         if (!validation) {

@@ -626,8 +626,8 @@ export const getNotification = async (req, res) => {
                 ins.is_read
             FROM ir_notifications ins
             JOIN ir_like_post_content_details ilcd ON ilcd.id = ins.source_id
-						JOIN ir_post_content_details ipcd ON ipcd.id = ilcd.post_content_details_id
-						JOIN ir_users usl ON usl.id = ilcd.users_id
+            JOIN ir_post_content_details ipcd ON ipcd.id = ilcd.post_content_details_id
+            JOIN ir_users usl ON usl.id = ilcd.users_id
             WHERE ins.users_id = :users_id
             AND ins.type = 2
 			-- END Notifikasi type = 2 (like_moment_notification)
@@ -649,7 +649,7 @@ export const getNotification = async (req, res) => {
             AND ins.type = 3
 			-- END Notifikasi type = 2 (comment_moment_notification)
             UNION ALL
-            -- Notifikasi type = 5 and type = 1 (join_groups_private_notification and join_groups_notification)
+            -- Notifikasi type = 5 and type = 1 and type = 8 (join_groups_private_notification and join_groups_notification)
             SELECT
                 ins.id AS notification_id,
                 usl.username,
@@ -664,7 +664,24 @@ export const getNotification = async (req, res) => {
             JOIN ir_content_details icds ON icds.id = igs.content_details_id
             JOIN ir_users usl ON usl.id = igms.users_id
             WHERE ins.users_id = :users_id
-            AND (ins.type = 5 OR ins.type = 1)
+            AND (ins.type = 5 OR ins.type = 1 OR ins.type = 8)
+             -- Notifikasi type = 8
+            UNION ALL
+            SELECT
+                ins.id AS notification_id,
+                usl.username,
+                usl.photo AS image,
+                TO_CHAR(TO_TIMESTAMP(ins.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created,
+                '/event/' || icds.slug || '/group/' || igs.slug  AS link,
+                ins.message,
+                ins.is_read
+            FROM ir_notifications ins
+            JOIN ir_groups igs ON igs.id = ins.source_id
+            JOIN ir_content_details icds ON icds.id = igs.content_details_id
+            JOIN ir_users usl ON usl.id = ins.users_id
+            WHERE ins.users_id = :users_id
+            AND ins.type = 8
+			-- END Notifikasi type = 8 (End new messages)
             ORDER BY notification_id DESC
             LIMIT :limit OFFSET :offset;
             `;
