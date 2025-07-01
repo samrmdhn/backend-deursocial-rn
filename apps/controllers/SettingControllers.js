@@ -329,6 +329,8 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
                 username_anonymous: newUser.username_anonymous,
                 gender: newUser.gender,
                 image: newUser.photo,
+                expired_verified: newUser.expired_verified,
+                is_verified: newUser.is_verified === 1 ? true : false,
             });
         }
 
@@ -394,6 +396,8 @@ export const loginUsers = async (req, res) => {
                 username_anonymous: user.username_anonymous,
                 gender: user.gender,
                 image: user.photo,
+                expired_verified: user.expired_verified,
+                is_verified: user.is_verified === 1 ? true : false,
             });
         }
 
@@ -451,6 +455,8 @@ export const checkAuth = async (req, res) => {
                 username_anonymous: getExistingUser.username_anonymous,
                 gender: getExistingUser.gender,
                 image: getExistingUser.photo,
+                expired_verified: getExistingUser.expired_verified,
+                is_verified: getExistingUser.is_verified === 1 ? true : false,
             });
             dataToken = { access_token: visitorToken };
         }
