@@ -807,7 +807,7 @@ export const commentGetPerContentDetail = async (req, res) => {
         };
 
         const query = `
-            SELECT cpcds.comment_post,
+            SELECT cpcds.id, cpcds.comment_post,
                 json_build_object(
                         'name', u.display_name,
                         'image', u.photo,
@@ -1439,4 +1439,31 @@ export const getFollowingEventOnProfile = async (req, res) => {
     }
 };
 
-
+export const deleteCommentMoment = withTransaction(
+    async (req, res) => {
+        try {
+            const { comment_id } = req.query;
+            const usersToken = getDataUserUsingToken(req, res);
+            const users_id = usersToken.tod;
+            const checkAnyComment = await CommentPostContentDetailModels.findOne({
+                where: {
+                    id: comment_id,
+                },
+            });
+            if (!checkAnyComment) {
+                return responseApi(res, [], null, "Server error....", 400);
+            }
+            if (checkAnyComment.users_id !== users_id) {
+                console.log("cannot be deleted because you arent owner of this image! ")
+                throw new Error("User Not Same!");
+            }
+            if (checkAnyComment) {
+                await checkAnyComment.destroy();
+            }
+            return responseApi(res, [], null, "Data has been deleted", 0);
+        } catch (error) {
+            console.log("error delete post", error);
+            return responseApi(res, [], null, "Server error....", 1);
+        }
+    }
+)

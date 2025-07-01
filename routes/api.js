@@ -109,8 +109,10 @@ api.get("/api/reminder/all/users", EmailControllers.reminderForUserManualSchedul
 
 api.post("/api/deactive/account/:usernameEncoding", SettingControllers.deactiveAccount)
 
-api.get("/api/get/report", ReportControllers.getDataReport)
-api.post("/api/reported/post", ReportControllers.saveReportedByUsers)
+api.get("/api/get/report", verifyToken, ReportControllers.getDataReport)
+api.post("/api/reported/post", verifyToken, ReportControllers.saveReportedByUsers)
+api.delete("/api/delete/comment/moment", verifyToken, MomentControllers.deleteCommentMoment);
+api.delete("/api/delete/comment/post", verifyToken, PostControllers.deleteCommentPost);
 
 api.get('/pink', async (req, res) => {
   res.send({ message: 'ponk' });
