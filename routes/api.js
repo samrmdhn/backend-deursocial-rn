@@ -8,6 +8,7 @@ import * as PostControllers from "../apps/index.js";
 import * as UsersControllers from "../apps/index.js";
 import * as SearchControllers from "../apps/index.js";
 import * as EmailControllers from "../apps/index.js";
+import * as ReportControllers from "../apps/index.js";
 import { verifyToken } from "../apps/middlewares/verifyToken.js";
 // import { generateDinamicBodyEmail, generateWelcomeEmail, sendMail } from "../libs/Mailist.js";
 
@@ -107,6 +108,9 @@ api.get("/api/post/profile/:username", verifyToken, PostControllers.getPostPerUs
 api.get("/api/reminder/all/users", EmailControllers.reminderForUserManualSchedule)
 
 api.post("/api/deactive/account/:usernameEncoding", SettingControllers.deactiveAccount)
+
+api.get("/api/get/report", ReportControllers.getDataReport)
+api.post("/api/reported/post", ReportControllers.saveReportedByUsers)
 
 api.get('/pink', async (req, res) => {
   res.send({ message: 'ponk' });
