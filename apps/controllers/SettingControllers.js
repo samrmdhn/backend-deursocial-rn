@@ -669,8 +669,8 @@ export const getNotification = async (req, res) => {
             UNION ALL
             SELECT
                 ins.id AS notification_id,
-                usl.username,
-                usl.photo AS image,
+                NULL AS username,
+                NULL AS image,
                 TO_CHAR(TO_TIMESTAMP(ins.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created,
                 '/event/' || icds.slug || '/group/' || igs.slug  AS link,
                 ins.message,
