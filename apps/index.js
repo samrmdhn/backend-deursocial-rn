@@ -100,3 +100,8 @@ export {
     getDetailPostPerContentDetailPerTopic,
     getPostPerUsers
 } from "./controllers/PostControllers.js";
+
+export {
+    getDataReport,
+    saveReportedByUsers
+} from "./controllers/ReportControllers.js";
