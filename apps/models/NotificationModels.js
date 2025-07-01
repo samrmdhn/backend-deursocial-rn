@@ -50,6 +50,10 @@ const NotificationModels = db.define("ir_notifications", {
         type: TYPES.TEXT("long"),
         allowNull: true,
     },
+    send_mail_at: {
+        type: TYPES.BIGINT,
+        allowNull: true,
+    },
     created_at: {
         type: TYPES.BIGINT,
         allowNull: true,
