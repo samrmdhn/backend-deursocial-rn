@@ -339,12 +339,14 @@ export const sendMessageToGroup = async (req, res) => {
                 created_at: dateToEpochTime(req.headers["x-date-for"]),
             },
         ];
-        await generateNotificationMessage({
-            source_id: dataGroupMember.id,
-            users_id: groupsData.users_id,
-            created_at: dateToEpochTime(req.headers["x-date-for"]),
-            type: statusMember == 2 ? 5 : 1
-        })
+        for (const item of saveStatusChat) {
+            await generateNotificationMessage({
+                source_id: item.groups_id,
+                users_id: item.users_id,
+                created_at: item.created_at,
+                type: 8
+            });
+        }
         await ChatStatusGroupsModels.bulkCreate(saveStatusChat)
             .then(() => {
                 console.log("Data berhasil disimpan di ChatStatusGroupsModels");
