@@ -21,7 +21,7 @@ const ReportsModels = db.define("ir_reports", {
         allowNull: true,
         defaultValue: 1,
         validate: {
-            isIn: [[1, 2]], // Hanya boleh 0, 1(0: non active, 1: active)
+            isIn: [[1, 2]], // Hanya boleh 1, 2 (1: Post/moment, 2: comment)
         },
     },
     status: {
