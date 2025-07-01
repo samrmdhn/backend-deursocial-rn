@@ -7,7 +7,7 @@ export const getDataReport = async (req, res) => {
     try {
         const { page = 1, limit = 10, type_report = '' } = req.query;
         const offset = (page - 1) * limit;
-        let whereClause = ` WHERE status = 1`
+        let whereClause = ` WHERE status = 1 `
         const replacements = {
             limit: parseInt(limit, 10),
             offset: parseInt(offset, 10),
@@ -63,7 +63,7 @@ export const getDataReport = async (req, res) => {
 export const saveReportedByUsers = withTransaction(
     async (req, res) => {
         try {
-            const { reports_id, description } = req.body;
+            const { reports_id, description, source, type } = req.body;
             const usersToken = getDataUserUsingToken(req, res);
             const users_id = usersToken.tod;
             if (users_id === 0) {
