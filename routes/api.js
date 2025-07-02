@@ -9,6 +9,7 @@ import * as UsersControllers from "../apps/index.js";
 import * as SearchControllers from "../apps/index.js";
 import * as EmailControllers from "../apps/index.js";
 import * as ReportControllers from "../apps/index.js";
+import * as UnderGroundControllers from "../apps/index.js";
 import { verifyToken } from "../apps/middlewares/verifyToken.js";
 // import { generateDinamicBodyEmail, generateWelcomeEmail, sendMail } from "../libs/Mailist.js";
 
@@ -115,4 +116,7 @@ api.post("/api/reported/post", ReportControllers.saveReportedByUsers)
 api.get('/pink', async (req, res) => {
   res.send({ message: 'ponk' });
 });
+
+api.post("/api/underground/create/event", UnderGroundControllers.postContentDetailOnUnderGround)
+
 export default api;

@@ -1,4 +1,7 @@
 export {
+    postContentDetailOnUnderGround
+} from "./controllers/UnderGroundControllers.js";
+export {
     homepage,
     createDisplayTypes,
     updateDisplayTypes,
