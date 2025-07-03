@@ -952,6 +952,7 @@ export const getCommentMomentContentDetail = async (req, res) => {
 
         const query = `
             SELECT
+                cpcds.id,
                 cpcds.comment_post,
                 pcds.slug AS post_slug,
                 pcds.type AS type_post,
