@@ -18,7 +18,7 @@ export const getDataReport = async (req, res) => {
         }
 
         const query = `
-            SELECT title, description FROM ir_reports
+            SELECT id, title, description FROM ir_reports
            ${whereClause}
             LIMIT :limit OFFSET :offset;
         `;
