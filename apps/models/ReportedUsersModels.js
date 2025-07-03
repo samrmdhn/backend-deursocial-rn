@@ -31,6 +31,10 @@ const ReportedUsersModels = db.define("ir_reported_users", {
             key: "id",
         },
     },
+    source_id: {
+        type: TYPES.BIGINT,
+        allowNull: false,
+    },
     created_at: {
         type: TYPES.BIGINT,
         allowNull: true,

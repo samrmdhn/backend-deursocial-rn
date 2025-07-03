@@ -73,7 +73,8 @@ export {
     getMomentPerProfile,
     getFollowerOnProfile,
     getFollowingOnProfile,
-    getFollowingEventOnProfile
+    getFollowingEventOnProfile,
+    deleteCommentMoment
 } from "./controllers/MomentControllers.js";
 
 export {
@@ -101,7 +102,8 @@ export {
     getDetailPostPerContentDetail,
     deletePostPerContentDetail,
     getDetailPostPerContentDetailPerTopic,
-    getPostPerUsers
+    getPostPerUsers,
+    deleteCommentPost
 } from "./controllers/PostControllers.js";
 
 export {
