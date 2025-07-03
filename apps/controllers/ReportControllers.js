@@ -1,13 +1,14 @@
 import db from "../../configs/Database.js";
 import { dateToEpochTime, getDataUserUsingToken, withTransaction } from "../../helpers/customHelpers.js";
 import { responseApi } from "../../libs/RestApiHandler.js"
+import ContentDetailsModels from "../models/ContentDetailsModels.js";
 import ReportedUsersModels from "../models/ReportedUsersModels.js";
 
 export const getDataReport = async (req, res) => {
     try {
         const { page = 1, limit = 10, type_report = '' } = req.query;
         const offset = (page - 1) * limit;
-        let whereClause = ` WHERE status = 1`
+        let whereClause = ` WHERE status = 1 `
         const replacements = {
             limit: parseInt(limit, 10),
             offset: parseInt(offset, 10),
@@ -18,7 +19,7 @@ export const getDataReport = async (req, res) => {
         }
 
         const query = `
-            SELECT title, description FROM ir_reports
+            SELECT id, title, description FROM ir_reports
            ${whereClause}
             LIMIT :limit OFFSET :offset;
         `;
@@ -61,30 +62,35 @@ export const getDataReport = async (req, res) => {
 }
 
 export const saveReportedByUsers = withTransaction(
-    async (req, res) => {
+    async (req, res, transaction) => {
         try {
-            const { reports_id, description } = req.body;
+            const { reports_id, description, source, type } = req.body;
             const usersToken = getDataUserUsingToken(req, res);
             const users_id = usersToken.tod;
             if (users_id === 0) {
                 return responseApi(res, [], null, "What are you doing? You can login yaah", 418);
             }
-            await ReportedUsersModels.create(
-                {
-                    users_id: users_id,
-                    reports_id: reports_id,
-                    description: description,
-                    created_at: dateToEpochTime(req.headers["x-date-for"]),
-                },
+            let source_id = 0
+            if (type === 1) {
+                const postOrMoment = await ContentDetailsModels.findOne({
+                    slug: source
+                })
+                if (!postOrMoment) {
+                    return responseApi(res, [], null, "What are you doing? You can login yaah", 418);
+                }
+                source_id = postOrMoment.id
+            }
+            const dataReport = {
+                users_id: users_id,
+                reports_id: reports_id,
+                source_id: source_id,
+                description: description,
+                created_at: dateToEpochTime(req.headers["x-date-for"]),
+            }
+            await ReportedUsersModels.create(dataReport,
                 { transaction }
             );
-
-            return responseApi(
-                res,
-                null, null,
-                "Data has been retrieved",
-                0
-            );
+            return responseApi(res, null, null, "Data has been retrieved", 0);
         } catch (error) {
             console.log("[ERROR] getDataReport", error)
             return responseApi(res, [], null, 'server error......!')
