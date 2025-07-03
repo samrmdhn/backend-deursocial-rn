@@ -83,6 +83,7 @@ export const saveReportedByUsers = withTransaction(
             const dataReport = {
                 users_id: users_id,
                 reports_id: reports_id,
+                type: type,
                 source_id: source_id,
                 description: description,
                 created_at: dateToEpochTime(req.headers["x-date-for"]),

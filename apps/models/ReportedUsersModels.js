@@ -35,6 +35,14 @@ const ReportedUsersModels = db.define("ir_reported_users", {
         type: TYPES.BIGINT,
         allowNull: false,
     },
+    type: {
+        type: TYPES.TINYINT,
+        allowNull: true,
+        defaultValue: 1,
+        validate: {
+            isIn: [[1, 2]], // Hanya boleh 1, 2 (1: Post/moment, 2: comment)
+        },
+    },
     created_at: {
         type: TYPES.BIGINT,
         allowNull: true,
