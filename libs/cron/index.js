@@ -5,7 +5,8 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export const CronJobs = async () => {
-    const cronFiles = fs.readdirSync(__dirname).filter(file => file.endsWith('.js') && file !== 'index.js')
+    const fileExclude = ["emailNotification"];
+    const cronFiles = fs.readdirSync(__dirname).filter(file => file.endsWith('.js') && file !== 'index.js' && !fileExclude.includes(file.replace('.js', '')))
 
     for (const file of cronFiles) {
         const modulePath = path.join(__dirname, file)

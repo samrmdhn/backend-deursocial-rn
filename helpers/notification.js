@@ -34,6 +34,9 @@ export const generateNotificationMessage = async ({ type, users_id, source_id, c
             case 8: // new messages group
                 message = `You have new messages on group.`;
                 break;
+            case 9: // someone mentioned your
+                message = `someone mentioned your.`;
+                break;
             default:
                 message = "Unknown notification type.";
                 break;
