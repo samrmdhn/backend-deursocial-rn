@@ -11,15 +11,18 @@ export const job = () => {
 
         try {
             const query = `
-                SELECT DISTINCT
-                    ins.id AS notif_id,
+                SELECT
                     u.email,
-                    u.username
+                    u.username,
+                    MIN(ins.id) AS notif_id -- atau MAX terserah lu
                 FROM
                     ir_notifications ins
                     INNER JOIN ir_users u ON ins.users_id = u.id
-                    WHERE ins.is_read = 1 
+                WHERE
+                    ins.is_read = 1 
                     AND ins.send_mail_at IS NULL
+                GROUP BY
+                    u.email, u.username
             `
 
             const users = await db.query(query, {
