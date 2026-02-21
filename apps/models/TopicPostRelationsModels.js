@@ -1,0 +1,51 @@
+import db from "../../configs/Database.js";
+import DataTypesCustom from "../../libs/DataTypesCustom.js";
+const { TYPES } = DataTypesCustom;
+
+const TopicPostRelationsModels = db.define("ir_topic_post_relations", {
+    id: {
+        type: TYPES.BIGINT,
+        primaryKey: true,
+        autoIncrement: true,
+    },
+    post_content_details_id: {
+        type: TYPES.BIGINT,
+        allowNull: false,
+        references: {
+            model: "ir_post_content_details",
+            key: "id",
+        },
+        onDelete: 'CASCADE',
+    },
+    users_id: {
+        type: TYPES.BIGINT,
+        allowNull: false,
+        references: {
+            model: "ir_users",
+            key: "id",
+        },
+        onDelete: 'CASCADE',
+    },
+    topic_posts_id: {
+        type: TYPES.BIGINT,
+        allowNull: false,
+        references: {
+            model: "ir_topic_posts",
+            key: "id",
+        },
+        onDelete: 'CASCADE',
+    },
+    created_at: {
+        type: TYPES.BIGINT,
+        allowNull: true,
+    },
+    updated_at: {
+        type: TYPES.BIGINT,
+        allowNull: true,
+    },
+}, {
+    freezeTableName: true,
+    timestamps: false,
+});
+
+export default TopicPostRelationsModels;

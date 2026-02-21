@@ -1,0 +1,25 @@
+# docker-compose -f docker-compose-postgres.yml up -d
+version: '3'
+services:
+  pgsql:
+    image: 'postgres:latest'
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_DB: 'dbstart'
+      POSTGRES_USER: 'trondol'
+      POSTGRES_PASSWORD: '123'
+    networks:
+      - 'database-net'
+    volumes:
+      - ./data:/var/lib/postgresql/data
+
+  adminer:
+    image: 'adminer'
+    ports:
+      - '8080:8080'
+    networks:
+      - 'database-net'
+
+networks:
+  database-net:
