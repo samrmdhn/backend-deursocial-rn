@@ -120,82 +120,24 @@ api.get('/pink', async (req, res) => {
   res.send({ message: 'ponk' });
 });
 
-// TEMPORARY: Sync ALL tables - HAPUS SETELAH DIJALANKAN
-api.get('/api/sync-all-tables', async (req, res) => {
-  const results = [];
-  const errors = [];
+// TEMPORARY: Sync new event posts tables - HAPUS SETELAH DIJALANKAN
+api.get('/api/sync-event-posts', async (req, res) => {
+  try {
+    const { default: EventPostsModels } = await import('../apps/models/EventPostsModels.js');
+    const { default: EventPostsCommentsModels } = await import('../apps/models/EventPostsCommentsModels.js');
+    const { default: EventPostsLikesModels } = await import('../apps/models/EventPostsLikesModels.js');
+    const { default: EventPostsImagesModels } = await import('../apps/models/EventPostsImagesModels.js');
 
-  const syncModel = async (name, importPath) => {
-    try {
-      const { default: Model } = await import(importPath);
-      await Model.sync({ force: false });
-      results.push(name);
-    } catch (err) {
-      errors.push({ table: name, error: err.message });
-    }
-  };
+    await EventPostsModels.sync({ force: false });
+    await EventPostsCommentsModels.sync({ force: false });
+    await EventPostsLikesModels.sync({ force: false });
+    await EventPostsImagesModels.sync({ force: false });
 
-  // Urutan penting: tabel parent dulu, baru child (foreign key)
-  // 1. Base/independent tables
-  await syncModel('ir_users_access_apps', '../apps/models/UsersAccessAppsModels.js');
-  await syncModel('ir_display_types', '../apps/models/DisplayTypesModels.js');
-  await syncModel('ir_contents', '../apps/models/ContentModels.js');
-  await syncModel('ir_regions', '../apps/models/RegionsModels.js');
-  await syncModel('ir_subregions', '../apps/models/SubregionsModels.js');
-  await syncModel('ir_countries', '../apps/models/CountriesModels.js');
-  await syncModel('ir_provinces', '../apps/models/ProvincesModels.js');
-  await syncModel('ir_citys', '../apps/models/CitysModels.js');
-  await syncModel('ir_vanues', '../apps/models/VanuesModels.js');
-  await syncModel('ir_event_organizers', '../apps/models/EventOrganizersModels.js');
-  await syncModel('ir_type_content_details', '../apps/models/TypeContentDetailsModels.js');
-  await syncModel('ir_tags', '../apps/models/TagsModels.js');
-  await syncModel('ir_actress', '../apps/models/ActressModels.js');
-  await syncModel('ir_users', '../apps/models/UsersModels.js');
-  await syncModel('ir_base_name_anonymous_users', '../apps/models/BaseNameAnonymousUsersModels.js');
-  await syncModel('ir_topic_posts', '../apps/models/TopicPostModels.js');
-  await syncModel('ir_reports', '../apps/models/ReportsModels.js');
-  await syncModel('ir_about', '../apps/models/AboutModels.js');
-
-  // 2. Tables that depend on users, content, etc.
-  await syncModel('ir_content_details', '../apps/models/ContentDetailsModels.js');
-  await syncModel('ir_content_detail_tags', '../apps/models/ContentDetailTagsModels.js');
-  await syncModel('ir_content_detail_actress', '../apps/models/ContentDetailActressModels.js');
-  await syncModel('ir_content_detail_followers', '../apps/models/ContentDetailFollowersModels.js');
-  await syncModel('ir_following_users', '../apps/models/FollowingUsersModels.js');
-  await syncModel('ir_notifications', '../apps/models/NotificationModels.js');
-  await syncModel('ir_base_name_anonymous_usages', '../apps/models/BaseNameAnonymousUsagesModels.js');
-  await syncModel('ir_reported_users', '../apps/models/ReportedUsersModels.js');
-
-  // 3. Groups
-  await syncModel('ir_groups', '../apps/models/GroupsModels.js');
-  await syncModel('ir_group_members', '../apps/models/GroupMembersModels.js');
-  await syncModel('ir_groups_posts', '../apps/models/GroupsPostsModels.js');
-  await syncModel('ir_groups_posts_comments', '../apps/models/GroupsPostsCommentsModels.js');
-  await syncModel('ir_groups_posts_likes', '../apps/models/GroupsPostsLikesModels.js');
-  await syncModel('ir_chat_groups', '../apps/models/ChatGroupsModels.js');
-  await syncModel('ir_chat_status_groups', '../apps/models/ChatStatusGroupsModels.js');
-
-  // 4. Posts
-  await syncModel('ir_post_content_details', '../apps/models/PostContentDetailModels.js');
-  await syncModel('ir_file_post_content_details', '../apps/models/FilePostContentDetailModels.js');
-  await syncModel('ir_comment_post_content_details', '../apps/models/CommentPostContentDetailModels.js');
-  await syncModel('ir_like_post_content_details', '../apps/models/LikePostContentDetailModels.js');
-  await syncModel('ir_impression_post_content_details', '../apps/models/ImpressionPostContentDetailModels.js');
-  await syncModel('ir_segmented_post_content_details', '../apps/models/SegmentedPostContentDetailModels.js');
-  await syncModel('ir_topic_post_relations', '../apps/models/TopicPostRelationsModels.js');
-
-  // 5. Event Posts (new)
-  await syncModel('ir_event_posts', '../apps/models/EventPostsModels.js');
-  await syncModel('ir_event_posts_comments', '../apps/models/EventPostsCommentsModels.js');
-  await syncModel('ir_event_posts_likes', '../apps/models/EventPostsLikesModels.js');
-  await syncModel('ir_event_posts_images', '../apps/models/EventPostsImagesModels.js');
-
-  res.json({
-    status: errors.length === 0 ? 'ok' : 'partial',
-    tables_created: results,
-    total_created: results.length,
-    errors: errors,
-  });
+    res.json({ status: 'ok', message: 'All 4 event posts tables created successfully' });
+  } catch (error) {
+    console.error('Sync error:', error);
+    res.status(500).json({ status: 'error', message: error.message });
+  }
 });
 
 api.post("/api/underground/create/event", UnderGroundControllers.postContentDetailOnUnderGround)

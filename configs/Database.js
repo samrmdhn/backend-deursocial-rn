@@ -16,12 +16,6 @@ const db = new Sequelize(
             acquire: 120000,
             idle: 10000,
         },
-        dialectOptions: {
-            ssl: {
-                require: true,
-                rejectUnauthorized: false,
-            },
-        },
         // logging: process.env.APP_MODE === 'production' ?? false
     },
 );
