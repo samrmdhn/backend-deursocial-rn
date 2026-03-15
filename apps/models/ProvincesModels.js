@@ -34,3 +34,4 @@ const ProvincesModels = db.define("ir_provinces", {
 });
 
 export default ProvincesModels;
+// vercel-fix

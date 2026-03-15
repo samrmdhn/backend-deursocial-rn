@@ -34,3 +34,4 @@ const BaseNameAnonymousUsersModels = db.define("ir_base_name_anonymous_users", {
 });
 
 export default BaseNameAnonymousUsersModels;
+// vercel-fix
