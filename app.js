@@ -26,33 +26,8 @@ app.use((req, res, next) => {
     next();
 });
 
-// Debug: catch import errors
-app.get('/debug', (req, res) => {
-    res.json({
-        status: 'app loaded',
-        env: {
-            DB_HOST: process.env.APP_DB_HOST || 'NOT SET',
-            DB_DATABASE: process.env.APP_DB_DATABASE || 'NOT SET',
-            DB_USERNAME: process.env.APP_DB_USERNAME || 'NOT SET',
-            DB_CONNECTION: process.env.APP_DB_CONNECTION || 'NOT SET',
-            DB_PORT: process.env.APP_DB_PORT || 'NOT SET',
-        }
-    });
-});
-
-// Load routes with error catching
-try {
-    const { default: api } = await import("./routes/api.js");
-    app.use(api);
-} catch (err) {
-    app.use('/', (req, res) => {
-        res.status(500).json({
-            error: 'Failed to load routes',
-            message: err.message,
-            stack: err.stack
-        });
-    });
-}
+const { default: api } = await import("./routes/api.js");
+app.use(api);
 
 // Vercel serverless: export the app
 export default app;
