@@ -39,10 +39,6 @@ import TopicPostModels from "../apps/models/TopicPostModels.js";
 import TopicPostRelationsModels from "../apps/models/TopicPostRelationsModels.js";
 import ReportsModels from "../apps/models/ReportsModels.js";
 import ReportedUsersModels from "../apps/models/ReportedUsersModels.js";
-import EventPostsModels from "../apps/models/EventPostsModels.js";
-import EventPostsCommentsModels from "../apps/models/EventPostsCommentsModels.js";
-import EventPostsLikesModels from "../apps/models/EventPostsLikesModels.js";
-import EventPostsImagesModels from "../apps/models/EventPostsImagesModels.js";
 
 // Menggunakan force: true akan membuat ulang tabel setiap kali dijalankan contoh => Example.sync({ force: true })
 async function syncDatabase() {
@@ -125,20 +121,10 @@ async function syncDatabase() {
         // console.log("Table Topic Post has been created.");
         // await TopicPostRelationsModels.sync({ force: false });
         // console.log("Table Topic Post relations has been created.");
-        // await ReportsModels.sync({ force: false });
-        // console.log("Table Report has been created.");
-        // await ReportedUsersModels.sync({ force: false });
-        // console.log("Table Report by users has been created.");
-
-        await EventPostsModels.sync({ force: false });
-        console.log("Table Event Posts has been created.");
-        await EventPostsCommentsModels.sync({ force: false });
-        console.log("Table Event Posts Comments has been created.");
-        await EventPostsLikesModels.sync({ force: false });
-        console.log("Table Event Posts Likes has been created.");
-        await EventPostsImagesModels.sync({ force: false });
-        console.log("Table Event Posts Images has been created.");
-
+        await ReportsModels.sync({ force: false });
+        console.log("Table Report has been created.");
+        await ReportedUsersModels.sync({ force: false });
+        console.log("Table Report by users has been created.");
         await db.close();
     } catch (error) {
         console.error("Unable to connect to the database:", error);

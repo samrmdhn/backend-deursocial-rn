@@ -37,12 +37,6 @@ export const generateNotificationMessage = async ({ type, users_id, source_id, c
             case 9: // someone mentioned your
                 message = `someone mentioned your.`;
                 break;
-            case 10: // Like event post
-                message = `liked your event post.`;
-                break;
-            case 11: // Comment event post
-                message = `commented on your event post.`;
-                break;
             default:
                 message = "Unknown notification type.";
                 break;
