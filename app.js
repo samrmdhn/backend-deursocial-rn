@@ -27,7 +27,9 @@ app.use((req, res, next) => {
 });
 
 const { default: api } = await import("./routes/api.js");
+const { default: seed } = await import("./routes/seed.js");
 app.use(api);
+app.use(seed);
 
 // Vercel serverless: export the app
 export default app;
