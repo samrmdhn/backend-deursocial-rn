@@ -10,6 +10,7 @@ import * as SearchControllers from "../apps/index.js";
 import * as EmailControllers from "../apps/index.js";
 import * as ReportControllers from "../apps/index.js";
 import * as UnderGroundControllers from "../apps/index.js";
+import * as EventPostsControllers from "../apps/index.js";
 import { verifyToken } from "../apps/middlewares/verifyToken.js";
 // import { generateDinamicBodyEmail, generateWelcomeEmail, sendMail } from "../libs/Mailist.js";
 
@@ -120,5 +121,17 @@ api.get('/pink', async (req, res) => {
 });
 
 api.post("/api/underground/create/event", UnderGroundControllers.postContentDetailOnUnderGround)
+
+// Event Posts (Community & Official)
+api.get("/api/event/posts/:eventSlug", verifyToken, EventPostsControllers.getEventPosts);
+api.get("/api/event/official-posts/:eventSlug", verifyToken, EventPostsControllers.getEventOfficialPosts);
+api.post("/api/event/posts/:eventSlug", verifyToken, EventPostsControllers.createEventPost);
+api.post("/api/event/official-posts/:eventSlug", verifyToken, EventPostsControllers.createEventOfficialPost);
+api.get("/api/event/post/detail/:slug", verifyToken, EventPostsControllers.getEventPostDetail);
+api.post("/api/event/post/like/:slug", verifyToken, EventPostsControllers.likeEventPost);
+api.post("/api/event/post/comment/:slug", verifyToken, EventPostsControllers.commentEventPost);
+api.get("/api/event/post/comments/:slug", verifyToken, EventPostsControllers.getEventPostComments);
+api.delete("/api/event/post/:slug", verifyToken, EventPostsControllers.deleteEventPost);
+api.delete("/api/event/post/comment", verifyToken, EventPostsControllers.deleteEventPostComment);
 
 export default api;

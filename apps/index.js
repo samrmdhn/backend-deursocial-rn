@@ -110,3 +110,16 @@ export {
     getDataReport,
     saveReportedByUsers
 } from "./controllers/ReportControllers.js";
+
+export {
+    getEventPosts,
+    getEventOfficialPosts,
+    createEventPost,
+    createEventOfficialPost,
+    getEventPostDetail,
+    likeEventPost,
+    commentEventPost,
+    getEventPostComments,
+    deleteEventPost,
+    deleteEventPostComment
+} from "./controllers/EventPostsControllers.js";
