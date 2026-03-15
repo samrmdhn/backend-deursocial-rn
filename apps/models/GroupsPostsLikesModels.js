@@ -38,3 +38,4 @@ const GroupsPostsLikesModels = db.define("ir_groups_posts_likes", {
 });
 
 export default GroupsPostsLikesModels;
+// vercel-fix

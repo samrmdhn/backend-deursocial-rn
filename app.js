@@ -1,14 +1,8 @@
 import express from "express";
 import cors from "cors";
-import http from "http";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
-import api from "./routes/api.js";
 import fileUpload from "express-fileupload";
-// const { Server } = require('socket.io');
-import { Server } from "socket.io";
-import { initializeSocket } from "./apps/controllers/ChatGroupsControllers.js";
-import { CronJobs } from "./libs/cron/index.js";
 
 dotenv.config({
     path: `./.env`,
@@ -21,7 +15,6 @@ app.use(
     })
 );
 
-// app.use(express.json());
 app.disable("x-powered-by");
 app.disable("date");
 
@@ -32,22 +25,34 @@ app.use((req, res, next) => {
     res.removeHeader("Date");
     next();
 });
-app.use(api);
 
-const httpServer = http.createServer(app);
-const io = new Server(httpServer, {
-    cors: {
-        origins: [
-            process.env.APP_FRONTEND,
-            "http://localhost:3000",
-            "http://localhost:5731",
-        ],
-        methods: ["GET", "POST", "PUT", "DELETE"],
-        credentials: true,
-    },
+// Debug: catch import errors
+app.get('/debug', (req, res) => {
+    res.json({
+        status: 'app loaded',
+        env: {
+            DB_HOST: process.env.APP_DB_HOST || 'NOT SET',
+            DB_DATABASE: process.env.APP_DB_DATABASE || 'NOT SET',
+            DB_USERNAME: process.env.APP_DB_USERNAME || 'NOT SET',
+            DB_CONNECTION: process.env.APP_DB_CONNECTION || 'NOT SET',
+            DB_PORT: process.env.APP_DB_PORT || 'NOT SET',
+        }
+    });
 });
-initializeSocket(io);
-await CronJobs()
-httpServer.listen(process.env.APP_PORT, process.env.APP_HOST, function () {
-    console.log("Started application on port %d", process.env.APP_PORT);
-});
+
+// Load routes with error catching
+try {
+    const { default: api } = await import("./routes/api.js");
+    app.use(api);
+} catch (err) {
+    app.use('/', (req, res) => {
+        res.status(500).json({
+            error: 'Failed to load routes',
+            message: err.message,
+            stack: err.stack
+        });
+    });
+}
+
+// Vercel serverless: export the app
+export default app;

@@ -54,3 +54,4 @@ const GroupsPostsModels = db.define("ir_groups_posts", {
 });
 
 export default GroupsPostsModels;
+// vercel-fix

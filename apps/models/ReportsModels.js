@@ -46,3 +46,4 @@ const ReportsModels = db.define("ir_reports", {
 });
 
 export default ReportsModels;
+// vercel-fix

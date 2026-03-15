@@ -30,3 +30,4 @@ const RegionsModels = db.define(
 );
 
 export default RegionsModels;
+// vercel-fix
