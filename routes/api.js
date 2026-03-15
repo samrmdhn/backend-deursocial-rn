@@ -120,14 +120,59 @@ api.get('/pink', async (req, res) => {
   res.send({ message: 'ponk' });
 });
 
-// TEMPORARY: Sync ALL tables - HAPUS SETELAH DIJALANKAN
+// TEMPORARY: Sync ALL tables via static imports - HAPUS SETELAH DIJALANKAN
+import db from "../configs/Database.js";
+import UsersAccessAppsModels from "../apps/models/UsersAccessAppsModels.js";
+import DisplayTypesModels from "../apps/models/DisplayTypesModels.js";
+import ContentModels from "../apps/models/ContentModels.js";
+import RegionsModels from "../apps/models/RegionsModels.js";
+import SubregionsModels from "../apps/models/SubregionsModels.js";
+import CountriesModels from "../apps/models/CountriesModels.js";
+import ProvincesModels from "../apps/models/ProvincesModels.js";
+import CitysModels from "../apps/models/CitysModels.js";
+import VanuesModels from "../apps/models/VanuesModels.js";
+import EventOrganizersModels from "../apps/models/EventOrganizersModels.js";
+import TypeContentDetailsModels from "../apps/models/TypeContentDetailsModels.js";
+import TagsModels from "../apps/models/TagsModels.js";
+import ActressModels from "../apps/models/ActressModels.js";
+import UsersModels from "../apps/models/UsersModels.js";
+import BaseNameAnonymousUsersModels from "../apps/models/BaseNameAnonymousUsersModels.js";
+import TopicPostModels from "../apps/models/TopicPostModels.js";
+import ReportsModels from "../apps/models/ReportsModels.js";
+import AboutModels from "../apps/models/AboutModels.js";
+import ContentDetailsModels from "../apps/models/ContentDetailsModels.js";
+import ContentDetailTagsModels from "../apps/models/ContentDetailTagsModels.js";
+import ContentDetailActressModels from "../apps/models/ContentDetailActressModels.js";
+import ContentDetailFollowersModels from "../apps/models/ContentDetailFollowersModels.js";
+import FollowingUsersModels from "../apps/models/FollowingUsersModels.js";
+import NotificationModels from "../apps/models/NotificationModels.js";
+import BaseNameAnonymousUsagesModels from "../apps/models/BaseNameAnonymousUsagesModels.js";
+import ReportedUsersModels from "../apps/models/ReportedUsersModels.js";
+import GroupsModels from "../apps/models/GroupsModels.js";
+import GroupMembersModels from "../apps/models/GroupMembersModels.js";
+import GroupsPostsModels from "../apps/models/GroupsPostsModels.js";
+import GroupsPostsCommentsModels from "../apps/models/GroupsPostsCommentsModels.js";
+import GroupsPostsLikesModels from "../apps/models/GroupsPostsLikesModels.js";
+import ChatGroupsModels from "../apps/models/ChatGroupsModels.js";
+import ChatStatusGroupsModels from "../apps/models/ChatStatusGroupsModels.js";
+import PostContentDetailModels from "../apps/models/PostContentDetailModels.js";
+import FilePostContentDetailModels from "../apps/models/FilePostContentDetailModels.js";
+import CommentPostContentDetailModels from "../apps/models/CommentPostContentDetailModels.js";
+import LikePostContentDetailModels from "../apps/models/LikePostContentDetailModels.js";
+import ImpressionPostContentDetailModels from "../apps/models/ImpressionPostContentDetailModels.js";
+import SegmentedPostContentDetailModels from "../apps/models/SegmentedPostContentDetailModels.js";
+import TopicPostRelationsModels from "../apps/models/TopicPostRelationsModels.js";
+import EventPostsModels from "../apps/models/EventPostsModels.js";
+import EventPostsCommentsModels from "../apps/models/EventPostsCommentsModels.js";
+import EventPostsLikesModels from "../apps/models/EventPostsLikesModels.js";
+import EventPostsImagesModels from "../apps/models/EventPostsImagesModels.js";
+
 api.get('/api/sync-all-tables', async (req, res) => {
   const results = [];
   const errors = [];
 
-  const syncModel = async (name, importPath) => {
+  const syncModel = async (name, Model) => {
     try {
-      const { default: Model } = await import(importPath);
       await Model.sync({ force: false });
       results.push(name);
     } catch (err) {
@@ -135,60 +180,59 @@ api.get('/api/sync-all-tables', async (req, res) => {
     }
   };
 
-  // Urutan penting: tabel parent dulu, baru child (foreign key)
   // 1. Base/independent tables
-  await syncModel('ir_users_access_apps', '../apps/models/UsersAccessAppsModels.js');
-  await syncModel('ir_display_types', '../apps/models/DisplayTypesModels.js');
-  await syncModel('ir_contents', '../apps/models/ContentModels.js');
-  await syncModel('ir_regions', '../apps/models/RegionsModels.js');
-  await syncModel('ir_subregions', '../apps/models/SubregionsModels.js');
-  await syncModel('ir_countries', '../apps/models/CountriesModels.js');
-  await syncModel('ir_provinces', '../apps/models/ProvincesModels.js');
-  await syncModel('ir_citys', '../apps/models/CitysModels.js');
-  await syncModel('ir_vanues', '../apps/models/VanuesModels.js');
-  await syncModel('ir_event_organizers', '../apps/models/EventOrganizersModels.js');
-  await syncModel('ir_type_content_details', '../apps/models/TypeContentDetailsModels.js');
-  await syncModel('ir_tags', '../apps/models/TagsModels.js');
-  await syncModel('ir_actress', '../apps/models/ActressModels.js');
-  await syncModel('ir_users', '../apps/models/UsersModels.js');
-  await syncModel('ir_base_name_anonymous_users', '../apps/models/BaseNameAnonymousUsersModels.js');
-  await syncModel('ir_topic_posts', '../apps/models/TopicPostModels.js');
-  await syncModel('ir_reports', '../apps/models/ReportsModels.js');
-  await syncModel('ir_about', '../apps/models/AboutModels.js');
+  await syncModel('ir_users_access_apps', UsersAccessAppsModels);
+  await syncModel('ir_display_types', DisplayTypesModels);
+  await syncModel('ir_contents', ContentModels);
+  await syncModel('ir_regions', RegionsModels);
+  await syncModel('ir_subregions', SubregionsModels);
+  await syncModel('ir_countries', CountriesModels);
+  await syncModel('ir_provinces', ProvincesModels);
+  await syncModel('ir_citys', CitysModels);
+  await syncModel('ir_vanues', VanuesModels);
+  await syncModel('ir_event_organizers', EventOrganizersModels);
+  await syncModel('ir_type_content_details', TypeContentDetailsModels);
+  await syncModel('ir_tags', TagsModels);
+  await syncModel('ir_actress', ActressModels);
+  await syncModel('ir_users', UsersModels);
+  await syncModel('ir_base_name_anonymous_users', BaseNameAnonymousUsersModels);
+  await syncModel('ir_topic_posts', TopicPostModels);
+  await syncModel('ir_reports', ReportsModels);
+  await syncModel('ir_about', AboutModels);
 
-  // 2. Tables that depend on users, content, etc.
-  await syncModel('ir_content_details', '../apps/models/ContentDetailsModels.js');
-  await syncModel('ir_content_detail_tags', '../apps/models/ContentDetailTagsModels.js');
-  await syncModel('ir_content_detail_actress', '../apps/models/ContentDetailActressModels.js');
-  await syncModel('ir_content_detail_followers', '../apps/models/ContentDetailFollowersModels.js');
-  await syncModel('ir_following_users', '../apps/models/FollowingUsersModels.js');
-  await syncModel('ir_notifications', '../apps/models/NotificationModels.js');
-  await syncModel('ir_base_name_anonymous_usages', '../apps/models/BaseNameAnonymousUsagesModels.js');
-  await syncModel('ir_reported_users', '../apps/models/ReportedUsersModels.js');
+  // 2. Dependent tables
+  await syncModel('ir_content_details', ContentDetailsModels);
+  await syncModel('ir_content_detail_tags', ContentDetailTagsModels);
+  await syncModel('ir_content_detail_actress', ContentDetailActressModels);
+  await syncModel('ir_content_detail_followers', ContentDetailFollowersModels);
+  await syncModel('ir_following_users', FollowingUsersModels);
+  await syncModel('ir_notifications', NotificationModels);
+  await syncModel('ir_base_name_anonymous_usages', BaseNameAnonymousUsagesModels);
+  await syncModel('ir_reported_users', ReportedUsersModels);
 
   // 3. Groups
-  await syncModel('ir_groups', '../apps/models/GroupsModels.js');
-  await syncModel('ir_group_members', '../apps/models/GroupMembersModels.js');
-  await syncModel('ir_groups_posts', '../apps/models/GroupsPostsModels.js');
-  await syncModel('ir_groups_posts_comments', '../apps/models/GroupsPostsCommentsModels.js');
-  await syncModel('ir_groups_posts_likes', '../apps/models/GroupsPostsLikesModels.js');
-  await syncModel('ir_chat_groups', '../apps/models/ChatGroupsModels.js');
-  await syncModel('ir_chat_status_groups', '../apps/models/ChatStatusGroupsModels.js');
+  await syncModel('ir_groups', GroupsModels);
+  await syncModel('ir_group_members', GroupMembersModels);
+  await syncModel('ir_groups_posts', GroupsPostsModels);
+  await syncModel('ir_groups_posts_comments', GroupsPostsCommentsModels);
+  await syncModel('ir_groups_posts_likes', GroupsPostsLikesModels);
+  await syncModel('ir_chat_groups', ChatGroupsModels);
+  await syncModel('ir_chat_status_groups', ChatStatusGroupsModels);
 
   // 4. Posts
-  await syncModel('ir_post_content_details', '../apps/models/PostContentDetailModels.js');
-  await syncModel('ir_file_post_content_details', '../apps/models/FilePostContentDetailModels.js');
-  await syncModel('ir_comment_post_content_details', '../apps/models/CommentPostContentDetailModels.js');
-  await syncModel('ir_like_post_content_details', '../apps/models/LikePostContentDetailModels.js');
-  await syncModel('ir_impression_post_content_details', '../apps/models/ImpressionPostContentDetailModels.js');
-  await syncModel('ir_segmented_post_content_details', '../apps/models/SegmentedPostContentDetailModels.js');
-  await syncModel('ir_topic_post_relations', '../apps/models/TopicPostRelationsModels.js');
+  await syncModel('ir_post_content_details', PostContentDetailModels);
+  await syncModel('ir_file_post_content_details', FilePostContentDetailModels);
+  await syncModel('ir_comment_post_content_details', CommentPostContentDetailModels);
+  await syncModel('ir_like_post_content_details', LikePostContentDetailModels);
+  await syncModel('ir_impression_post_content_details', ImpressionPostContentDetailModels);
+  await syncModel('ir_segmented_post_content_details', SegmentedPostContentDetailModels);
+  await syncModel('ir_topic_post_relations', TopicPostRelationsModels);
 
-  // 5. Event Posts (new)
-  await syncModel('ir_event_posts', '../apps/models/EventPostsModels.js');
-  await syncModel('ir_event_posts_comments', '../apps/models/EventPostsCommentsModels.js');
-  await syncModel('ir_event_posts_likes', '../apps/models/EventPostsLikesModels.js');
-  await syncModel('ir_event_posts_images', '../apps/models/EventPostsImagesModels.js');
+  // 5. Event Posts
+  await syncModel('ir_event_posts', EventPostsModels);
+  await syncModel('ir_event_posts_comments', EventPostsCommentsModels);
+  await syncModel('ir_event_posts_likes', EventPostsLikesModels);
+  await syncModel('ir_event_posts_images', EventPostsImagesModels);
 
   res.json({
     status: errors.length === 0 ? 'ok' : 'partial',
