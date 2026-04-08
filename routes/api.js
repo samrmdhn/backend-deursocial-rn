@@ -10,6 +10,7 @@ import * as SearchControllers from "../apps/index.js";
 import * as EmailControllers from "../apps/index.js";
 import * as ReportControllers from "../apps/index.js";
 import * as UnderGroundControllers from "../apps/index.js";
+import * as ChatControllers from "../apps/index.js";
 import { verifyToken } from "../apps/middlewares/verifyToken.js";
 // import { generateDinamicBodyEmail, generateWelcomeEmail, sendMail } from "../libs/Mailist.js";
 
@@ -120,5 +121,30 @@ api.get('/pink', async (req, res) => {
 });
 
 api.post("/api/underground/create/event", UnderGroundControllers.postContentDetailOnUnderGround)
+
+// ═══════════════════════════════════════════════════════════════
+// CHAT API (Supabase queries offloaded to backend)
+// ═══════════════════════════════════════════════════════════════
+
+// Link Preview
+api.post("/api/chat/link-preview", verifyToken, ChatControllers.getLinkPreview);
+
+// Messages List (group list screen — heavy queries)
+api.post("/api/chat/messages/latest-per-group", verifyToken, ChatControllers.getLatestMessagePerGroup);
+api.post("/api/chat/messages/unread-counts", verifyToken, ChatControllers.getUnreadCountsPerGroup);
+
+// DM Conversations
+api.post("/api/chat/conversations/get-or-create", verifyToken, ChatControllers.getOrCreateConversation);
+api.get("/api/chat/conversations/:username/:userId", verifyToken, ChatControllers.getUserConversations);
+
+// Meeting Points
+api.get("/api/chat/meeting-point/:groupSlug", verifyToken, ChatControllers.getMeetingPoint);
+api.post("/api/chat/meeting-point", verifyToken, ChatControllers.setMeetingPoint);
+
+// Media Gallery
+api.get("/api/chat/media/:groupSlug", verifyToken, ChatControllers.getGroupMedia);
+
+// User Join Date
+api.get("/api/chat/user-groups/:userId/:groupSlug/join-date", verifyToken, ChatControllers.getUserJoinDate);
 
 export default api;
