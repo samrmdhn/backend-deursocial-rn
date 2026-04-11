@@ -120,5 +120,7 @@ api.get('/pink', async (req, res) => {
 });
 
 api.post("/api/underground/create/event", UnderGroundControllers.postContentDetailOnUnderGround)
-
+api.get("/api/pink", async (req, res) => {
+  res.send({ message: 'ponk' });
+});
 export default api;
