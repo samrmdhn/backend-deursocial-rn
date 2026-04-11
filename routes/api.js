@@ -116,9 +116,7 @@ api.post("/api/reported/post", verifyToken, ReportControllers.saveReportedByUser
 api.delete("/api/delete/comment/moment", verifyToken, MomentControllers.deleteCommentMoment);
 api.delete("/api/delete/comment/post", verifyToken, PostControllers.deleteCommentPost);
 
-api.get('/pink', async (req, res) => {
-  res.send({ message: 'ponk' });
-});
+
 
 api.post("/api/underground/create/event", UnderGroundControllers.postContentDetailOnUnderGround)
 
@@ -146,5 +144,8 @@ api.get("/api/chat/media/:groupSlug", verifyToken, ChatControllers.getGroupMedia
 
 // User Join Date
 api.get("/api/chat/user-groups/:userId/:groupSlug/join-date", verifyToken, ChatControllers.getUserJoinDate);
+api.get("/api/pink", async (req, res) => {
+  res.send({ message: 'ponk' });
+});
 
 export default api;
