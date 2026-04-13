@@ -1,4 +1,4 @@
-import supabase from "../../configs/Supabase.js";
+import sdb from "../../configs/SupabaseDatabase.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
 import {
     validationSetMeetingPoint,
@@ -65,13 +65,12 @@ const fetchLinkPreviewInternal = async (url) => {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// LINK PREVIEW (offloaded from client)
+// LINK PREVIEW
 // ═══════════════════════════════════════════════════════════════
 
 /**
  * POST /api/chat/link-preview
  * Body: { url: string } OR { text: string }
- * Extracts OG metadata from a URL (or first URL found in text).
  */
 export const getLinkPreview = async (req, res) => {
     try {
@@ -99,13 +98,12 @@ export const getLinkPreview = async (req, res) => {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// LATEST MESSAGE PER GROUP (for messages list screen)
+// LATEST MESSAGE PER GROUP
 // ═══════════════════════════════════════════════════════════════
 
 /**
  * POST /api/chat/messages/latest-per-group
  * Body: { group_slugs: string[] }
- * Returns a map of group_slug → latest message.
  */
 export const getLatestMessagePerGroup = async (req, res) => {
     try {
@@ -115,22 +113,22 @@ export const getLatestMessagePerGroup = async (req, res) => {
             return responseApi(res, {}, null, "group_slugs array is required", 1);
         }
 
-        const result = {};
-
-        await Promise.all(
-            group_slugs.map(async (slug) => {
-                const { data, error } = await supabase
-                    .from("messages")
-                    .select("*")
-                    .eq("group_slug", slug)
-                    .order("created_at", { ascending: false })
-                    .limit(1);
-
-                if (!error && data && data.length > 0) {
-                    result[slug] = data[0];
-                }
-            }),
+        const rows = await sdb.query(
+            `SELECT DISTINCT ON (group_slug) *
+             FROM messages
+             WHERE group_slug = ANY($1::text[])
+               AND deleted_at IS NULL
+             ORDER BY group_slug, created_at DESC`,
+            {
+                bind: [group_slugs],
+                type: sdb.QueryTypes.SELECT,
+            },
         );
+
+        const result = {};
+        for (const row of rows) {
+            result[row.group_slug] = row;
+        }
 
         return responseApi(res, result, { count: Object.keys(result).length }, "Latest messages per group", 0);
     } catch (error) {
@@ -146,7 +144,6 @@ export const getLatestMessagePerGroup = async (req, res) => {
 /**
  * POST /api/chat/messages/unread-counts
  * Body: { group_slugs: string[], user_id: string }
- * Returns a map of group_slug → unread count.
  */
 export const getUnreadCountsPerGroup = async (req, res) => {
     try {
@@ -156,54 +153,43 @@ export const getUnreadCountsPerGroup = async (req, res) => {
             return responseApi(res, {}, null, "group_slugs and user_id are required", 1);
         }
 
-        // Fetch user join dates for all groups
-        const { data: userGroups } = await supabase
-            .from("user_groups")
-            .select("group_slug, joined_at")
-            .eq("user_id", user_id)
-            .in("group_slug", group_slugs);
-
-        const joinDates = {};
-        for (const ug of userGroups || []) {
-            joinDates[ug.group_slug] = ug.joined_at;
-        }
+        const rows = await sdb.query(
+            `WITH join_dates AS (
+                SELECT group_slug, MAX(joined_at) AS joined_at
+                FROM user_groups
+                WHERE user_id = $2
+                  AND group_slug = ANY($1::text[])
+                GROUP BY group_slug
+            )
+            SELECT
+                gs.group_slug,
+                COUNT(m.id) AS unread_count
+            FROM unnest($1::text[]) AS gs(group_slug)
+            LEFT JOIN messages m ON m.group_slug = gs.group_slug
+                AND m.user_id != $2
+                AND m.deleted_at IS NULL
+                AND NOT EXISTS (
+                    SELECT 1 FROM message_reads mr
+                    WHERE mr.message_id = m.id AND mr.user_id = $2
+                )
+            LEFT JOIN join_dates jd ON jd.group_slug = gs.group_slug
+            WHERE m.id IS NULL
+               OR (jd.joined_at IS NULL OR m.created_at >= jd.joined_at)
+            GROUP BY gs.group_slug`,
+            {
+                bind: [group_slugs, user_id],
+                type: sdb.QueryTypes.SELECT,
+            },
+        );
 
         const result = {};
-
-        await Promise.all(
-            group_slugs.map(async (slug) => {
-                const joinDate = joinDates[slug];
-
-                // Get messages in this group not sent by this user
-                let query = supabase
-                    .from("messages")
-                    .select("id")
-                    .eq("group_slug", slug)
-                    .neq("user_id", user_id);
-
-                if (joinDate) {
-                    query = query.gte("created_at", joinDate);
-                }
-
-                const { data: messages, error: msgError } = await query;
-
-                if (msgError || !messages || messages.length === 0) {
-                    result[slug] = 0;
-                    return;
-                }
-
-                // Get which of those messages have been read by this user
-                const msgIds = messages.map((m) => m.id);
-                const { data: reads } = await supabase
-                    .from("message_reads")
-                    .select("message_id")
-                    .in("message_id", msgIds)
-                    .eq("user_id", user_id);
-
-                const readIds = new Set((reads || []).map((r) => r.message_id));
-                result[slug] = msgIds.filter((id) => !readIds.has(id)).length;
-            }),
-        );
+        // Initialise all slugs to 0 first
+        for (const slug of group_slugs) {
+            result[slug] = 0;
+        }
+        for (const row of rows) {
+            result[row.group_slug] = parseInt(row.unread_count, 10);
+        }
 
         return responseApi(res, result, null, "Unread counts retrieved", 0);
     } catch (error) {
@@ -229,22 +215,9 @@ export const getOrCreateConversation = async (req, res) => {
 
         const { current_username, other_username, current_user_id, other_user_id } = req.body;
 
-        // Generate deterministic slug
         const sorted = [current_username, other_username].sort();
         const slug = `dm_${sorted[0]}_${sorted[1]}`;
 
-        // Check existing
-        const { data: existing } = await supabase
-            .from("conversations")
-            .select("*")
-            .eq("slug", slug)
-            .maybeSingle();
-
-        if (existing) {
-            return responseApi(res, existing, null, "Conversation found", 0);
-        }
-
-        // Create
         const user1Id = sorted[0] === current_username
             ? current_user_id || current_username
             : other_user_id || other_username;
@@ -252,22 +225,27 @@ export const getOrCreateConversation = async (req, res) => {
             ? other_user_id || other_username
             : current_user_id || current_username;
 
-        const { data: conversation, error } = await supabase
-            .from("conversations")
-            .insert({
-                user1_id: user1Id,
-                user2_id: user2Id,
-                slug,
-            })
-            .select()
-            .single();
+        const existing = await sdb.query(
+            `SELECT * FROM conversations WHERE slug = :slug LIMIT 1`,
+            { replacements: { slug }, type: sdb.QueryTypes.SELECT },
+        );
 
-        if (error) {
-            console.error("[ChatControllers] getOrCreateConversation insert error:", error.message);
-            return responseApi(res, null, null, "Failed to create conversation", 1);
+        if (existing.length > 0) {
+            return responseApi(res, existing[0], null, "Conversation found", 0);
         }
 
-        return responseApi(res, conversation, null, "Conversation created", 0);
+        const created = await sdb.query(
+            `INSERT INTO conversations (user1_id, user2_id, slug)
+             VALUES (:user1Id, :user2Id, :slug)
+             ON CONFLICT (slug) DO UPDATE SET slug = EXCLUDED.slug
+             RETURNING *`,
+            {
+                replacements: { user1Id, user2Id, slug },
+                type: sdb.QueryTypes.SELECT,
+            },
+        );
+
+        return responseApi(res, created[0], null, "Conversation created", 0);
     } catch (error) {
         console.error("[ChatControllers] getOrCreateConversation error:", error);
         return responseApi(res, null, null, "Server error", 1);
@@ -276,98 +254,103 @@ export const getOrCreateConversation = async (req, res) => {
 
 /**
  * GET /api/chat/conversations/:username/:userId
- * Fetch all DM conversations for a user.
- * This is the heavy query that benefits from being on the server.
+ * Fetch all DM conversations for a user with last message and unread count.
  */
 export const getUserConversations = async (req, res) => {
     try {
         const { username, userId } = req.params;
 
-        // Fetch all DM messages for this user
-        const { data: allDmMsgs, error } = await supabase
-            .from("messages")
-            .select("*")
-            .like("group_slug", "dm_%")
-            .is("deleted_at", null)
-            .order("created_at", { ascending: false });
-
-        if (error || !allDmMsgs) {
-            console.error("[ChatControllers] getUserConversations error:", error?.message);
-            return responseApi(res, [], null, "Failed to fetch conversations", 1);
-        }
-
-        // Group messages by slug, filtering only slugs that contain this user
-        const slugMap = new Map();
-        for (const msg of allDmMsgs) {
-            const body = msg.group_slug.slice(3); // remove "dm_"
-            const belongsToUser =
-                body.startsWith(username + "_") || body.endsWith("_" + username);
-            if (!belongsToUser) continue;
-            if (!slugMap.has(msg.group_slug)) {
-                slugMap.set(msg.group_slug, []);
-            }
-            slugMap.get(msg.group_slug).push(msg);
-        }
-
-        // Build conversation list from grouped messages
-        const results = await Promise.all(
-            Array.from(slugMap.entries()).map(async ([slug, msgs]) => {
-                const body = slug.slice(3);
-                const otherUsername = body.startsWith(username + "_")
-                    ? body.slice(username.length + 1)
-                    : body.slice(0, body.length - username.length - 1);
-
-                // Last message is the first one (already sorted desc)
-                const lastMessage = msgs[0];
-
-                // Get other user's profile from their latest message
-                let otherUser = {
-                    user_id: otherUsername,
-                    display_name: otherUsername,
-                    username: otherUsername,
-                    user_image: null,
-                };
-
-                const otherMsg = msgs.find((m) => m.username === otherUsername);
-                if (otherMsg) {
-                    otherUser = {
-                        user_id: otherMsg.user_id,
-                        display_name: otherMsg.display_name,
-                        username: otherMsg.username,
-                        user_image: otherMsg.user_image,
-                    };
-                }
-
-                // Count unread messages
-                const otherMsgIds = msgs
-                    .filter((m) => m.user_id !== userId)
-                    .map((m) => m.id);
-
-                let unreadCount = 0;
-                if (otherMsgIds.length > 0) {
-                    const { data: reads } = await supabase
-                        .from("message_reads")
-                        .select("message_id")
-                        .in("message_id", otherMsgIds)
-                        .eq("user_id", userId);
-
-                    const readIds = new Set((reads || []).map((r) => r.message_id));
-                    unreadCount = otherMsgIds.filter((id) => !readIds.has(id)).length;
-                }
-
-                return {
-                    conversation: { slug, created_at: lastMessage.created_at },
-                    otherUser,
-                    lastMessage,
-                    unreadCount,
-                };
-            }),
+        const rows = await sdb.query(
+            `WITH latest_msg AS (
+                SELECT DISTINCT ON (group_slug) *
+                FROM messages
+                WHERE (group_slug LIKE :pattern1 OR group_slug LIKE :pattern2)
+                  AND deleted_at IS NULL
+                ORDER BY group_slug, created_at DESC
+            ),
+            other_profile AS (
+                SELECT DISTINCT ON (m.group_slug)
+                    m.group_slug,
+                    m.user_id,
+                    m.display_name,
+                    m.username,
+                    m.user_image
+                FROM messages m
+                WHERE (m.group_slug LIKE :pattern1 OR m.group_slug LIKE :pattern2)
+                  AND m.username != :username
+                  AND m.deleted_at IS NULL
+                ORDER BY m.group_slug, m.created_at DESC
+            ),
+            unread AS (
+                SELECT
+                    m.group_slug,
+                    COUNT(*) AS unread_count
+                FROM messages m
+                WHERE (m.group_slug LIKE :pattern1 OR m.group_slug LIKE :pattern2)
+                  AND m.user_id != :userId
+                  AND m.deleted_at IS NULL
+                  AND NOT EXISTS (
+                      SELECT 1 FROM message_reads mr
+                      WHERE mr.message_id = m.id AND mr.user_id = :userId
+                  )
+                GROUP BY m.group_slug
+            )
+            SELECT
+                lm.group_slug AS slug,
+                lm.created_at AS conversation_created_at,
+                lm.id, lm.user_id, lm.display_name, lm.username,
+                lm.user_image, lm.message, lm.message_type,
+                lm.image_url, lm.link_url, lm.link_title,
+                lm.link_description, lm.link_image,
+                lm.created_at AS last_message_at,
+                lm.deleted_at,
+                COALESCE(op.user_id, '')      AS other_user_id,
+                COALESCE(op.display_name, '') AS other_display_name,
+                COALESCE(op.username, '')     AS other_username,
+                op.user_image                 AS other_user_image,
+                COALESCE(u.unread_count, 0)   AS unread_count
+            FROM latest_msg lm
+            LEFT JOIN other_profile op ON op.group_slug = lm.group_slug
+            LEFT JOIN unread u ON u.group_slug = lm.group_slug
+            ORDER BY lm.created_at DESC`,
+            {
+                replacements: {
+                    pattern1: `dm_${username}_%`,
+                    pattern2: `dm_%_${username}`,
+                    username,
+                    userId,
+                },
+                type: sdb.QueryTypes.SELECT,
+            },
         );
 
-        // Sort by latest message
-        results.sort((a, b) => {
-            return new Date(b.lastMessage.created_at).getTime() - new Date(a.lastMessage.created_at).getTime();
-        });
+        const results = rows.map((row) => ({
+            conversation: { slug: row.slug, created_at: row.conversation_created_at },
+            otherUser: {
+                user_id: row.other_user_id,
+                display_name: row.other_display_name,
+                username: row.other_username,
+                user_image: row.other_user_image,
+            },
+            lastMessage: row.id ? {
+                id: row.id,
+                group_slug: row.slug,
+                user_id: row.user_id,
+                display_name: row.display_name,
+                username: row.username,
+                user_image: row.user_image,
+                message: row.message,
+                message_type: row.message_type,
+                image_url: row.image_url,
+                link_url: row.link_url,
+                link_title: row.link_title,
+                link_description: row.link_description,
+                link_image: row.link_image,
+                created_at: row.last_message_at,
+                deleted_at: row.deleted_at,
+            } : null,
+            unreadCount: parseInt(row.unread_count, 10),
+        }));
 
         return responseApi(res, results, { count: results.length }, "Conversations retrieved", 0);
     } catch (error) {
@@ -387,22 +370,16 @@ export const getMeetingPoint = async (req, res) => {
     try {
         const { groupSlug } = req.params;
 
-        const { data: point, error } = await supabase
-            .from("meeting_points")
-            .select("*")
-            .eq("group_slug", groupSlug)
-            .maybeSingle();
+        const rows = await sdb.query(
+            `SELECT * FROM meeting_points WHERE group_slug = :groupSlug LIMIT 1`,
+            { replacements: { groupSlug }, type: sdb.QueryTypes.SELECT },
+        );
 
-        if (error) {
-            console.error("[ChatControllers] getMeetingPoint error:", error.message);
-            return responseApi(res, null, null, "Server error", 1);
-        }
-
-        if (!point) {
+        if (rows.length === 0) {
             return responseApi(res, null, null, "No meeting point set", 2);
         }
 
-        return responseApi(res, point, null, "Meeting point retrieved", 0);
+        return responseApi(res, rows[0], null, "Meeting point retrieved", 0);
     } catch (error) {
         console.error("[ChatControllers] getMeetingPoint error:", error);
         return responseApi(res, null, null, "Server error", 1);
@@ -420,20 +397,22 @@ export const setMeetingPoint = async (req, res) => {
             return responseApi(res, null, null, validationError.details[0].message, 1);
         }
 
-        const {
-            group_slug,
-            name,
-            notes,
-            latitude,
-            longitude,
-            set_by,
-            set_by_user_id,
-        } = req.body;
+        const { group_slug, name, notes, latitude, longitude, set_by, set_by_user_id } = req.body;
 
-        const { data: point, error } = await supabase
-            .from("meeting_points")
-            .upsert(
-                {
+        const rows = await sdb.query(
+            `INSERT INTO meeting_points (group_slug, name, notes, latitude, longitude, set_by, set_by_user_id, updated_at)
+             VALUES (:group_slug, :name, :notes, :latitude, :longitude, :set_by, :set_by_user_id, NOW())
+             ON CONFLICT (group_slug) DO UPDATE SET
+                 name           = EXCLUDED.name,
+                 notes          = EXCLUDED.notes,
+                 latitude       = EXCLUDED.latitude,
+                 longitude      = EXCLUDED.longitude,
+                 set_by         = EXCLUDED.set_by,
+                 set_by_user_id = EXCLUDED.set_by_user_id,
+                 updated_at     = NOW()
+             RETURNING *`,
+            {
+                replacements: {
                     group_slug,
                     name,
                     notes: notes || null,
@@ -441,19 +420,12 @@ export const setMeetingPoint = async (req, res) => {
                     longitude: longitude || null,
                     set_by,
                     set_by_user_id,
-                    updated_at: new Date().toISOString(),
                 },
-                { onConflict: "group_slug" },
-            )
-            .select()
-            .single();
+                type: sdb.QueryTypes.SELECT,
+            },
+        );
 
-        if (error) {
-            console.error("[ChatControllers] setMeetingPoint error:", error.message);
-            return responseApi(res, null, null, "Failed to save meeting point", 1);
-        }
-
-        return responseApi(res, point, null, "Meeting point saved successfully", 0);
+        return responseApi(res, rows[0], null, "Meeting point saved successfully", 0);
     } catch (error) {
         console.error("[ChatControllers] setMeetingPoint error:", error);
         return responseApi(res, null, null, "Server error", 1);
@@ -471,27 +443,25 @@ export const setMeetingPoint = async (req, res) => {
 export const getGroupMedia = async (req, res) => {
     try {
         const { groupSlug } = req.params;
-        const { page = 0, limit = 30 } = req.query;
+        const page = parseInt(req.query.page || "0", 10);
+        const limit = parseInt(req.query.limit || "30", 10);
+        const offset = page * limit;
 
-        const from = parseInt(page) * parseInt(limit);
-        const to = from + parseInt(limit) - 1;
+        const rows = await sdb.query(
+            `SELECT * FROM group_media
+             WHERE group_slug = :groupSlug
+             ORDER BY created_at DESC
+             LIMIT :limit OFFSET :offset`,
+            {
+                replacements: { groupSlug, limit, offset },
+                type: sdb.QueryTypes.SELECT,
+            },
+        );
 
-        const { data: media, error } = await supabase
-            .from("group_media")
-            .select("*")
-            .eq("group_slug", groupSlug)
-            .order("created_at", { ascending: false })
-            .range(from, to);
-
-        if (error) {
-            console.error("[ChatControllers] getGroupMedia error:", error.message);
-            return responseApi(res, [], null, "Server error", 1);
-        }
-
-        return responseApi(res, media || [], {
-            count: (media || []).length,
-            page: parseInt(page),
-            has_more: (media || []).length >= parseInt(limit),
+        return responseApi(res, rows, {
+            count: rows.length,
+            page,
+            has_more: rows.length >= limit,
         }, "Group media retrieved", 0);
     } catch (error) {
         console.error("[ChatControllers] getGroupMedia error:", error);
@@ -510,25 +480,22 @@ export const getUserJoinDate = async (req, res) => {
     try {
         const { userId, groupSlug } = req.params;
 
-        const { data, error } = await supabase
-            .from("user_groups")
-            .select("joined_at")
-            .eq("user_id", userId)
-            .eq("group_slug", groupSlug)
-            .order("joined_at", { ascending: false })
-            .limit(1);
+        const rows = await sdb.query(
+            `SELECT joined_at FROM user_groups
+             WHERE user_id = :userId AND group_slug = :groupSlug
+             ORDER BY joined_at DESC
+             LIMIT 1`,
+            {
+                replacements: { userId, groupSlug },
+                type: sdb.QueryTypes.SELECT,
+            },
+        );
 
-        if (error || !data || data.length === 0) {
-            return responseApi(
-                res,
-                null,
-                null,
-                "User not found in group",
-                2,
-            );
+        if (rows.length === 0) {
+            return responseApi(res, null, null, "User not found in group", 2);
         }
 
-        return responseApi(res, { joined_at: data[0].joined_at }, null, "Join date retrieved", 0);
+        return responseApi(res, { joined_at: rows[0].joined_at }, null, "Join date retrieved", 0);
     } catch (error) {
         console.error("[ChatControllers] getUserJoinDate error:", error);
         return responseApi(res, null, null, "Server error", 1);

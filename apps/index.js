@@ -50,7 +50,7 @@ export {
     leaveGroup
 } from "./controllers/GroupsControllers.js";
 
-export { sendMessageToGroup, getGroupsMessages } from "./controllers/ChatGroupsControllers.js";
+export { getGroupsMessages } from "./controllers/ChatGroupsControllers.js";
 
 export {
     getDetailUser,

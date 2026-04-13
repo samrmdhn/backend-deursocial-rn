@@ -20,7 +20,7 @@ import { getPagination } from "../../helpers/paginationHelpers.js";
 import { buildWhereClause } from "../../helpers/queryBuilderHelpers.js";
 import db from "../../configs/Database.js";
 import BaseNameAnonymousUsagesModels from "../models/BaseNameAnonymousUsagesModels.js";
-import { uploadFile } from "../../helpers/FileUpload.js";
+import { uploadImageFromUrl, uploadFileToStorage } from "../../helpers/StorageUpload.js";
 import { validateUniqueField } from "../../helpers/validationSavedData.js";
 import bcrypt from "bcrypt";
 import { validationRegisterUsers } from "../validators/usersValidators.js";
@@ -216,20 +216,13 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
             date_of_birth
         } = req.body;
         const file = req.files && req.files.image;
-        let filesNamed = "";
         let putPhotoOnTable = "";
         if (file) {
-            const fileDate = new Date();
-            filesNamed = fileDate.getTime() + getExtension(file.name);
-            putPhotoOnTable = createNameFile(filesNamed);
-        } else {
-            if (image) {
-                const result = await downloadImage(image);
-                if (result) {
-                    filesNamed = result.image;
-                    putPhotoOnTable = filesNamed
-                }
-            }
+            // Multipart file upload → Supabase Storage
+            putPhotoOnTable = await uploadFileToStorage(file.data, file.name, file.mimetype);
+        } else if (image) {
+            // URL (e.g. Google profile pic) → download & upload to Supabase Storage
+            putPhotoOnTable = await uploadImageFromUrl(image);
         }
         const password = email;
 
@@ -334,11 +327,6 @@ export const createUsers = withTransaction(async (req, res, transaction) => {
             });
         }
 
-        if (file) {
-            const fileDestination =
-                process.env.APP_LOCATION_FILE + createNameFile(filesNamed);
-            await uploadFile(file, fileDestination);
-        }
         return responseApi(
             res,
             { access_token: visitorToken },
