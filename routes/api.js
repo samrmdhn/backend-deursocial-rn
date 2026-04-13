@@ -55,7 +55,6 @@ api.get("/api/content/details/:slug", HomepageControllers.getContentDetails);
 api.post("/api/content/details", verifyToken, HomepageControllers.createContentDetails);
 api.post("/api/check/auth", HomepageControllers.checkAuth);
 
-api.post("/api/sendMessage/:groupSlugs", ChatGroupsControllers.sendMessageToGroup);
 api.get("/api/group/messages", verifyToken, ChatGroupsControllers.getGroupsMessages);
 
 
