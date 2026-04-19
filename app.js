@@ -30,6 +30,9 @@ app.use((_req, res, next) => {
 app.use(api);
 
 await CronJobs()
-app.listen(process.env.APP_PORT, process.env.APP_HOST, function () {
+const server = app.listen(parseInt(process.env.APP_PORT), process.env.APP_HOST, function () {
     console.log("Started application on port %d", process.env.APP_PORT);
+});
+server.on('error', (err) => {
+    console.error('Server error:', err);
 });

@@ -11,6 +11,7 @@ import * as EmailControllers from "../apps/index.js";
 import * as ReportControllers from "../apps/index.js";
 import * as UnderGroundControllers from "../apps/index.js";
 import * as ChatControllers from "../apps/index.js";
+import * as EventContentControllers from "../apps/index.js";
 import { verifyToken } from "../apps/middlewares/verifyToken.js";
 // import { generateDinamicBodyEmail, generateWelcomeEmail, sendMail } from "../libs/Mailist.js";
 
@@ -23,12 +24,13 @@ api.post("/api/vanues", verifyToken, SettingControllers.createVanues);
 api.post("/api/register", SettingControllers.createUsers);
 api.post("/api/login", SettingControllers.loginUsers);
 
-api.get("/api/groups/:contentDetailSlugs", GroupsControllers.getGroups);
 api.get("/api/groups/detail/:slugs", GroupsControllers.getGroupsDetail);
+api.get("/api/groups/:contentDetailSlugs", GroupsControllers.getGroups);
 api.post("/api/groups/:slug", verifyToken, GroupsControllers.createGroups);
 // api.post("/api/join/groups", verifyToken, GroupsControllers.joinMemberToGroups);
 api.post("/api/join/group/:slug", verifyToken, GroupsControllers.joinMemberToGroups);
 api.post("/api/approve/member/:slug", verifyToken, GroupsControllers.approveMember);
+api.post("/api/reject/member/:slug", verifyToken, GroupsControllers.rejectMember);
 api.get("/api/get/member/group/:slugGroup", GroupsControllers.getMemberNeedApprovalGroup);
 api.delete("/api/removed/group/:slugGroup", verifyToken, GroupsControllers.deleteGroup);
 api.delete("/api/leave/group/:slugGroup", verifyToken, GroupsControllers.leaveGroup);
@@ -114,6 +116,49 @@ api.get("/api/get/report", verifyToken, ReportControllers.getDataReport)
 api.post("/api/reported/post", verifyToken, ReportControllers.saveReportedByUsers)
 api.delete("/api/delete/comment/moment", verifyToken, MomentControllers.deleteCommentMoment);
 api.delete("/api/delete/comment/post", verifyToken, PostControllers.deleteCommentPost);
+
+// ═══════════════════════════════════════════════════════════════
+// EVENT CONTENT API (posts, moments, comments, likes)
+// ═══════════════════════════════════════════════════════════════
+
+// Event community posts
+api.get("/api/event/posts/:eventSlug", verifyToken, EventContentControllers.getEventPosts);
+api.post("/api/event/posts/:eventSlug", verifyToken, EventContentControllers.createEventPost);
+
+// Event official (EO) posts
+api.get("/api/event/official-posts/:eventSlug", verifyToken, EventContentControllers.getEventOfficialPosts);
+api.post("/api/event/official-posts/:eventSlug", verifyToken, EventContentControllers.createEventOfficialPost);
+
+// Event moments
+api.get("/api/event/moments/:eventSlug", verifyToken, EventContentControllers.getEventMoments);
+api.post("/api/event/moments/:eventSlug", verifyToken, EventContentControllers.createEventMoment);
+
+// Feeds (cross-event, homepage)
+api.get("/api/posts/feed", verifyToken, EventContentControllers.getPostsFeed);
+api.get("/api/moments/feed", verifyToken, EventContentControllers.getMomentsFeed);
+
+// Event post/moment delete
+api.delete("/api/event/post/:slug", verifyToken, EventContentControllers.deleteEventPost);
+
+// Event post like toggle
+api.post("/api/event/post/like/:slug", verifyToken, EventContentControllers.toggleEventPostLike);
+
+// User profile posts & moments
+api.get("/api/event/posts/user/:username", verifyToken, EventContentControllers.getPostsByUser);
+api.get("/api/event/moments/user/:username", verifyToken, EventContentControllers.getMomentsByUser);
+
+// Event post detail
+api.get("/api/event/post/detail/:slug", verifyToken, EventContentControllers.getEventPostDetail);
+
+// Batch endpoints
+api.post("/api/batch/likes", verifyToken, EventContentControllers.batchGetLikes);
+api.post("/api/batch/comments", verifyToken, EventContentControllers.batchGetComments);
+
+// Comment replies
+api.get("/api/comment/replies/:commentId", verifyToken, EventContentControllers.getCommentReplies);
+
+// Comment likes
+api.post("/api/like/comment/:commentId", verifyToken, EventContentControllers.toggleCommentLike);
 
 api.get('/pink', async (req, res) => {
   res.send({ message: 'ponk' });

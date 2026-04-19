@@ -340,7 +340,7 @@ export const getCommentPostPerContentDetail = async (req, res) => {
         };
 
         const query = `
-            SELECT cpcds.id, cpcds.comment_post,
+            SELECT cpcds.id, cpcds.comment_post, cpcds.users_id, cpcds.parent_id,
                 json_build_object(
                         'name', u.display_name,
                         'image', u.photo,

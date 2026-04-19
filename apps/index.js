@@ -45,6 +45,7 @@ export {
     getGroups,
     getGroupsDetail,
     approveMember,
+    rejectMember,
     getMemberNeedApprovalGroup,
     deleteGroup,
     leaveGroup
@@ -110,6 +111,27 @@ export {
     getDataReport,
     saveReportedByUsers
 } from "./controllers/ReportControllers.js";
+
+export {
+    getEventPosts,
+    createEventPost,
+    getEventOfficialPosts,
+    createEventOfficialPost,
+    getEventMoments,
+    getPostsFeed,
+    getMomentsFeed,
+    batchGetLikes,
+    batchGetComments,
+    commentWithReply,
+    getCommentReplies,
+    toggleCommentLike,
+    getEventPostDetail,
+    createEventMoment,
+    deleteEventPost,
+    toggleEventPostLike,
+    getPostsByUser,
+    getMomentsByUser,
+} from "./controllers/EventContentControllers.js";
 
 export {
     getLinkPreview,

@@ -61,7 +61,7 @@ export const createGroups = async (req, res) => {
             );
         }
         const contentDetailsId = getContentDetail.id;
-        await GroupsModels.create({
+        const newGroup = await GroupsModels.create({
             title: title,
             slug: convertToSlug(title.substring(0, 35)) + "_" + makeRandomString(3),
             users_id: users_id,
@@ -74,7 +74,7 @@ export const createGroups = async (req, res) => {
             is_anonymous: is_anonymous,
             created_at: dateToEpochTime(req.headers["x-date-for"]),
         });
-        return responseApi(res, [], null, "Data Success Saved", 0);
+        return responseApi(res, { slug: newGroup.slug }, null, "Data Success Saved", 0);
     } catch (error) {
         console.log(error);
         return responseApi(res, [], null, "Server error....", 1);
@@ -178,10 +178,12 @@ export const joinMemberToGroups = async (req, res) => {
 
         const dataGroupsMembers = await GroupMembersModels.findAll({
             where: {
-                id: groups_id
+                groups_id: groups_id,
+                status: 1,
             },
         });
-        if ((dataGroupsMembers.length + 1) > groupsData.max_members) {
+        // +1 for the creator who is not in the members table
+        if ((dataGroupsMembers.length + 1 + 1) > groupsData.max_members) {
             return responseApi(
                 res,
                 [],
@@ -459,9 +461,11 @@ export const getGroupsDetail = async (req, res) => {
         replacements.groupSlugs = groupSlugs;
         const queryValidation = `
             SELECT
-			gm.status
+                g.id AS group_id,
+                g.users_id AS creator_id,
+                gm.status
             FROM ir_groups g
-            LEFT JOIN ir_group_members gm ON gm.groups_id = g.id
+            LEFT JOIN ir_group_members gm ON gm.groups_id = g.id AND gm.users_id = ${getToken.tod}
             ${whereClause}
             GROUP BY g.id, gm.id;
         `;
@@ -470,24 +474,13 @@ export const getGroupsDetail = async (req, res) => {
             type: db.QueryTypes.SELECT,
             plain: true,
         });
-        if (typeof validationGroupsData?.status === "undefined") {
-            return responseApi(
-                res,
-                {},
-                {},
-                "Sorry You Cannot be see these group",
-                1
-            );
-        } else {
-            if (validationGroupsData?.status === 3) {
-                return responseApi(
-                    res,
-                    {},
-                    {},
-                    "Sorry You Cannot be see these group",
-                    1
-                );
-            }
+        // Allow access if user is the creator, or is a member (status != 3 blocked)
+        if (!validationGroupsData) {
+            return responseApi(res, {}, {}, "Group not found", 1);
+        }
+        const isGroupCreator = validationGroupsData.creator_id === getToken.tod;
+        if (!isGroupCreator && validationGroupsData.status === 3) {
+            return responseApi(res, {}, {}, "Sorry You Cannot be see these group", 1);
         }
         const query = `
             SELECT
@@ -611,8 +604,8 @@ export const getGroupsDetail = async (req, res) => {
                     FROM (
                         SELECT DISTINCT
                             CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
-                            CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END,
-                            CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.username END,
+                            CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END AS photo,
+                            CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.username END AS username,
                             'member' AS role
                         FROM ir_group_members gm
                         JOIN ir_users u ON u.id = gm.users_id
@@ -623,7 +616,7 @@ export const getGroupsDetail = async (req, res) => {
                         SELECT DISTINCT
                             CASE WHEN g.is_anonymous = 1 THEN creator.display_name_anonymous ELSE creator.display_name END AS display_name,
                             CASE WHEN g.is_anonymous = 1 THEN '' ELSE creator.photo END AS photo,
-                            CASE WHEN g.is_anonymous = 1 THEN '' ELSE creator.username END,
+                            creator.username AS username,
                             'creator' AS role
                         FROM ir_users creator
                         WHERE creator.id = g.users_id
@@ -750,6 +743,14 @@ export const approveMember = async (req, res) => {
             }
         );
 
+        // Notify the approved member
+        await generateNotificationMessage({
+            source_id: validationGroupsData?.id,
+            users_id: validationGroupsData?.users_id,
+            created_at: dateToEpochTime(req.headers["x-date-for"]),
+            type: 10
+        });
+
         return responseApi(
             res,
             [],
@@ -759,6 +760,57 @@ export const approveMember = async (req, res) => {
             "Data retrieved successfully",
             0
         );
+    } catch (error) {
+        console.log(error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+};
+
+export const rejectMember = async (req, res) => {
+    try {
+        const { username } = req.body;
+        const getToken = getDataUserUsingToken(req, res);
+        const groupSlugs = req.params.slug;
+
+        const replacements = {
+            groupSlugs,
+            userToken: getToken.tod,
+            username,
+        };
+
+        const query = `
+            SELECT gm.id, gm.status, gm.users_id
+            FROM ir_groups g
+            JOIN ir_group_members gm ON gm.groups_id = g.id
+            JOIN ir_users u ON u.id = gm.users_id
+            WHERE g.slug = :groupSlugs
+              AND g.users_id = :userToken
+              AND u.username = :username
+        `;
+
+        const memberData = await db.query(query, {
+            replacements,
+            type: db.QueryTypes.SELECT,
+            plain: true,
+        });
+
+        if (!memberData) {
+            return responseApi(res, {}, {}, "Member not found", 1);
+        }
+
+        // Notify the rejected member before destroying
+        await generateNotificationMessage({
+            source_id: memberData.id,
+            users_id: memberData.users_id,
+            created_at: dateToEpochTime(req.headers["x-date-for"]),
+            type: 11
+        });
+
+        await GroupMembersModels.destroy({
+            where: { id: memberData.id },
+        });
+
+        return responseApi(res, [], null, "Member rejected successfully", 0);
     } catch (error) {
         console.log(error);
         return responseApi(res, [], null, "Server error....", 1);

@@ -3,6 +3,48 @@ import https from "https";
 import http from "http";
 
 const BUCKET = "profile-images";
+const POST_BUCKET = "post-images";
+
+/**
+ * Upload a file buffer to Supabase Storage (post-images bucket).
+ * Accepts express-fileupload file object or raw buffer.
+ * Returns the relative path stored in the DB, or "" on failure.
+ */
+export const uploadPostImage = async (file) => {
+    if (!file) return "";
+    try {
+        const ext = file.name ? file.name.split(".").pop().toLowerCase() : "jpg";
+        if (ext !== "jpg" && ext !== "jpeg" && ext !== "png") return "";
+        const fileName = `posts/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const buffer = file.data || file;
+
+        const { error } = await supabase.storage
+            .from(POST_BUCKET)
+            .upload(fileName, buffer, {
+                contentType: ext === "png" ? "image/png" : "image/jpeg",
+                upsert: false,
+            });
+
+        if (error) {
+            console.error("[STORAGE] Post image upload failed:", error.message);
+            return "";
+        }
+
+        return fileName;
+    } catch (err) {
+        console.error("[STORAGE] uploadPostImage error:", err.message);
+        return "";
+    }
+};
+
+/**
+ * Get public URL for a file in the post-images bucket.
+ */
+export const getPostImageUrl = (filePath) => {
+    if (!filePath) return null;
+    const { data } = supabase.storage.from(POST_BUCKET).getPublicUrl(filePath);
+    return data?.publicUrl || null;
+};
 
 /**
  * Download an image from a URL and upload it to Supabase Storage.
