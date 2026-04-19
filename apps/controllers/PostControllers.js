@@ -300,11 +300,13 @@ export const commentPostPerContentDetail = withTransaction(
             if (comment_post.length > 100) {
                 return responseApi(res, [], null, "Comment to long", 400);
             }
+            const { parent_id } = req.body;
             const commentPostData = await CommentPostContentDetailModels.create(
                 {
                     users_id: users_id,
                     post_content_details_id: getIdPostContentDetail.id,
                     comment_post: comment_post,
+                    parent_id: parent_id || null,
                     created_at: dateToEpochTime(req.headers["x-date-for"]),
                 },
                 { transaction }
@@ -317,7 +319,20 @@ export const commentPostPerContentDetail = withTransaction(
                     type: 7
                 })
             }
-            return responseApi(res, [], null, "Data has been saved", 0);
+            // Fetch the user info to return a complete comment object
+            const userInfo = await db.query(
+                `SELECT display_name AS name, photo AS image, username, CASE WHEN is_verified = 1 THEN true ELSE false END AS verified FROM ir_users WHERE id = :uid`,
+                { replacements: { uid: users_id }, type: db.QueryTypes.SELECT, plain: true }
+            );
+            const newComment = {
+                id: commentPostData.id,
+                comment_post: comment_post,
+                users_id: users_id,
+                parent_id: parent_id || null,
+                user: userInfo || {},
+                created_at: new Date(commentPostData.created_at * 1000).toISOString(),
+            };
+            return responseApi(res, [newComment], null, "Data has been saved", 0);
         } catch (error) {
             console.log("error function commentPostPerContentDetail", error);
             throw error;

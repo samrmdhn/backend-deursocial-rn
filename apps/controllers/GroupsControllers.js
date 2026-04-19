@@ -701,7 +701,8 @@ export const approveMember = async (req, res) => {
         const queryValidation = `
             SELECT
 			gm.status,
-            gm.id
+            gm.id,
+            gm.users_id
             FROM ir_groups g
             LEFT JOIN ir_group_members gm ON gm.groups_id = g.id
             LEFT JOIN ir_users u ON u.id = gm.users_id
