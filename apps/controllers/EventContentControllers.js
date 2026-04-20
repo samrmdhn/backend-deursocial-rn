@@ -28,6 +28,7 @@ const buildPaginationMeta = (page, limit, totalCount) => ({
 
 const POST_SELECT_FIELDS = `
     pcds.id,
+    pcds.users_id,
     pcds.caption_post AS caption,
     pcds.caption_post_raw AS caption_raw,
     pcds.slug,

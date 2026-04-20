@@ -370,6 +370,7 @@ export const getCommentPostPerContentDetail = async (req, res) => {
             LEFT JOIN ir_post_content_details pcds ON cpcds.post_content_details_id = pcds.id
             LEFT JOIN ir_users u ON cpcds.users_id = u.id
             ${whereClause}
+            AND cpcds.parent_id IS NULL
             ORDER BY cpcds.created_at DESC
             LIMIT :limit OFFSET :offset;
         `;
@@ -384,6 +385,7 @@ export const getCommentPostPerContentDetail = async (req, res) => {
             LEFT JOIN ir_post_content_details pcds ON cpcds.post_content_details_id = pcds.id
             LEFT JOIN ir_users u ON cpcds.users_id = u.id
         ${whereClause}
+        AND cpcds.parent_id IS NULL
     `;
         const totalCountResult = await db.query(countQuery, {
             replacements,
@@ -571,6 +573,7 @@ export const getDetailPostPerContentDetail = async (req, res) => {
 
         const query = `
             SELECT
+                pcds.users_id,
                 pcds.caption_post AS caption,
                 pcds.slug,
                 (
@@ -692,6 +695,7 @@ export const getDetailPostPerContentDetailPerTopic = async (req, res) => {
 
         const query = `
                  SELECT
+                pcds.users_id,
                 pcds.caption_post AS caption,
                 pcds.slug,
                 (
@@ -811,6 +815,7 @@ export const getPostPerUsers = async (req, res) => {
 
         const query = `
             SELECT
+                pcds.users_id,
                 pcds.caption_post AS caption,
                 pcds.slug,
                 CASE 
