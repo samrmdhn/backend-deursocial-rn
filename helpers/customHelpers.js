@@ -57,9 +57,10 @@ export const withTransaction = (fn) => {
         const transaction = await db.transaction();
         try {
             await fn(req, res, transaction);
-            await transaction.commit();
+            // Only commit if fn didn't already commit (early-commit pattern)
+            if (!transaction.finished) await transaction.commit();
         } catch (error) {
-            await transaction.rollback();
+            if (!transaction.finished) await transaction.rollback();
             console.error("Transaction Rolled Back Due to Error:", error);
             return responseApi(res, [], null, "Server error....", 1);
         }

@@ -205,6 +205,8 @@ export const createEventPost = withTransaction(async (req, res, transaction) => 
             }
         }
 
+        // Commit before responding so the detail endpoint can find the post immediately
+        await transaction.commit();
         return responseApi(res, [{ post_slug: post.slug }], null, "Post created", 0);
     } catch (error) {
         console.log("error createEventPost", error);
@@ -325,6 +327,7 @@ export const createEventOfficialPost = withTransaction(async (req, res, transact
             }
         }
 
+        await transaction.commit();
         return responseApi(res, [{ post_slug: post.slug }], null, "Official post created", 0);
     } catch (error) {
         console.log("error createEventOfficialPost", error);
