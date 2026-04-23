@@ -12,6 +12,7 @@ const db = new Sequelize(
         host: process.env.APP_DB_HOST,
         dialect: process.env.APP_DB_CONNECTION,
         port: process.env.APP_DB_PORT,
+        dialectModule: pg,
         pool: {
             max: 40,
             min: 0,
