@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import fileUpload from "express-fileupload";
+import { CronJobs } from "./libs/cron/index.js";
 
 dotenv.config({
     path: `./.env`,
@@ -21,15 +22,15 @@ app.disable("date");
 app.use(express.json({ strict: false }));
 app.use(cookieParser());
 app.use(fileUpload());
-app.use((req, res, next) => {
+app.use((_req, res, next) => {
     res.removeHeader("Date");
     next();
 });
 
-const { default: api } = await import("./routes/api.js");
-const { default: seed } = await import("./routes/seed.js");
-app.use(api);
-app.use(seed);
-
-// Vercel serverless: export the app
-export default app;
+await CronJobs()
+const server = app.listen(parseInt(process.env.APP_PORT), process.env.APP_HOST, function () {
+    console.log("Started application on port %d", process.env.APP_PORT);
+});
+server.on('error', (err) => {
+    console.error('Server error:', err);
+});

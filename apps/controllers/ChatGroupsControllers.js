@@ -1,375 +1,9 @@
 import db from "../../configs/Database.js";
 import {
-    createNameFile,
-    dateToEpochTime,
-    escapeHtmlForXss,
     getDataUserUsingToken,
-    getExtension,
 } from "../../helpers/customHelpers.js";
 import { responseApi } from "../../libs/RestApiHandler.js";
-import ChatGroupsModels from "../models/ChatGroupsModels.js";
-import { jwtDecode } from "jwt-decode";
-import ChatStatusGroupsModels from "../models/ChatStatusGroupsModels.js";
-import { uploadFile } from "../../helpers/FileUpload.js";
 import UsersModels from "../models/UsersModels.js";
-import { generateNotificationMessage } from "../../helpers/notification.js";
-
-let ioInstance;
-
-export const initializeSocket = (io) => {
-    ioInstance = io;
-    io.on("connection", (socket) => {
-        // console.log("ïni token", token)
-        socket.on("joinGroup", async (data) => {
-            const groupsSlug = data.slug;
-            const usersIdAccess = data.userId;
-            if (!groupsSlug) return;
-
-            socket.join(groupsSlug);
-            try {
-                const limit = 20;
-                const offset = 0;
-
-                const replacements = {
-                    limit: parseInt(limit),
-                    offset: parseInt(offset),
-                };
-
-                // Prepare WHERE clause to match the slug
-                let whereClause =
-                    "WHERE g.slug = :groupsSlug";
-                replacements.groupsSlug = groupsSlug;
-
-                // Main query using the slug for fetching messages
-                const query = `
-                    SELECT
-                        u.id as user_id,
-                        g.id as groups_id,
-                        CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END AS image,
-                        TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
-                        cg.messages,
-                        cg.file as image_messages,
-                        CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
-                        g.slug
-                    FROM
-                        ir_chat_groups cg
-                        INNER JOIN ir_users u ON u.id = cg.users_id
-                        INNER JOIN ir_groups g ON g.id = cg.groups_id
-                        ${whereClause}
-                        ORDER BY cg.id DESC
-                    LIMIT :limit OFFSET :offset;
-                `;
-                const messages = await db.query(query, {
-                    replacements,
-                    type: db.QueryTypes.SELECT,
-                });
-
-                const formattedMessages = messages.map((msg) => ({
-                    users_id: msg.user_id,
-                    display_name: msg.display_name,
-                    image: process.env.APP_BUCKET_IMAGE + "/" + msg.image,
-                    display_name_anonymous: msg.display_name_anonymous,
-                    groupSlug: msg.slug,
-                    created_at: msg.created_at,
-                    message: msg.messages,
-                    image_messages: msg.image_messages
-                        ? process.env.APP_BUCKET_IMAGE + msg.image_messages
-                        : null,
-                }));
-
-                await ChatStatusGroupsModels.update(
-                    {
-                        status: 0,
-                    },
-                    {
-                        where: {
-                            groups_id: messages[0].groups_id,
-                            users_id: usersIdAccess,
-                        },
-                    }
-                );
-
-                socket.emit("initialMessages", formattedMessages.reverse());
-            } catch (error) {
-                console.error("Error fetching initial messages:", error);
-            }
-        });
-
-        socket.on("fetchMoreMessages", async (data) => {
-            const groupsSlug = data.slug;
-            const offset = data.offset;
-            if (!groupsSlug) return;
-
-            try {
-                const limit = 20; // number of messages to fetch
-                const replacements = {
-                    limit: limit,
-                    offset: offset || 0,
-                    groupsSlug: groupsSlug,
-                };
-
-                // Raw SQL query for fetching more messages based on the slug
-                const query = `
-                    SELECT
-                        u.id as user_id,
-                        CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END AS image,
-                        cg.messages,
-                        cg.file as image_messages,
-                        TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
-                        CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
-                        g.slug
-                    FROM
-                        ir_chat_groups cg
-                        INNER JOIN ir_users u ON u.id = cg.users_id
-                        INNER JOIN ir_groups g ON g.id = cg.groups_id
-                    WHERE
-                        g.slug = :groupsSlug
-                        ORDER BY cg.id DESC
-                    LIMIT :limit OFFSET :offset;
-                `;
-
-                const messages = await db.query(query, {
-                    replacements,
-                    type: db.QueryTypes.SELECT,
-                });
-
-                const formattedMessages = messages.map((msg) => ({
-                    users_id: msg.user_id,
-                    display_name: msg.display_name,
-                    image: process.env.APP_BUCKET_IMAGE + "/" + msg.image,
-                    created_at: msg.created_at,
-                    display_name_anonymous: msg.display_name_anonymous,
-                    slug: msg.slug,
-                    message: msg.messages,
-                    image_messages: msg.image_messages
-                        ? process.env.APP_BUCKET_IMAGE + msg.image_messages
-                        : null,
-                }));
-
-                socket.emit("moreMessages", formattedMessages.reverse());
-            } catch (error) {
-                console.error("Error fetching more messages:", error);
-            }
-        });
-
-        socket.on("readMessage", async (data) => {
-            const groupsSlug = data.slug;
-            const usersIdAccess = data.userId;
-
-            if (!groupsSlug) return;
-
-            try {
-                const replacements = {};
-                let whereClause =
-                    "WHERE g.slug = :groupsSlug";
-                replacements.groupsSlug = groupsSlug;
-                const query = `
-                    SELECT
-                        u.id as user_id,
-                        g.id as groups_id,
-                        CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END AS image,
-                        TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
-                        cg.messages,
-                        cg.file as image_messages,
-                        CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
-                        g.slug
-                    FROM
-                        ir_chat_groups cg
-                        INNER JOIN ir_users u ON u.id = cg.users_id
-                        INNER JOIN ir_groups g ON g.id = cg.groups_id
-                        ${whereClause}
-                        ORDER BY cg.id DESC;
-                `;
-                const messages = await db.query(query, {
-                    replacements,
-                    type: db.QueryTypes.SELECT,
-                });
-
-                const formattedMessages = messages.map((msg) => ({
-                    users_id: msg.user_id,
-                    display_name: msg.display_name,
-                    image: process.env.APP_BUCKET_IMAGE + "/" + msg.image,
-                    display_name_anonymous: msg.display_name_anonymous,
-                    groupSlug: msg.slug,
-                    created_at: msg.created_at,
-                    message: msg.messages,
-                }));
-
-                await ChatStatusGroupsModels.update(
-                    {
-                        status: 0,
-                    },
-                    {
-                        where: {
-                            groups_id: messages[0].groups_id,
-                            users_id: usersIdAccess,
-                        },
-                    }
-                );
-            } catch (error) {
-                console.error("Error fetching more messages:", error);
-            }
-        });
-    });
-};
-
-export const sendMessageToGroup = async (req, res) => {
-    const { message } = req.body;
-    const file = req.files && req.files.image;
-    let filesNamed = "";
-    if (file) {
-        const fileDate = new Date();
-        filesNamed = fileDate.getTime() + getExtension(file.name);
-        filesNamed = createNameFile(filesNamed);
-        if (
-            getExtension(file.name) !== ".jpg" &&
-            getExtension(file.name) !== ".png"
-        ) {
-            return responseApi(res, [], null, "Image not valid", 400);
-        }
-    }
-
-    let users_id;
-    const usersToken = getDataUserUsingToken(req, res);
-    users_id = usersToken.tod;
-    if (Number(users_id) === 0) {
-        return res.status(400).send("You cannot joined that");
-    }
-
-    const groupSlugs = req.params.groupSlugs;
-
-    if (!users_id) {
-        return res.status(400).send("Invalid request payload");
-    }
-
-    if (!ioInstance) {
-        return res.status(500).send("Socket.IO is not initialized");
-    }
-
-    try {
-        // Assuming you need to map the slug to group ID
-        const groupQuery = `
-            SELECT g.id, g.users_id
-            FROM ir_groups g
-            WHERE g.slug = :groupSlugs
-        `;
-
-        const groupResult = await db.query(groupQuery, {
-            replacements: { groupSlugs },
-            type: db.QueryTypes.SELECT,
-            plain: true
-        });
-
-        if (groupResult.length === 0) {
-            return res.status(404).send("Group not found");
-        }
-
-        const groupId = groupResult.id;
-        let parseMessage = escapeHtmlForXss(message);
-
-
-        const chat = await ChatGroupsModels.create({
-            groups_id: groupId,
-            messages: parseMessage,
-            users_id: users_id,
-            created_at: dateToEpochTime(req.headers["x-date-for"]),
-            file: filesNamed
-        });
-
-        let replacements = {};
-        let whereClause =
-            "WHERE g.slug = :groupSlugs";
-        replacements.groupSlugs = groupSlugs;
-        if (chat.id) {
-            whereClause = "AND cg.id = :idCg";
-            replacements.idCg = chat.id;
-        }
-
-        // Main query using the slug for fetching messages
-        const query = `
-            SELECT
-                cg.id as chat_group_id,
-                u.id as user_id,
-                CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END AS image,
-                cg.messages,
-                cg.file as image_messages,
-                TO_CHAR(TO_TIMESTAMP(cg.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
-                CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
-                g.slug
-            FROM
-                ir_chat_groups cg
-                INNER JOIN ir_users u ON u.id = cg.users_id
-                INNER JOIN ir_groups g ON g.id = cg.groups_id
-                ${whereClause}
-                ORDER BY cg.id DESC
-        `;
-        const dataMessages = await db.query(query, {
-            replacements,
-            type: db.QueryTypes.SELECT,
-        });
-        const formattedMessages = dataMessages.map((msg) => ({
-            users_id: msg.user_id,
-            display_name: msg.display_name,
-            image: process.env.APP_BUCKET_IMAGE + "/" + msg.image,
-            created_at: msg.created_at,
-            display_name_anonymous: msg.display_name_anonymous,
-            groupSlug: msg.slug,
-            message: msg.messages,
-            image_messages: msg.image_messages
-                ? process.env.APP_BUCKET_IMAGE + msg.image_messages
-                : null,
-        }));
-
-        const queryGetTotalMember = `SELECT * FROM ir_group_members WHERE groups_id = ${groupId} AND users_id != ${users_id} `;
-        const dataTotalMember = await db.query(queryGetTotalMember, {
-            type: db.QueryTypes.SELECT,
-        });
-
-        const saveStatusChat = [
-            ...dataTotalMember.map((member) => ({
-                groups_id: member.groups_id,
-                users_id: member.users_id,
-                chat_groups_id: dataMessages[0].chat_group_id,
-                created_at: dateToEpochTime(req.headers["x-date-for"]),
-            })),
-            {
-                groups_id: groupId, // atau ganti sesuai kebutuhan
-                users_id: groupResult.users_id,
-                chat_groups_id: dataMessages[0].chat_group_id,
-                created_at: dateToEpochTime(req.headers["x-date-for"]),
-            },
-        ];
-        for (const item of saveStatusChat) {
-            await generateNotificationMessage({
-                source_id: item.groups_id,
-                users_id: item.users_id,
-                created_at: item.created_at,
-                type: 8
-            });
-        }
-        await ChatStatusGroupsModels.bulkCreate(saveStatusChat)
-            .then(() => {
-                console.log("Data berhasil disimpan di ChatStatusGroupsModels");
-            })
-            .catch((error) => {
-                console.error("Gagal menyimpan data:", error);
-            });
-        if (file) {
-            const fileDestination = process.env.APP_LOCATION_FILE + filesNamed;
-            await uploadFile(file, fileDestination);
-            console.log("filesNamed", filesNamed);
-        }
-        ioInstance.to(groupSlugs).emit("newMessage", formattedMessages[0]);
-
-        console.log(`Message sent to group ${groupSlugs}: ${message}`);
-        return res
-            .status(200)
-            .send({ message: "Message sent", data: formattedMessages });
-    } catch (error) {
-        console.error("Error sending message:", error);
-        return res.status(500).send("Internal server error");
-    }
-};
 
 export const getGroupsMessages = async (req, res) => {
     try {
@@ -380,7 +14,6 @@ export const getGroupsMessages = async (req, res) => {
         const limit = 10;
         const offset = (page - 1) * limit;
 
-        // WHERE clause secara dinamis
         let whereClause = `
             WHERE (gm.users_id = :userToken OR g.users_id = :userToken)
         `;
@@ -405,26 +38,26 @@ export const getGroupsMessages = async (req, res) => {
                 cds.title AS event_name,
                 cds.slug AS event_slug,
                 CASE
-                    WHEN cds.status = 0 THEN 'ended' 
-                    WHEN cds.status = 1 THEN 'ongoing' 
-                    WHEN cds.status = 2 THEN 'upcoming' 
+                    WHEN cds.status = 0 THEN 'ended'
+                    WHEN cds.status = 1 THEN 'ongoing'
+                    WHEN cds.status = 2 THEN 'upcoming'
                     ELSE 'not joined'
                 END AS event_status,
                 g.slug,
                 g.title,
                 g.description,
                 json_build_object(
-                    'is_gender', 
-                    CASE 
+                    'is_gender',
+                    CASE
                         WHEN g.is_gender = 1 THEN 'male'
                         WHEN g.is_gender = 2 THEN 'female'
                         ELSE 'unisex'
                     END,
-                    'is_private', CASE 
+                    'is_private', CASE
                         WHEN g.is_private = 0 THEN false
                         ELSE true
                     END,
-                    'is_anonymous_mode', CASE 
+                    'is_anonymous_mode', CASE
                         WHEN g.is_anonymous = 0 THEN false
                         ELSE true
                     END
@@ -535,4 +168,3 @@ export const getGroupsMessages = async (req, res) => {
         return responseApi(res, [], null, "Server error....", 1);
     }
 };
-

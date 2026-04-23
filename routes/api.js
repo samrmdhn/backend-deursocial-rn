@@ -10,7 +10,8 @@ import * as SearchControllers from "../apps/index.js";
 import * as EmailControllers from "../apps/index.js";
 import * as ReportControllers from "../apps/index.js";
 import * as UnderGroundControllers from "../apps/index.js";
-import * as EventPostsControllers from "../apps/index.js";
+import * as ChatControllers from "../apps/index.js";
+import * as EventContentControllers from "../apps/index.js";
 import { verifyToken } from "../apps/middlewares/verifyToken.js";
 // import { generateDinamicBodyEmail, generateWelcomeEmail, sendMail } from "../libs/Mailist.js";
 
@@ -23,12 +24,13 @@ api.post("/api/vanues", verifyToken, SettingControllers.createVanues);
 api.post("/api/register", SettingControllers.createUsers);
 api.post("/api/login", SettingControllers.loginUsers);
 
-api.get("/api/groups/:contentDetailSlugs", GroupsControllers.getGroups);
 api.get("/api/groups/detail/:slugs", GroupsControllers.getGroupsDetail);
+api.get("/api/groups/:contentDetailSlugs", GroupsControllers.getGroups);
 api.post("/api/groups/:slug", verifyToken, GroupsControllers.createGroups);
 // api.post("/api/join/groups", verifyToken, GroupsControllers.joinMemberToGroups);
 api.post("/api/join/group/:slug", verifyToken, GroupsControllers.joinMemberToGroups);
 api.post("/api/approve/member/:slug", verifyToken, GroupsControllers.approveMember);
+api.post("/api/reject/member/:slug", verifyToken, GroupsControllers.rejectMember);
 api.get("/api/get/member/group/:slugGroup", GroupsControllers.getMemberNeedApprovalGroup);
 api.delete("/api/removed/group/:slugGroup", verifyToken, GroupsControllers.deleteGroup);
 api.delete("/api/leave/group/:slugGroup", verifyToken, GroupsControllers.leaveGroup);
@@ -55,7 +57,6 @@ api.get("/api/content/details/:slug", HomepageControllers.getContentDetails);
 api.post("/api/content/details", verifyToken, HomepageControllers.createContentDetails);
 api.post("/api/check/auth", HomepageControllers.checkAuth);
 
-api.post("/api/sendMessage/:groupSlugs", ChatGroupsControllers.sendMessageToGroup);
 api.get("/api/group/messages", verifyToken, ChatGroupsControllers.getGroupsMessages);
 
 
@@ -116,18 +117,78 @@ api.post("/api/reported/post", verifyToken, ReportControllers.saveReportedByUser
 api.delete("/api/delete/comment/moment", verifyToken, MomentControllers.deleteCommentMoment);
 api.delete("/api/delete/comment/post", verifyToken, PostControllers.deleteCommentPost);
 
+// ═══════════════════════════════════════════════════════════════
+// EVENT CONTENT API (posts, moments, comments, likes)
+// ═══════════════════════════════════════════════════════════════
+
+// Event community posts
+api.get("/api/event/posts/:eventSlug", verifyToken, EventContentControllers.getEventPosts);
+api.post("/api/event/posts/:eventSlug", verifyToken, EventContentControllers.createEventPost);
+
+// Event official (EO) posts
+api.get("/api/event/official-posts/:eventSlug", verifyToken, EventContentControllers.getEventOfficialPosts);
+api.post("/api/event/official-posts/:eventSlug", verifyToken, EventContentControllers.createEventOfficialPost);
+
+// Event moments
+api.get("/api/event/moments/:eventSlug", verifyToken, EventContentControllers.getEventMoments);
+api.post("/api/event/moments/:eventSlug", verifyToken, EventContentControllers.createEventMoment);
+
+// Feeds (cross-event, homepage)
+api.get("/api/posts/feed", verifyToken, EventContentControllers.getPostsFeed);
+api.get("/api/moments/feed", verifyToken, EventContentControllers.getMomentsFeed);
+
+// Event post/moment delete
+api.delete("/api/event/post/:slug", verifyToken, EventContentControllers.deleteEventPost);
+
+// Event post like toggle
+api.post("/api/event/post/like/:slug", verifyToken, EventContentControllers.toggleEventPostLike);
+
+// User profile posts & moments
+api.get("/api/event/posts/user/:username", verifyToken, EventContentControllers.getPostsByUser);
+api.get("/api/event/moments/user/:username", verifyToken, EventContentControllers.getMomentsByUser);
+
+// Event post detail
+api.get("/api/event/post/detail/:slug", verifyToken, EventContentControllers.getEventPostDetail);
+
+// Batch endpoints
+api.post("/api/batch/likes", verifyToken, EventContentControllers.batchGetLikes);
+api.post("/api/batch/comments", verifyToken, EventContentControllers.batchGetComments);
+
+// Comment replies
+api.get("/api/comment/replies/:commentId", verifyToken, EventContentControllers.getCommentReplies);
+
+// Comment likes
+api.post("/api/like/comment/:commentId", verifyToken, EventContentControllers.toggleCommentLike);
+
+api.get('/pink', async (req, res) => {
+  res.send({ message: 'ponk' });
+});
+
 api.post("/api/underground/create/event", UnderGroundControllers.postContentDetailOnUnderGround)
 
-// Event Posts (Community & Official)
-api.get("/api/event/posts/:eventSlug", verifyToken, EventPostsControllers.getEventPosts);
-api.get("/api/event/official-posts/:eventSlug", verifyToken, EventPostsControllers.getEventOfficialPosts);
-api.post("/api/event/posts/:eventSlug", verifyToken, EventPostsControllers.createEventPost);
-api.post("/api/event/official-posts/:eventSlug", verifyToken, EventPostsControllers.createEventOfficialPost);
-api.get("/api/event/post/detail/:slug", verifyToken, EventPostsControllers.getEventPostDetail);
-api.post("/api/event/post/like/:slug", verifyToken, EventPostsControllers.likeEventPost);
-api.post("/api/event/post/comment/:slug", verifyToken, EventPostsControllers.commentEventPost);
-api.get("/api/event/post/comments/:slug", verifyToken, EventPostsControllers.getEventPostComments);
-api.delete("/api/event/post/:slug", verifyToken, EventPostsControllers.deleteEventPost);
-api.delete("/api/event/post/comment", verifyToken, EventPostsControllers.deleteEventPostComment);
+// ═══════════════════════════════════════════════════════════════
+// CHAT API (Supabase queries offloaded to backend)
+// ═══════════════════════════════════════════════════════════════
+
+// Link Preview
+api.post("/api/chat/link-preview", verifyToken, ChatControllers.getLinkPreview);
+
+// Messages List (group list screen — heavy queries)
+api.post("/api/chat/messages/latest-per-group", verifyToken, ChatControllers.getLatestMessagePerGroup);
+api.post("/api/chat/messages/unread-counts", verifyToken, ChatControllers.getUnreadCountsPerGroup);
+
+// DM Conversations
+api.post("/api/chat/conversations/get-or-create", verifyToken, ChatControllers.getOrCreateConversation);
+api.get("/api/chat/conversations/:username/:userId", verifyToken, ChatControllers.getUserConversations);
+
+// Meeting Points
+api.get("/api/chat/meeting-point/:groupSlug", verifyToken, ChatControllers.getMeetingPoint);
+api.post("/api/chat/meeting-point", verifyToken, ChatControllers.setMeetingPoint);
+
+// Media Gallery
+api.get("/api/chat/media/:groupSlug", verifyToken, ChatControllers.getGroupMedia);
+
+// User Join Date
+api.get("/api/chat/user-groups/:userId/:groupSlug/join-date", verifyToken, ChatControllers.getUserJoinDate);
 
 export default api;

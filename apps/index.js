@@ -45,12 +45,13 @@ export {
     getGroups,
     getGroupsDetail,
     approveMember,
+    rejectMember,
     getMemberNeedApprovalGroup,
     deleteGroup,
     leaveGroup
 } from "./controllers/GroupsControllers.js";
 
-export { sendMessageToGroup, getGroupsMessages } from "./controllers/ChatGroupsControllers.js";
+export { getGroupsMessages } from "./controllers/ChatGroupsControllers.js";
 
 export {
     getDetailUser,
@@ -113,13 +114,33 @@ export {
 
 export {
     getEventPosts,
-    getEventOfficialPosts,
     createEventPost,
+    getEventOfficialPosts,
     createEventOfficialPost,
+    getEventMoments,
+    getPostsFeed,
+    getMomentsFeed,
+    batchGetLikes,
+    batchGetComments,
+    commentWithReply,
+    getCommentReplies,
+    toggleCommentLike,
     getEventPostDetail,
-    likeEventPost,
-    commentEventPost,
-    getEventPostComments,
+    createEventMoment,
     deleteEventPost,
-    deleteEventPostComment
-} from "./controllers/EventPostsControllers.js";
+    toggleEventPostLike,
+    getPostsByUser,
+    getMomentsByUser,
+} from "./controllers/EventContentControllers.js";
+
+export {
+    getLinkPreview,
+    getLatestMessagePerGroup,
+    getUnreadCountsPerGroup,
+    getOrCreateConversation,
+    getUserConversations,
+    getMeetingPoint,
+    setMeetingPoint,
+    getGroupMedia,
+    getUserJoinDate,
+} from "./controllers/ChatControllers.js";

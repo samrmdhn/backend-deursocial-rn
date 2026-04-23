@@ -2,6 +2,8 @@ import pg from "pg";
 import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
 dotenv.config({ path: `./.env` });
+const isSupabase = (process.env.APP_DB_HOST || "").includes("supabase.co");
+
 const db = new Sequelize(
     process.env.APP_DB_DATABASE,
     process.env.APP_DB_USERNAME,
@@ -16,6 +18,11 @@ const db = new Sequelize(
             acquire: 120000,
             idle: 10000,
         },
+        ...(isSupabase && {
+            dialectOptions: {
+                ssl: { require: true, rejectUnauthorized: false },
+            },
+        }),
         // logging: process.env.APP_MODE === 'production' ?? false
     },
 );
