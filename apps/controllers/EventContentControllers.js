@@ -50,7 +50,7 @@ const POST_SELECT_FIELDS = `
         'username', u.username
     ) AS user,
     (
-        SELECT COALESCE(json_agg(json_build_object('image', fpcds.file)), '[]')
+        SELECT COALESCE(json_agg(json_build_object('image', fpcds.file)) FILTER (WHERE fpcds.file IS NOT NULL AND fpcds.file != ''), '[]')
         FROM ir_file_post_content_details fpcds
         WHERE fpcds.post_content_details_id = pcds.id
     ) AS images
