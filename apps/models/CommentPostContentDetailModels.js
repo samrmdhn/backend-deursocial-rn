@@ -12,6 +12,14 @@ const CommentPostContentDetailModels = db.define("ir_comment_post_content_detail
         type: TYPES.TEXT("long"),
         allowNull: true,
     },
+    parent_id: {
+        type: TYPES.BIGINT,
+        allowNull: true,
+        references: {
+            model: "ir_comment_post_content_details",
+            key: "id",
+        },
+    },
     post_content_details_id: {
         type: TYPES.BIGINT,
         allowNull: false,

@@ -300,11 +300,13 @@ export const commentPostPerContentDetail = withTransaction(
             if (comment_post.length > 100) {
                 return responseApi(res, [], null, "Comment to long", 400);
             }
+            const { parent_id } = req.body;
             const commentPostData = await CommentPostContentDetailModels.create(
                 {
                     users_id: users_id,
                     post_content_details_id: getIdPostContentDetail.id,
                     comment_post: comment_post,
+                    parent_id: parent_id || null,
                     created_at: dateToEpochTime(req.headers["x-date-for"]),
                 },
                 { transaction }
@@ -317,7 +319,20 @@ export const commentPostPerContentDetail = withTransaction(
                     type: 7
                 })
             }
-            return responseApi(res, [], null, "Data has been saved", 0);
+            // Fetch the user info to return a complete comment object
+            const userInfo = await db.query(
+                `SELECT display_name AS name, photo AS image, username, CASE WHEN is_verified = 1 THEN true ELSE false END AS verified FROM ir_users WHERE id = :uid`,
+                { replacements: { uid: users_id }, type: db.QueryTypes.SELECT, plain: true }
+            );
+            const newComment = {
+                id: commentPostData.id,
+                comment_post: comment_post,
+                users_id: users_id,
+                parent_id: parent_id || null,
+                user: userInfo || {},
+                created_at: new Date(commentPostData.created_at * 1000).toISOString(),
+            };
+            return responseApi(res, [newComment], null, "Data has been saved", 0);
         } catch (error) {
             console.log("error function commentPostPerContentDetail", error);
             throw error;
@@ -340,7 +355,7 @@ export const getCommentPostPerContentDetail = async (req, res) => {
         };
 
         const query = `
-            SELECT cpcds.id, cpcds.comment_post,
+            SELECT cpcds.id, cpcds.comment_post, cpcds.users_id, cpcds.parent_id,
                 json_build_object(
                         'name', u.display_name,
                         'image', u.photo,
@@ -355,6 +370,7 @@ export const getCommentPostPerContentDetail = async (req, res) => {
             LEFT JOIN ir_post_content_details pcds ON cpcds.post_content_details_id = pcds.id
             LEFT JOIN ir_users u ON cpcds.users_id = u.id
             ${whereClause}
+            AND cpcds.parent_id IS NULL
             ORDER BY cpcds.created_at DESC
             LIMIT :limit OFFSET :offset;
         `;
@@ -369,6 +385,7 @@ export const getCommentPostPerContentDetail = async (req, res) => {
             LEFT JOIN ir_post_content_details pcds ON cpcds.post_content_details_id = pcds.id
             LEFT JOIN ir_users u ON cpcds.users_id = u.id
         ${whereClause}
+        AND cpcds.parent_id IS NULL
     `;
         const totalCountResult = await db.query(countQuery, {
             replacements,
@@ -556,6 +573,7 @@ export const getDetailPostPerContentDetail = async (req, res) => {
 
         const query = `
             SELECT
+                pcds.users_id,
                 pcds.caption_post AS caption,
                 pcds.slug,
                 (
@@ -677,6 +695,7 @@ export const getDetailPostPerContentDetailPerTopic = async (req, res) => {
 
         const query = `
                  SELECT
+                pcds.users_id,
                 pcds.caption_post AS caption,
                 pcds.slug,
                 (
@@ -796,6 +815,7 @@ export const getPostPerUsers = async (req, res) => {
 
         const query = `
             SELECT
+                pcds.users_id,
                 pcds.caption_post AS caption,
                 pcds.slug,
                 CASE 

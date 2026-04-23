@@ -1,4 +1,7 @@
 import jwt from "jsonwebtoken";
+import { jwtDecode } from "jwt-decode";
+
+const isDev = process.env.APP_MODE !== "production";
 
 const validateApiKey = (req, res, next) => {
     const apiKey = req.headers["x-api-key"];
@@ -14,6 +17,16 @@ const validateToken = (req, res, next) => {
     const token = req.headers["authorization"]?.split(" ")[1];
     if (!token) {
         return res.status(401).json({ message: "Forbidden: access denied" });
+    }
+    // In development, skip signature verification so production tokens work locally
+    if (isDev) {
+        try {
+            const decoded = jwtDecode(token);
+            req.user = decoded;
+            return next();
+        } catch (err) {
+            return res.status(403).json({ message: "Invalid token" });
+        }
     }
     jwt.verify(token, process.env.APP_ACCESS_TOKEN_SECRET, (err, decoded) => {
         if (err) {

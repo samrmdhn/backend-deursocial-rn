@@ -37,6 +37,12 @@ export const generateNotificationMessage = async ({ type, users_id, source_id, c
             case 9: // someone mentioned your
                 message = `someone mentioned your.`;
                 break;
+            case 10: // approved to join group
+                message = `Your request to join the group has been approved.`;
+                break;
+            case 11: // rejected from group
+                message = `Your request to join the group has been rejected.`;
+                break;
             default:
                 message = "Unknown notification type.";
                 break;
