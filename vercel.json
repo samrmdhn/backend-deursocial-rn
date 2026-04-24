@@ -5,8 +5,7 @@
       "src": "api.js",
       "use": "@vercel/node",
       "config": {
-        "bundle": false,
-        "includeFiles": ["node_modules/pg/**", "node_modules/pg-hstore/**"]
+        "includeFiles": ["node_modules/pg/**", "node_modules/pg-hstore/**", "node_modules/sequelize/**"]
       }
     }
   ],
