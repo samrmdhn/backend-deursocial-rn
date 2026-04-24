@@ -1,6 +1,12 @@
-import pg from "pg";
+import { createRequire } from "module";
 import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
+
+// createRequire loads pg via CJS require(), which:
+// 1. pre-populates the CJS module cache (so Sequelize's internal require('pg') finds it)
+// 2. gives us the exact object Sequelize expects for dialectModule
+const _require = createRequire(import.meta.url);
+const pg = _require("pg");
 dotenv.config({ path: `./.env` });
 const isSupabase = (process.env.APP_DB_HOST || "").includes("supabase.co");
 
