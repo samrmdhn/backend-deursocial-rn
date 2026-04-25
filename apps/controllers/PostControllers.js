@@ -369,13 +369,14 @@ export const getCommentPostPerContentDetail = async (req, res) => {
                         'name', u.display_name,
                         'image', u.photo,
                         'username', u.username,
-                        'verified', CASE 
+                        'verified', CASE
                             WHEN u.is_verified = 1 THEN true
                             ELSE false END
                 ) AS user,
-            TO_CHAR(TO_TIMESTAMP(cpcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at
-            FROM 
-            ir_comment_post_content_details cpcds 
+            TO_CHAR(TO_TIMESTAMP(cpcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
+            (SELECT COUNT(*) FROM ir_comment_post_content_details r WHERE r.parent_id = cpcds.id) AS reply_count
+            FROM
+            ir_comment_post_content_details cpcds
             LEFT JOIN ir_post_content_details pcds ON cpcds.post_content_details_id = pcds.id
             LEFT JOIN ir_users u ON cpcds.users_id = u.id
             ${whereClause}
