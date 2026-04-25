@@ -543,6 +543,8 @@ export const commentMomentPerContentDetail = withTransaction(
                 },
                 { transaction }
             );
+            await transaction.commit();
+
             if (getIdPostContentDetail.users_id !== users_id) {
                 await generateNotificationMessage({
                     source_id: commentPostData.id,
@@ -554,7 +556,7 @@ export const commentMomentPerContentDetail = withTransaction(
             return responseApi(res, [], null, "Data has been saved", 0);
         } catch (error) {
             console.log("error post", error);
-            return responseApi(res, [], null, "Server error....", 1);
+            throw error;
         }
     }
 );
