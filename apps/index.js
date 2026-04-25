@@ -122,6 +122,7 @@ export {
     getMomentsFeed,
     batchGetLikes,
     batchGetComments,
+    batchGetReplyCounts,
     commentWithReply,
     getCommentReplies,
     toggleCommentLike,
