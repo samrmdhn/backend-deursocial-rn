@@ -50,7 +50,7 @@ const POST_SELECT_FIELDS = `
         'username', u.username
     ) AS user,
     (
-        SELECT COALESCE(json_agg(json_build_object('image', fpcds.file)) FILTER (WHERE fpcds.file IS NOT NULL AND fpcds.file != ''), '[]')
+        SELECT COALESCE(json_agg(json_build_object('image', fpcds.file)), '[]')
         FROM ir_file_post_content_details fpcds
         WHERE fpcds.post_content_details_id = pcds.id
     ) AS images
@@ -205,8 +205,6 @@ export const createEventPost = withTransaction(async (req, res, transaction) => 
             }
         }
 
-        // Commit before responding so the detail endpoint can find the post immediately
-        await transaction.commit();
         return responseApi(res, [{ post_slug: post.slug }], null, "Post created", 0);
     } catch (error) {
         console.log("error createEventPost", error);
@@ -327,7 +325,6 @@ export const createEventOfficialPost = withTransaction(async (req, res, transact
             }
         }
 
-        await transaction.commit();
         return responseApi(res, [{ post_slug: post.slug }], null, "Official post created", 0);
     } catch (error) {
         console.log("error createEventOfficialPost", error);
@@ -611,34 +608,6 @@ export const commentWithReply = withTransaction(async (req, res, transaction) =>
 /**
  * GET /api/comment/replies/:commentId
  */
-export const batchGetReplyCounts = async (req, res) => {
-    try {
-        const { comment_ids } = req.body;
-        if (!Array.isArray(comment_ids) || comment_ids.length === 0) {
-            return responseApi(res, {}, null, "OK", 0);
-        }
-        const ids = comment_ids.map((id) => parseInt(id, 10)).filter(Boolean);
-        const query = `
-            SELECT parent_id, COUNT(*) AS reply_count
-            FROM ir_comment_post_content_details
-            WHERE parent_id IN (:ids)
-            GROUP BY parent_id
-        `;
-        const rows = await db.query(query, {
-            type: db.QueryTypes.SELECT,
-            replacements: { ids },
-        });
-        const result = {};
-        for (const row of rows) {
-            result[String(row.parent_id)] = parseInt(row.reply_count, 10);
-        }
-        return responseApi(res, result, null, "OK", 0);
-    } catch (error) {
-        console.log("error batchGetReplyCounts", error);
-        return responseApi(res, {}, null, "Server error", 1);
-    }
-};
-
 export const getCommentReplies = async (req, res) => {
     try {
         const commentId = req.params.commentId;

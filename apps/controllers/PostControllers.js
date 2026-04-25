@@ -258,13 +258,10 @@ export const commentPostPerContentDetail = withTransaction(
     async (req, res, transaction) => {
         try {
             const { comment_post } = req.body;
-            if (!comment_post) {
-                return responseApi(res, [], null, "Comment cannot be empty", 400);
-            }
             const usersToken = getDataUserUsingToken(req, res);
-            const users_id = usersToken?.tod;
-            if (!users_id || users_id === 0 || users_id === "0") {
-                return responseApi(res, [], null, "Please login to comment", 418);
+            const users_id = usersToken.tod;
+            if (users_id === 0) {
+                return responseApi(res, [], null, "What are you doing? You can login yaah", 418);
             }
             const slugPostContentDetail = req.params.slugPost;
             const getIdPostContentDetail =
@@ -314,12 +311,6 @@ export const commentPostPerContentDetail = withTransaction(
                 },
                 { transaction }
             );
-            // Commit before any non-transactional work so the response is
-            // never sent before the INSERT is persisted (Vercel buffers the
-            // response until the handler returns, so a late commit failure
-            // would overwrite the success response with "Server error....").
-            await transaction.commit();
-
             if (getIdPostContentDetail.users_id !== users_id) {
                 await generateNotificationMessage({
                     source_id: commentPostData.id,
@@ -343,7 +334,7 @@ export const commentPostPerContentDetail = withTransaction(
             };
             return responseApi(res, [newComment], null, "Data has been saved", 0);
         } catch (error) {
-            console.error("[commentPostPerContentDetail ERROR]", error?.message ?? error);
+            console.log("error function commentPostPerContentDetail", error);
             throw error;
         }
     }
