@@ -258,10 +258,13 @@ export const commentPostPerContentDetail = withTransaction(
     async (req, res, transaction) => {
         try {
             const { comment_post } = req.body;
+            if (!comment_post) {
+                return responseApi(res, [], null, "Comment cannot be empty", 400);
+            }
             const usersToken = getDataUserUsingToken(req, res);
-            const users_id = usersToken.tod;
-            if (users_id === 0) {
-                return responseApi(res, [], null, "What are you doing? You can login yaah", 418);
+            const users_id = usersToken?.tod;
+            if (!users_id || users_id === 0 || users_id === "0") {
+                return responseApi(res, [], null, "Please login to comment", 418);
             }
             const slugPostContentDetail = req.params.slugPost;
             const getIdPostContentDetail =
@@ -340,7 +343,7 @@ export const commentPostPerContentDetail = withTransaction(
             };
             return responseApi(res, [newComment], null, "Data has been saved", 0);
         } catch (error) {
-            console.log("error function commentPostPerContentDetail", error);
+            console.error("[commentPostPerContentDetail ERROR]", error?.message ?? error);
             throw error;
         }
     }
