@@ -155,7 +155,6 @@ api.post("/api/batch/likes", verifyToken, EventContentControllers.batchGetLikes)
 api.post("/api/batch/comments", verifyToken, EventContentControllers.batchGetComments);
 
 // Comment replies
-api.post("/api/batch/reply-counts", verifyToken, EventContentControllers.batchGetReplyCounts);
 api.get("/api/comment/replies/:commentId", verifyToken, EventContentControllers.getCommentReplies);
 
 // Comment likes
