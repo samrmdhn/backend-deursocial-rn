@@ -113,7 +113,7 @@ export const getDetailUser = async (req, res) => {
             username: queryUser.username,
             description: queryUser.description,
             image: queryUser.photo
-                ? process.env.APP_BUCKET_IMAGE + queryUser.photo
+                ? (queryUser.photo.startsWith('http') ? queryUser.photo : process.env.APP_BUCKET_IMAGE + queryUser.photo)
                 : null,
             followers: queryUser.followers || [],
             total_followers: queryUser.total_followers || 0,

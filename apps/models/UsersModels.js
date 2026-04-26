@@ -20,7 +20,7 @@ const UsersModels = db.define(
             allowNull: true,
         },
         photo: {
-            type: TYPES.STRING(100),
+            type: TYPES.STRING(500),
             allowNull: true,
         },
         description: {

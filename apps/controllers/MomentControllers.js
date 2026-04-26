@@ -1182,7 +1182,7 @@ export const getFollowerOnProfile = async (req, res) => {
             res,
             data.map(user => ({
                 ...user,
-                image: user.image ? process.env.APP_BUCKET_IMAGE + user.image : null,
+                image: user.image ? (user.image.startsWith('http') ? user.image : process.env.APP_BUCKET_IMAGE + user.image) : null,
             })),
             {
                 assets_image_url: process.env.APP_BUCKET_IMAGE,
@@ -1271,7 +1271,7 @@ export const getFollowingOnProfile = async (req, res) => {
             res,
             data.map(user => ({
                 ...user,
-                image: user.image ? process.env.APP_BUCKET_IMAGE + user.image : null,
+                image: user.image ? (user.image.startsWith('http') ? user.image : process.env.APP_BUCKET_IMAGE + user.image) : null,
             })),
             {
                 assets_image_url: process.env.APP_BUCKET_IMAGE,

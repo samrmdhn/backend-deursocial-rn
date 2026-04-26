@@ -13,7 +13,7 @@ const GroupsPostsModels = db.define("ir_groups_posts", {
         allowNull: true, // Kolom ini bisa bernilai null
     },
     photo: {
-        type: TYPES.STRING(100),
+        type: TYPES.STRING(500),
         allowNull: true,
     },
     content_details_id: {

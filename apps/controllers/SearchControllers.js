@@ -392,7 +392,7 @@ export const dataUser = async (req, res) => {
             display_name: user.display_name,
             username: user.username,
             description: cuttingString(user.description, 22),
-            image: process.env.APP_BUCKET_IMAGE + user.photo,
+            image: user.photo ? (user.photo.startsWith('http') ? user.photo : process.env.APP_BUCKET_IMAGE + user.photo) : null,
             followed_user: user.followed_user
         }));
         const countQuery = `
