@@ -34,3 +34,4 @@ const SubregionsModels = db.define("ir_subregions", {
 });
 
 export default SubregionsModels;
+// vercel-fix

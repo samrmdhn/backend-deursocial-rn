@@ -2,33 +2,21 @@ import db from "../../configs/Database.js";
 import DataTypesCustom from "../../libs/DataTypesCustom.js";
 const { TYPES } = DataTypesCustom;
 
-const GroupsPostsModels = db.define("ir_groups_posts", {
+const EventPostsCommentsModels = db.define("ir_event_posts_comments", {
     id: {
         type: TYPES.BIGINT,
         primaryKey: true,
         autoIncrement: true,
     },
-    caption_post: {
-        type: TYPES.TEXT(),
-        allowNull: true, // Kolom ini bisa bernilai null
-    },
-    photo: {
-        type: TYPES.STRING(500),
+    comment: {
+        type: TYPES.TEXT("long"),
         allowNull: true,
     },
-    content_details_id: {
+    event_posts_id: {
         type: TYPES.BIGINT,
         allowNull: false,
         references: {
-            model: "ir_content_details",
-            key: "id",
-        },
-    },
-    groups_id: {
-        type: TYPES.BIGINT,
-        allowNull: false,
-        references: {
-            model: "ir_groups",
+            model: "ir_event_posts",
             key: "id",
         },
     },
@@ -53,5 +41,4 @@ const GroupsPostsModels = db.define("ir_groups_posts", {
     timestamps: false,
 });
 
-export default GroupsPostsModels;
-// vercel-fix
+export default EventPostsCommentsModels;

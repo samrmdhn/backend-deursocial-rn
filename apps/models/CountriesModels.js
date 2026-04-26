@@ -34,3 +34,4 @@ const CountriesModels = db.define("ir_countries", {
 });
 
 export default CountriesModels;
+// vercel-fix

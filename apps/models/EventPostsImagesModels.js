@@ -2,23 +2,23 @@ import db from "../../configs/Database.js";
 import DataTypesCustom from "../../libs/DataTypesCustom.js";
 const { TYPES } = DataTypesCustom;
 
-const BaseNameAnonymousUsersModels = db.define("ir_base_name_anonymous_users", {
+const EventPostsImagesModels = db.define("ir_event_posts_images", {
     id: {
         type: TYPES.BIGINT,
         primaryKey: true,
         autoIncrement: true,
     },
-    name: {
-        type: TYPES.STRING(100),
+    event_posts_id: {
+        type: TYPES.BIGINT,
         allowNull: false,
-    },
-    type: {
-        type: TYPES.TINYINT,
-        allowNull: true,
-        defaultValue: 1,
-        validate: {
-            isIn: [[1, 2, 3]], // Hanya boleh 1, 2, 3 ("1: animal, 2: fnb, 3: characteristic")
+        references: {
+            model: "ir_event_posts",
+            key: "id",
         },
+    },
+    image_url: {
+        type: TYPES.STRING(255),
+        allowNull: false,
     },
     created_at: {
         type: TYPES.BIGINT,
@@ -33,5 +33,4 @@ const BaseNameAnonymousUsersModels = db.define("ir_base_name_anonymous_users", {
     timestamps: false,
 });
 
-export default BaseNameAnonymousUsersModels;
-// vercel-fix
+export default EventPostsImagesModels;

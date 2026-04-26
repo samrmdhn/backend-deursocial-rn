@@ -22,7 +22,7 @@ import db from "../../configs/Database.js";
 import BaseNameAnonymousUsagesModels from "../models/BaseNameAnonymousUsagesModels.js";
 import { uploadImageFromUrl, uploadFileToStorage } from "../../helpers/StorageUpload.js";
 import { validateUniqueField } from "../../helpers/validationSavedData.js";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { validationRegisterUsers } from "../validators/usersValidators.js";
 import axios from "axios";
 import { encrypt } from "../../helpers/CustomShortEncrypt.js";

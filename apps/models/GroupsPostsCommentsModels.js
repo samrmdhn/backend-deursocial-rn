@@ -42,3 +42,4 @@ const GroupsPostsCommentsModels = db.define("ir_groups_posts_comments", {
 });
 
 export default GroupsPostsCommentsModels;
+// vercel-fix

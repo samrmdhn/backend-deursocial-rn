@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
-import api from "./routes/api.js";
 import fileUpload from "express-fileupload";
 import { CronJobs } from "./libs/cron/index.js";
 
@@ -27,7 +26,6 @@ app.use((_req, res, next) => {
     res.removeHeader("Date");
     next();
 });
-app.use(api);
 
 await CronJobs()
 const server = app.listen(parseInt(process.env.APP_PORT), process.env.APP_HOST, function () {
