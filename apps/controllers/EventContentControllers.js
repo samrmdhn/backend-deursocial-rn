@@ -947,7 +947,7 @@ export const getHomeFeed = async (req, res) => {
     try {
         const usersToken = getDataUserUsingToken(req, res);
         const users_id = usersToken.tod;
-        const { page = 1, limit = 15, filter = 'latest', since } = req.query;
+        const { page = 1, limit = 15, filter = 'latest', since, content_type } = req.query;
         const offset = (page - 1) * limit;
 
         // Followed event IDs
@@ -977,6 +977,12 @@ export const getHomeFeed = async (req, res) => {
         const eventWhere = eventSlugFilter
             ? `AND cd.slug = :eventSlugFilter`
             : `AND cd.id IN (:followedIds)`;
+
+        const contentTypeWhere = content_type === 'post'
+            ? `AND pcds.post_category = 0`
+            : content_type === 'moment'
+                ? `AND pcds.post_category = 1`
+                : '';
 
         const replacements = {
             usersId: users_id,
@@ -1024,6 +1030,7 @@ export const getHomeFeed = async (req, res) => {
             WHERE pcds.is_accepted = 1
               AND pcds.type = 1
               ${eventWhere}
+              ${contentTypeWhere}
             ORDER BY ${orderBy}
             LIMIT :limit OFFSET :offset
         `;

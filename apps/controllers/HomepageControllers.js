@@ -1182,20 +1182,46 @@ export const getFollowedEvents = async (req, res) => {
     try {
         const usersToken = getDataUserUsingToken(req, res);
         const users_id = usersToken.tod;
+        const { search = '', page = 1, limit = 5 } = req.query;
+        const offset = (page - 1) * limit;
 
-        const rows = await db.query(`
-            SELECT
-                cd.slug,
-                cd.title,
-                cd.image,
-                cdf.created_at AS followed_at
-            FROM ir_content_detail_followers cdf
-            JOIN ir_content_details cd ON cd.id = cdf.content_details_id
-            WHERE cdf.users_id = :usersId
-            ORDER BY cdf.created_at DESC
-        `, { type: db.QueryTypes.SELECT, replacements: { usersId: users_id } });
+        const searchWhere = search ? `AND LOWER(cd.title) LIKE LOWER(:search)` : '';
+        const replacements = {
+            usersId: users_id,
+            limit: parseInt(limit, 10),
+            offset: parseInt(offset, 10),
+            ...(search ? { search: `%${search}%` } : {}),
+        };
 
-        return responseApi(res, rows, null, "Data has been retrieved", 0);
+        const [rows, [{ total_count }]] = await Promise.all([
+            db.query(`
+                SELECT
+                    cd.slug,
+                    cd.title,
+                    cd.image,
+                    cdf.created_at AS followed_at
+                FROM ir_content_detail_followers cdf
+                JOIN ir_content_details cd ON cd.id = cdf.content_details_id
+                WHERE cdf.users_id = :usersId ${searchWhere}
+                ORDER BY cdf.created_at DESC
+                LIMIT :limit OFFSET :offset
+            `, { type: db.QueryTypes.SELECT, replacements }),
+            db.query(`
+                SELECT COUNT(*) AS total_count
+                FROM ir_content_detail_followers cdf
+                JOIN ir_content_details cd ON cd.id = cdf.content_details_id
+                WHERE cdf.users_id = :usersId ${searchWhere}
+            `, { type: db.QueryTypes.SELECT, replacements }),
+        ]);
+
+        return responseApi(res, rows, {
+            pagination: {
+                current_page: parseInt(page, 10),
+                per_page: parseInt(limit, 10),
+                total: parseInt(total_count, 10),
+                total_page: Math.ceil(total_count / limit),
+            },
+        }, "Data has been retrieved", 0);
     } catch (error) {
         console.log("error getFollowedEvents", error);
         return responseApi(res, [], null, "Server error....", 1);
