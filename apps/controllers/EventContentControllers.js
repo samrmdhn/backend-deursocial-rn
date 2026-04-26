@@ -1011,6 +1011,7 @@ export const getHomeFeed = async (req, res) => {
                     'username', u.username
                 ) AS user,
                 json_build_object('slug', cd.slug, 'title', cd.title) AS event,
+                ${POST_GROUP_FIELD},
                 (
                     SELECT COALESCE(json_agg(json_build_object('image', fpcds.file)), '[]')
                     FROM ir_file_post_content_details fpcds
