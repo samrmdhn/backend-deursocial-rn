@@ -1177,3 +1177,27 @@ export const followEvent = async (req, res) => {
         return responseApi(res, [], null, "Server error....", 1);
     }
 };
+
+export const getFollowedEvents = async (req, res) => {
+    try {
+        const usersToken = getDataUserUsingToken(req, res);
+        const users_id = usersToken.tod;
+
+        const rows = await db.query(`
+            SELECT
+                cd.slug,
+                cd.title,
+                cd.image,
+                cdf.created_at AS followed_at
+            FROM ir_content_detail_followers cdf
+            JOIN ir_content_details cd ON cd.id = cdf.content_details_id
+            WHERE cdf.users_id = :usersId
+            ORDER BY cdf.created_at DESC
+        `, { type: db.QueryTypes.SELECT, replacements: { usersId: users_id } });
+
+        return responseApi(res, rows, null, "Data has been retrieved", 0);
+    } catch (error) {
+        console.log("error getFollowedEvents", error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+};

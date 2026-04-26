@@ -283,11 +283,16 @@ export const createEventOfficialPost = withTransaction(async (req, res, transact
             return responseApi(res, [], null, "Caption too long", 400);
         }
 
-        // Verify user is event organizer
-        // Since ir_event_organizers doesn't have users_id, we allow any verified user
-        // or the content creator to post as official. Adjust this logic as needed.
         const contentDetail = await ContentDetailsModels.findOne({ where: { slug: eventSlug } });
         if (!contentDetail) return responseApi(res, [], null, "Event not found", 400);
+
+        // EO auth: verify caller is linked to this event's organizer via ir_users_admin
+        const [eoCheck] = await db.query(`
+            SELECT 1 FROM ir_users_admin ua
+            WHERE ua.users_id = :usersId AND ua.event_organizers_id = :eoId
+            LIMIT 1
+        `, { type: db.QueryTypes.SELECT, replacements: { usersId: users_id, eoId: contentDetail.event_organizers_id } });
+        if (!eoCheck) return responseApi(res, [], null, "Not authorized as event organizer", 2);
 
         const data = {
             created_at: dateToEpochTime(req.headers["x-date-for"]),
@@ -298,6 +303,7 @@ export const createEventOfficialPost = withTransaction(async (req, res, transact
             type: 1,
             post_category: 0,
             is_official: 1,
+            is_eo_post: 1,
             is_accepted: 1,
         };
 
@@ -920,6 +926,199 @@ export const getEventPostDetail = async (req, res) => {
         return responseApi(res, data, { assets_image_url: process.env.APP_BUCKET_IMAGE }, "Data has been retrieved", 0);
     } catch (error) {
         console.log("error getEventPostDetail", error);
+        return responseApi(res, [], null, "Server error", 1);
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// HOMEPAGE FEED (followed events)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/feed/home
+ * Returns interleaved posts & moments from events the user follows.
+ * Query params:
+ *   filter  - "latest" (default) | "popular" | "event:<eventSlug>"
+ *   page    - page number (default 1)
+ *   limit   - items per page (default 15)
+ *   since   - epoch ms; sets meta.has_new if newer content exists
+ */
+export const getHomeFeed = async (req, res) => {
+    try {
+        const usersToken = getDataUserUsingToken(req, res);
+        const users_id = usersToken.tod;
+        const { page = 1, limit = 15, filter = 'latest', since } = req.query;
+        const offset = (page - 1) * limit;
+
+        // Followed event IDs
+        const followedRows = await db.query(`
+            SELECT content_details_id FROM ir_content_detail_followers WHERE users_id = :usersId
+        `, { type: db.QueryTypes.SELECT, replacements: { usersId: users_id } });
+
+        if (followedRows.length === 0) {
+            return responseApi(res, [], {
+                no_followed_events: true,
+                has_new: false,
+                pagination: { current_page: parseInt(page, 10), per_page: parseInt(limit, 10), total: 0, total_page: 0 },
+            }, "Data has been retrieved", 0);
+        }
+
+        const followedIds = followedRows.map(r => r.content_details_id);
+
+        let eventSlugFilter = null;
+        if (filter && filter.startsWith('event:')) {
+            eventSlugFilter = filter.slice(6);
+        }
+
+        const orderBy = filter === 'popular'
+            ? `pcds.impression_count DESC, pcds.created_at DESC`
+            : `pcds.created_at DESC`;
+
+        const eventWhere = eventSlugFilter
+            ? `AND cd.slug = :eventSlugFilter`
+            : `AND cd.id IN (:followedIds)`;
+
+        const replacements = {
+            usersId: users_id,
+            followedIds,
+            limit: parseInt(limit, 10),
+            offset: parseInt(offset, 10),
+            ...(eventSlugFilter ? { eventSlugFilter } : {}),
+        };
+
+        const query = `
+            SELECT
+                pcds.id,
+                pcds.slug,
+                CASE WHEN pcds.post_category = 0 THEN 'post' ELSE 'moment' END AS content_type,
+                pcds.is_official,
+                pcds.is_eo_post,
+                pcds.caption_post AS caption,
+                pcds.caption_post_raw AS caption_raw,
+                pcds.impression_count,
+                (SELECT COUNT(*) FROM ir_like_post_content_details lpcds WHERE lpcds.post_content_details_id = pcds.id) AS total_likes,
+                (SELECT COUNT(*) FROM ir_comment_post_content_details cpcds WHERE cpcds.post_content_details_id = pcds.id AND cpcds.parent_id IS NULL) AS total_comments,
+                (SELECT EXISTS (
+                    SELECT 1 FROM ir_like_post_content_details l
+                    WHERE l.post_content_details_id = pcds.id AND l.users_id = :usersId
+                )) AS is_liked,
+                TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS created_at,
+                pcds.created_at AS created_at_epoch,
+                json_build_object(
+                    'name', u.display_name,
+                    'image', u.photo,
+                    'verified', CASE WHEN u.is_verified = 1 THEN true ELSE false END,
+                    'username', u.username
+                ) AS user,
+                json_build_object('slug', cd.slug, 'title', cd.title) AS event,
+                (
+                    SELECT COALESCE(json_agg(json_build_object('image', fpcds.file)), '[]')
+                    FROM ir_file_post_content_details fpcds
+                    WHERE fpcds.post_content_details_id = pcds.id
+                ) AS images
+            FROM ir_post_content_details pcds
+            JOIN ir_users u ON pcds.users_id = u.id
+            JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
+            JOIN ir_content_details cd ON cd.id = spcd.content_details_id
+            WHERE pcds.is_accepted = 1
+              AND pcds.type = 1
+              ${eventWhere}
+            ORDER BY ${orderBy}
+            LIMIT :limit OFFSET :offset
+        `;
+
+        const countQuery = `
+            SELECT COUNT(DISTINCT pcds.id) AS total_count
+            FROM ir_post_content_details pcds
+            JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
+            JOIN ir_content_details cd ON cd.id = spcd.content_details_id
+            WHERE pcds.is_accepted = 1
+              AND pcds.type = 1
+              ${eventWhere}
+        `;
+
+        const [data, [{ total_count }]] = await Promise.all([
+            db.query(query, { type: db.QueryTypes.SELECT, replacements }),
+            db.query(countQuery, { type: db.QueryTypes.SELECT, replacements }),
+        ]);
+
+        let has_new = false;
+        if (since) {
+            const sinceEpoch = Math.floor(parseInt(since, 10) / 1000);
+            const newCheckQuery = `
+                SELECT EXISTS (
+                    SELECT 1 FROM ir_post_content_details pcds
+                    JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
+                    JOIN ir_content_details cd ON cd.id = spcd.content_details_id
+                    WHERE pcds.is_accepted = 1
+                      AND pcds.type = 1
+                      AND pcds.created_at > :sinceEpoch
+                      ${eventWhere}
+                ) AS has_new
+            `;
+            const [{ has_new: hn }] = await db.query(newCheckQuery, {
+                type: db.QueryTypes.SELECT,
+                replacements: { ...replacements, sinceEpoch },
+            });
+            has_new = hn;
+        }
+
+        return responseApi(res, data, {
+            no_followed_events: false,
+            has_new,
+            assets_image_url: process.env.APP_BUCKET_IMAGE,
+            pagination: {
+                current_page: parseInt(page, 10),
+                per_page: parseInt(limit, 10),
+                total: parseInt(total_count, 10),
+                total_page: Math.ceil(total_count / limit),
+            },
+        }, "Data has been retrieved", 0);
+    } catch (error) {
+        console.log("error getHomeFeed", error);
+        return responseApi(res, [], null, "Server error", 1);
+    }
+};
+
+/**
+ * GET /api/feed/home/new-count
+ * Lightweight new-content check. Returns { count, has_new } without post data.
+ * Query params: since (epoch ms, required)
+ */
+export const getHomeFeedNewCount = async (req, res) => {
+    try {
+        const usersToken = getDataUserUsingToken(req, res);
+        const users_id = usersToken.tod;
+        const { since } = req.query;
+
+        if (!since) return responseApi(res, { count: 0, has_new: false }, null, "since param required", 0);
+
+        const sinceEpoch = Math.floor(parseInt(since, 10) / 1000);
+
+        const followedRows = await db.query(`
+            SELECT content_details_id FROM ir_content_detail_followers WHERE users_id = :usersId
+        `, { type: db.QueryTypes.SELECT, replacements: { usersId: users_id } });
+
+        if (followedRows.length === 0) {
+            return responseApi(res, { count: 0, has_new: false }, null, "Data has been retrieved", 0);
+        }
+
+        const followedIds = followedRows.map(r => r.content_details_id);
+
+        const [{ count }] = await db.query(`
+            SELECT COUNT(DISTINCT pcds.id) AS count
+            FROM ir_post_content_details pcds
+            JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
+            WHERE pcds.is_accepted = 1
+              AND pcds.type = 1
+              AND pcds.created_at > :sinceEpoch
+              AND spcd.content_details_id IN (:followedIds)
+        `, { type: db.QueryTypes.SELECT, replacements: { usersId: users_id, sinceEpoch, followedIds } });
+
+        const countNum = parseInt(count, 10);
+        return responseApi(res, { count: countNum, has_new: countNum > 0 }, null, "Data has been retrieved", 0);
+    } catch (error) {
+        console.log("error getHomeFeedNewCount", error);
         return responseApi(res, [], null, "Server error", 1);
     }
 };

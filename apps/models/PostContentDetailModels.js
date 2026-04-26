@@ -65,6 +65,20 @@ const PostContentDetailModels = db.define("ir_post_content_details", {
             isIn: [[0, 1]],
         }
     },
+    is_eo_post: {
+        type: TYPES.TINYINT,
+        allowNull: false,
+        description: "0: community post, 1: EO-created official post",
+        defaultValue: 0,
+        validate: {
+            isIn: [[0, 1]],
+        }
+    },
+    impression_count: {
+        type: TYPES.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+    },
     groups_id: {
         type: TYPES.BIGINT,
         allowNull: true,

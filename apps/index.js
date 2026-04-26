@@ -20,6 +20,7 @@ export {
     createContentDetails,
     getContentDetails,
     followEvent,
+    getFollowedEvents,
     getContentsData
 } from "./controllers/HomepageControllers.js";
 export {
@@ -131,6 +132,8 @@ export {
     toggleEventPostLike,
     getPostsByUser,
     getMomentsByUser,
+    getHomeFeed,
+    getHomeFeedNewCount,
 } from "./controllers/EventContentControllers.js";
 
 export {

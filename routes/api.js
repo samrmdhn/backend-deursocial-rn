@@ -51,6 +51,7 @@ api.post("/api/type/content/detail", verifyToken, HomepageControllers.createType
 api.get("/api/tags", verifyToken, HomepageControllers.getTags);
 api.post("/api/tags", verifyToken, HomepageControllers.createTags);
 api.post("/api/follow/event", verifyToken, HomepageControllers.followEvent);
+api.get("/api/follow/events", verifyToken, HomepageControllers.getFollowedEvents);
 api.get("/api/actress", verifyToken, HomepageControllers.getActress);
 api.post("/api/actress", verifyToken, HomepageControllers.createActress);
 api.get("/api/content/details/:slug", HomepageControllers.getContentDetails);
@@ -136,6 +137,10 @@ api.post("/api/event/moments/:eventSlug", verifyToken, EventContentControllers.c
 // Feeds (cross-event, homepage)
 api.get("/api/posts/feed", verifyToken, EventContentControllers.getPostsFeed);
 api.get("/api/moments/feed", verifyToken, EventContentControllers.getMomentsFeed);
+
+// Homepage feed (followed events only)
+api.get("/api/feed/home/new-count", verifyToken, EventContentControllers.getHomeFeedNewCount);
+api.get("/api/feed/home", verifyToken, EventContentControllers.getHomeFeed);
 
 // Event post/moment delete
 api.delete("/api/event/post/:slug", verifyToken, EventContentControllers.deleteEventPost);

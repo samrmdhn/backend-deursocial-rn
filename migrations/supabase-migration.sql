@@ -124,3 +124,19 @@ CREATE TABLE IF NOT EXISTS "ir_like_comment_post_content_details" ("id"  BIGSERI
 
 -- ir_topic_post_relations
 CREATE TABLE IF NOT EXISTS "ir_topic_post_relations" ("id"  BIGSERIAL , "post_content_details_id" BIGINT NOT NULL REFERENCES "ir_post_content_details" ("id") ON DELETE CASCADE, "users_id" BIGINT NOT NULL REFERENCES "ir_users" ("id") ON DELETE CASCADE, "topic_posts_id" BIGINT NOT NULL REFERENCES "ir_topic_posts" ("id") ON DELETE CASCADE, "created_at" BIGINT, "updated_at" BIGINT, PRIMARY KEY ("id"));
+
+-- event-follow-feed: new columns on ir_post_content_details
+ALTER TABLE "ir_post_content_details" ADD COLUMN IF NOT EXISTS "impression_count" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "ir_post_content_details" ADD COLUMN IF NOT EXISTS "is_eo_post" SMALLINT NOT NULL DEFAULT 0;
+
+-- event-follow-feed: backfill impression_count from existing impression rows
+UPDATE "ir_post_content_details" pcds
+SET "impression_count" = (
+    SELECT COUNT(*) FROM "ir_impression_post_content_details" ipcds
+    WHERE ipcds.post_content_details_id = pcds.id
+);
+
+-- event-follow-feed: indexes
+CREATE INDEX IF NOT EXISTS "idx_content_detail_followers_users_id" ON "ir_content_detail_followers" ("users_id");
+CREATE INDEX IF NOT EXISTS "idx_post_content_details_impression_count" ON "ir_post_content_details" ("impression_count" DESC);
+CREATE INDEX IF NOT EXISTS "idx_post_content_details_created_at" ON "ir_post_content_details" ("created_at" DESC);
