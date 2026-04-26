@@ -657,21 +657,26 @@ export const getDetailMomentPerContentDetail = async (req, res) => {
             return responseApi(res, [], null, "Server error....", 400);
         }
         if (Number(users_id) > 0) {
-            const t = await db.transaction();
-            try {
-                await ImpressionPostContentDetailModels.create({
-                    users_id: users_id,
-                    post_content_details_id: getIdPostContentDetail.id,
-                }, { transaction: t });
-                await PostContentDetailModels.increment('impression_count', {
-                    by: 1,
-                    where: { id: getIdPostContentDetail.id },
-                    transaction: t,
-                });
-                await t.commit();
-            } catch (impressionErr) {
-                await t.rollback();
-                console.log("error recording impression", impressionErr);
+            const alreadyImpressed = await ImpressionPostContentDetailModels.findOne({
+                where: { users_id, post_content_details_id: getIdPostContentDetail.id },
+            });
+            if (!alreadyImpressed) {
+                const t = await db.transaction();
+                try {
+                    await ImpressionPostContentDetailModels.create({
+                        users_id,
+                        post_content_details_id: getIdPostContentDetail.id,
+                    }, { transaction: t });
+                    await PostContentDetailModels.increment('impression_count', {
+                        by: 1,
+                        where: { id: getIdPostContentDetail.id },
+                        transaction: t,
+                    });
+                    await t.commit();
+                } catch (impressionErr) {
+                    await t.rollback();
+                    console.log("error recording impression", impressionErr);
+                }
             }
         }
 
