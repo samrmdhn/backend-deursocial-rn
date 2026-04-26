@@ -1,13 +1,10 @@
-import { fileURLToPath } from "url";
-import { dirname, resolve } from "path";
+import { createRequire } from "module";
 import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
 dotenv.config({ path: `./.env` });
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-// pg-module.cjs is a CJS file — nft can statically trace its require('pg')
-// and Sequelize uses dialectModulePath to require it by absolute path
-const pgModulePath = resolve(__dirname, "../pg-module.cjs");
+const require = createRequire(import.meta.url);
+const pgModulePath = require.resolve("pg");
 
 const isSupabase = (process.env.APP_DB_HOST || "").includes("supabase.co");
 
