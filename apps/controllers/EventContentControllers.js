@@ -947,7 +947,7 @@ export const getHomeFeed = async (req, res) => {
     try {
         const usersToken = getDataUserUsingToken(req, res);
         const users_id = usersToken.tod;
-        const { page = 1, limit = 15, filter = 'latest', since, content_type } = req.query;
+        const { page = 1, limit = 15, sort = 'latest', since, content_type, event_slug } = req.query;
         const offset = (page - 1) * limit;
 
         // Followed event IDs
@@ -965,17 +965,12 @@ export const getHomeFeed = async (req, res) => {
 
         const followedIds = followedRows.map(r => r.content_details_id);
 
-        let eventSlugFilter = null;
-        if (filter && filter.startsWith('event:')) {
-            eventSlugFilter = filter.slice(6);
-        }
-
-        const orderBy = filter === 'popular'
+        const orderBy = sort === 'popular'
             ? `pcds.impression_count DESC, pcds.created_at DESC`
             : `pcds.created_at DESC`;
 
-        const eventWhere = eventSlugFilter
-            ? `AND cd.slug = :eventSlugFilter`
+        const eventWhere = event_slug
+            ? `AND cd.slug = :eventSlug`
             : `AND cd.id IN (:followedIds)`;
 
         const contentTypeWhere = content_type === 'post'
@@ -989,7 +984,7 @@ export const getHomeFeed = async (req, res) => {
             followedIds,
             limit: parseInt(limit, 10),
             offset: parseInt(offset, 10),
-            ...(eventSlugFilter ? { eventSlugFilter } : {}),
+            ...(event_slug ? { eventSlug: event_slug } : {}),
         };
 
         const query = `
