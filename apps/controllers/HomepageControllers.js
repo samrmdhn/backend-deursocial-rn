@@ -1098,7 +1098,7 @@ export const getContentDetails = async (req, res) => {
                 );
             } catch (error) {
                 console.error("Error updating impression:", error);
-                throw error;
+                // non-fatal, continue
             }
         }
         return responseApi(
