@@ -885,7 +885,7 @@ export const getContentDetails = async (req, res) => {
     try {
         const usersToken = getDataUserUsingToken(req, res);
         const contentDetailsSlug = req.params.slug;
-        const users_id = usersToken?.tod;
+        const users_id = usersToken?.tod ?? 0;
 
         const replacements = {};
         let whereClause = "WHERE cd.slug = :contentDetailsSlug";
@@ -915,7 +915,7 @@ export const getContentDetails = async (req, res) => {
                     WHEN cd.status = 1 THEN 'ongoing'
                     ELSE 'upcoming' END AS status,
                 CASE
-                    WHEN EXISTS (
+                    WHEN ${users_id} > 0 AND EXISTS (
                         SELECT 1
                         FROM ir_content_detail_followers cdf
                         WHERE cdf.content_details_id = cd.id AND cdf.users_id = ${users_id}
@@ -983,12 +983,12 @@ export const getContentDetails = async (req, res) => {
                                 WHERE ipcds.post_content_details_id = pcds.id
                             ), 
                             'post_liked', (
-                                SELECT EXISTS (
+                                SELECT CASE WHEN ${users_id} > 0 THEN EXISTS (
                                     SELECT 1
                                     FROM ir_like_post_content_details l
                                     WHERE l.post_content_details_id = pcds.id
                                     AND l.users_id = ${users_id}
-                                )
+                                ) ELSE false END
                             )
                         )
                     )
