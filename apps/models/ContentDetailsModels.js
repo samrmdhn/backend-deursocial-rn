@@ -41,7 +41,15 @@ const ContentDetailsModels = db.define(
         },
         image: {
             type: TYPES.STRING(200),
-            allowNull: true, // Kolom image bisa null
+            allowNull: true,
+        },
+        instagram_url: {
+            type: TYPES.STRING(200),
+            allowNull: true,
+        },
+        website_url: {
+            type: TYPES.STRING(200),
+            allowNull: true,
         },
         vanues_id: {
             type: TYPES.BIGINT,

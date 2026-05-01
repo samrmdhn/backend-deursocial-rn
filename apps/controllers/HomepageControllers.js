@@ -26,6 +26,7 @@ import { Sequelize } from "sequelize";
 import { uploadFile } from "../../helpers/FileUpload.js";
 import ContentDetailFollowersModels from "../models/ContentDetailFollowersModels.js";
 import UsersModels from "../models/UsersModels.js";
+import EventPostersModels from "../models/EventPostersModels.js";
 
 const Op = Sequelize.Op;
 
@@ -902,9 +903,16 @@ export const getContentDetails = async (req, res) => {
                 TO_CHAR(TO_TIMESTAMP(cd.date_end), 'YYYY-MM-DD HH24:MI:SS') AS date_end,
                 cd.description,
                 cd.image,
+                cd.instagram_url,
+                cd.website_url,
+                (
+                    SELECT json_agg(json_build_object('id', ep.id, 'image_url', ep.image_url) ORDER BY ep.id)
+                    FROM ir_event_posters ep
+                    WHERE ep.content_details_id = cd.id
+                ) AS posters,
                 CASE WHEN cd.is_trending = 1 THEN true ELSE false END AS is_trending,
-                CASE WHEN cd.status = 0 THEN 'ended' 
-                    WHEN cd.status = 1 THEN 'ongoing' 
+                CASE WHEN cd.status = 0 THEN 'ended'
+                    WHEN cd.status = 1 THEN 'ongoing'
                     ELSE 'upcoming' END AS status,
                 CASE
                     WHEN EXISTS (
@@ -1225,5 +1233,88 @@ export const getFollowedEvents = async (req, res) => {
     } catch (error) {
         console.log("error getFollowedEvents", error);
         return responseApi(res, [], null, "Server error....", 1);
+    }
+};
+
+// ─── Event Poster Management ─────────────────────────────────────────────────
+
+/**
+ * POST /api/event/:slug/posters
+ * Body: { image_url: string }  (relative path already uploaded to bucket by CMS)
+ */
+export const addEventPoster = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const { image_url } = req.body;
+        if (!image_url) return responseApi(res, null, null, "image_url is required", 1);
+
+        const event = await ContentDetailsModels.findOne({ where: { slug } });
+        if (!event) return responseApi(res, null, null, "Event not found", 1);
+
+        const poster = await EventPostersModels.create({
+            content_details_id: event.id,
+            image_url,
+            created_at: makeEpocTime(),
+        });
+
+        return responseApi(res, poster, null, "Poster added", 0);
+    } catch (error) {
+        console.log("error addEventPoster", error);
+        return responseApi(res, null, null, "Server error....", 1);
+    }
+};
+
+/**
+ * DELETE /api/event/posters/:posterId
+ */
+export const deleteEventPoster = async (req, res) => {
+    try {
+        const { posterId } = req.params;
+        const deleted = await EventPostersModels.destroy({ where: { id: posterId } });
+        if (!deleted) return responseApi(res, null, null, "Poster not found", 1);
+        return responseApi(res, null, null, "Poster deleted", 0);
+    } catch (error) {
+        console.log("error deleteEventPoster", error);
+        return responseApi(res, null, null, "Server error....", 1);
+    }
+};
+
+/**
+ * GET /api/event/:slug/posters
+ */
+export const getEventPosters = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const event = await ContentDetailsModels.findOne({ where: { slug } });
+        if (!event) return responseApi(res, [], null, "Event not found", 1);
+
+        const posters = await EventPostersModels.findAll({
+            where: { content_details_id: event.id },
+            order: [["id", "ASC"]],
+        });
+        return responseApi(res, posters, null, "Data has been retrieved", 0);
+    } catch (error) {
+        console.log("error getEventPosters", error);
+        return responseApi(res, [], null, "Server error....", 1);
+    }
+};
+
+/**
+ * PATCH /api/event/:slug/social
+ * Body: { instagram_url?, website_url? }
+ */
+export const updateEventSocial = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const { instagram_url, website_url } = req.body;
+
+        await ContentDetailsModels.update(
+            { instagram_url: instagram_url ?? null, website_url: website_url ?? null },
+            { where: { slug } }
+        );
+        return responseApi(res, null, null, "Social links updated", 0);
+    } catch (error) {
+        console.log("error updateEventSocial", error);
+        return responseApi(res, null, null, "Server error....", 1);
     }
 };

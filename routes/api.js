@@ -58,6 +58,12 @@ api.get("/api/content/details/:slug", HomepageControllers.getContentDetails);
 api.post("/api/content/details", verifyToken, HomepageControllers.createContentDetails);
 api.post("/api/check/auth", HomepageControllers.checkAuth);
 
+// Event poster management (EO / CMS)
+api.get("/api/event/:slug/posters", verifyToken, HomepageControllers.getEventPosters);
+api.post("/api/event/:slug/posters", verifyToken, HomepageControllers.addEventPoster);
+api.delete("/api/event/posters/:posterId", verifyToken, HomepageControllers.deleteEventPoster);
+api.patch("/api/event/:slug/social", verifyToken, HomepageControllers.updateEventSocial);
+
 api.get("/api/group/messages", verifyToken, ChatGroupsControllers.getGroupsMessages);
 
 

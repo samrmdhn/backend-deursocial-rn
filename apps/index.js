@@ -21,7 +21,11 @@ export {
     getContentDetails,
     followEvent,
     getFollowedEvents,
-    getContentsData
+    getContentsData,
+    addEventPoster,
+    deleteEventPoster,
+    getEventPosters,
+    updateEventSocial,
 } from "./controllers/HomepageControllers.js";
 export {
     visitorToken,
