@@ -254,7 +254,7 @@ export const getGroups = async (req, res) => {
         });
 
         const contentDetailSlugs = req.params.contentDetailSlugs;
-        const { page = 1, search_text = "" } = req.query;
+        const { page = 1, search_text = "", filter = "all" } = req.query;
         const limit = 10;
         const offset = (page - 1) * limit;
 
@@ -267,6 +267,11 @@ export const getGroups = async (req, res) => {
         if (search_text) {
             whereClause += ` AND g.title ILIKE :search_text`;
             replacements.search_text = `%${search_text}%`;
+        }
+        if (filter === "open") {
+            whereClause += ` AND g.max_members > (SELECT COUNT(*) FROM ir_group_members gm2 WHERE gm2.groups_id = g.id AND gm2.status = 1)`;
+        } else if (filter === "full") {
+            whereClause += ` AND g.max_members <= (SELECT COUNT(*) FROM ir_group_members gm2 WHERE gm2.groups_id = g.id AND gm2.status = 1)`;
         }
         if (dataUser) {
             if (dataUser.is_anonymous == 0) {
@@ -394,6 +399,7 @@ export const getGroups = async (req, res) => {
             LEFT JOIN ir_group_members gm ON gm.groups_id = g.id
             ${whereClause}
             GROUP BY g.id, u.id, c.id, cds.id
+            ORDER BY g.id DESC
             LIMIT :limit OFFSET :offset;
         `;
 

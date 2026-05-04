@@ -103,7 +103,8 @@ export const getEventPosts = async (req, res) => {
         const query = `
             SELECT ${POST_SELECT_FIELDS},
                 ${POST_IS_LIKED_FIELD(users_id)},
-                ${POST_GROUP_FIELD}
+                ${POST_GROUP_FIELD},
+                ${POST_EVENT_FIELD}
             FROM ir_post_content_details pcds
             JOIN ir_users u ON pcds.users_id = u.id
             JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
