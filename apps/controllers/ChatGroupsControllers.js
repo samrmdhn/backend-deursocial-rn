@@ -15,7 +15,10 @@ export const getGroupsMessages = async (req, res) => {
         const offset = (page - 1) * limit;
 
         let whereClause = `
-            WHERE (gm.users_id = :userToken OR g.users_id = :userToken)
+            WHERE (
+                (gm.users_id = :userToken AND gm.status = 1)
+                OR g.users_id = :userToken
+            )
         `;
 
         if (title) {
