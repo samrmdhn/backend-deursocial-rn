@@ -7,13 +7,14 @@ import ContentDetailsModels from "../models/ContentDetailsModels.js";
 export const searchData = (req, res) => {
     try {
         const searchType = req.params.type;
-        const { page = 1, search_text = "" } = req.query;
+        const { search_text = "" } = req.query;
         if (search_text) {
-            if (searchType === "event") {
+            // Accept both legacy and new type names from the frontend
+            if (searchType === "events" || searchType === "event") {
                 return dataEvent(req, res);
-            } else if (searchType === "users") {
+            } else if (searchType === "people" || searchType === "users") {
                 return dataUser(req, res);
-            } else if (searchType === "groupEvent") {
+            } else if (searchType === "groups" || searchType === "groupEvent") {
                 return dataGroupEvent(req, res);
             }
         }
@@ -295,13 +296,8 @@ const dataEvent = async (req, res) => {
 
         const countQuery = `
             SELECT COUNT(*) AS total_count
-            FROM (
-                SELECT 1
-                FROM ir_content_details cd
-                ${whereClause}
-                LIMIT :limit OFFSET :offset
-            ) AS subquery;
-            ;
+            FROM ir_content_details cd
+            ${whereClause};
         `;
         const totalCountResult = await db.query(countQuery, {
             replacements,
@@ -338,29 +334,11 @@ export const dataUser = async (req, res) => {
         const getToken = await getDataUserUsingToken(req, res);
         const userId = getToken.tod;
 
-        const userData = await UsersModels.findOne({ where: { id: userId } });
-
         const { page = 1, search_text = "" } = req.query;
         const limit = 10;
         const offset = (page - 1) * limit;
 
-        const isOwner = Number(userData?.id) === Number(userId);
-
-        const queryFollowedUser = `
-            (
-                CASE 
-                    WHEN EXISTS (
-                        SELECT 1
-                        FROM ir_following_users ifs
-                        WHERE 
-                            ifs.following_id = ${getToken.tod} AND ifs.users_id = u.id
-                    ) THEN true
-                    ELSE false
-                END
-            ) AS followed_user
-        `;
-
-        const whereClause = `WHERE u.display_name ILIKE :search_text`;
+        const whereClause = `WHERE (u.display_name ILIKE :search_text OR u.username ILIKE :search_text)`;
 
         const query = `
             SELECT
@@ -369,7 +347,18 @@ export const dataUser = async (req, res) => {
                 u.display_name,
                 u.description,
                 u.photo,
-                u.gender
+                u.gender,
+                (
+                    CASE 
+                        WHEN EXISTS (
+                            SELECT 1
+                            FROM ir_following_users ifs
+                            WHERE 
+                                ifs.following_id = ${getToken.tod} AND ifs.users_id = u.id
+                        ) THEN true
+                        ELSE false
+                    END
+                ) AS followed_user
             FROM ir_users u
             ${whereClause}
             ORDER BY u.display_name ASC
