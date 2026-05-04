@@ -191,7 +191,6 @@ const dataEvent = async (req, res) => {
         const limit = 10;
         const offset = (page - 1) * limit;
 
-        // Construct where clause with parameterized values
         let whereClause = ``;
         const replacements = {
             limit: parseInt(limit),
@@ -199,8 +198,8 @@ const dataEvent = async (req, res) => {
         };
 
         if (search_text) {
-            whereClause += ` WHERE cd.title ILIKE :title`;
-            replacements.title = `%${search_text}%`;
+            whereClause += ` WHERE cd.title ILIKE :search_text OR cd.description ILIKE :search_text`;
+            replacements.search_text = `%${search_text}%`;
         }
 
         const query = `
@@ -254,12 +253,12 @@ const dataEvent = async (req, res) => {
                     WHERE cdf.content_details_id = cd.id
                 ) AS "followers",
                 (
-                    SELECT COUNT(*) AS total_posts
+                    SELECT COUNT(*)
                     FROM ir_segmented_post_content_details gp 
                     WHERE gp.content_details_id = cd.id
                 ) AS "total_posts",
                 (
-                    SELECT COUNT(*) AS total_groups
+                    SELECT COUNT(*)
                     FROM ir_groups g 
                     WHERE g.content_details_id = cd.id
                 ) AS "total_groups",
@@ -285,7 +284,8 @@ const dataEvent = async (req, res) => {
             LEFT JOIN ir_provinces p ON v.provinces_id = p.id
             LEFT JOIN ir_countries co ON v.countries_id = co.id
             ${whereClause}
-            GROUP BY cd.id, tcd.id, eo.id, co.id, ci.id, v.id, p.id
+            GROUP BY cd.id, tcd.id, eo.id, co.id, ci.id, v.id
+            ORDER BY cd.id DESC
             LIMIT :limit OFFSET :offset;
         `;
 
@@ -294,23 +294,22 @@ const dataEvent = async (req, res) => {
             type: db.QueryTypes.SELECT,
         });
 
+        const countReplacements = search_text ? { search_text: `%${search_text}%` } : {};
         const countQuery = `
             SELECT COUNT(*) AS total_count
             FROM ir_content_details cd
             ${whereClause};
         `;
         const totalCountResult = await db.query(countQuery, {
-            replacements,
+            replacements: countReplacements,
             type: db.QueryTypes.SELECT,
         });
         const totalCount = totalCountResult[0].total_count;
         const totalPages = Math.ceil(totalCount / limit);
 
-        const responseData = contentData;
-
         return responseApi(
             res,
-            responseData,
+            contentData,
             {
                 assets_image_url: process.env.APP_BUCKET_IMAGE,
                 pagination: {
@@ -320,11 +319,11 @@ const dataEvent = async (req, res) => {
                     total_page: totalPages,
                 },
             },
-            "Data Success Saved",
+            "Data retrieved successfully",
             0
         );
     } catch (error) {
-        console.log("Err get data Event", error);
+        console.error("Err get data Event", error);
         return responseApi(res, [], null, "Server error....", 1);
     }
 };
