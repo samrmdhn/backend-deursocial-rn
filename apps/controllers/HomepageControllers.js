@@ -352,12 +352,37 @@ export const getContents = async (req, res) => {
         const totalCount = totalCountResult[0].total_count;
         const totalPages = Math.ceil(totalCount / limit);
 
+        const SUPABASE_STORAGE = process.env.APP_BUCKET_IMAGE || "https://jbcdjttfaxwendlfpgjk.supabase.co/storage/v1/object/public/post-images/";
+        const BACKEND_BASE_URL = process.env.APP_URL || "https://deursocial.vercel.app";
+
+        const normalizeImage = (image) => {
+            if (!image) return null;
+            // Already full Supabase URL
+            if (image.startsWith("https://jbcdjttfaxwendlfpgjk.supabase.co")) return image;
+            // CMS localhost URL → extract path after /post-images/ and rebuild
+            if (image.startsWith("http://localhost") || image.startsWith("https://localhost")) {
+                const match = image.match(/\/post-images\/(.+)$/);
+                if (match) return `${SUPABASE_STORAGE}${match[1]}`;
+                return null;
+            }
+            // Relative /images/xxx.jpg → backend URL
+            if (image.startsWith("/images/")) return `${BACKEND_BASE_URL}${image}`;
+            // Relative /images without leading slash
+            if (image.startsWith("images/")) return `${BACKEND_BASE_URL}/${image}`;
+            // Just filename (e.g. "1777403749-1qcsip.png") → append to Supabase storage
+            if (!image.startsWith("/") && !image.startsWith("http")) return `${SUPABASE_STORAGE}${image}`;
+            return image;
+        };
+
         const responseData = contentData.map((item) => ({
             id: item.id,
             title: item.title,
             content_slug: item.slug,
             display_types: item.display_type,
-            content_details: item.content_details,
+            content_details: (item.content_details || []).map((cd) => ({
+                ...cd,
+                image: normalizeImage(cd.image),
+            })),
         }));
 
         return responseApi(
