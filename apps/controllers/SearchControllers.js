@@ -130,7 +130,15 @@ export const dataGroupEvent = async (req, res) => {
                         FROM ir_users creator
                         WHERE creator.id = g.users_id
                     ) AS member
-                ) AS members
+                ) AS members,
+                CASE
+                    WHEN cds.id IS NOT NULL THEN json_build_object(
+                        'id', cds.id,
+                        'title', cds.title,
+                        'slug', cds.slug
+                    )
+                    ELSE NULL
+                END AS content_details
             FROM ir_groups g
             LEFT JOIN ir_content_details cds ON cds.id = g.content_details_id
             LEFT JOIN ir_users u ON u.id = g.users_id
