@@ -7,18 +7,15 @@ import ContentDetailsModels from "../models/ContentDetailsModels.js";
 export const searchData = (req, res) => {
     try {
         const searchType = req.params.type;
-        const { search_text = "" } = req.query;
-        if (search_text) {
-            // Accept both legacy and new type names from the frontend
-            if (searchType === "events" || searchType === "event") {
-                return dataEvent(req, res);
-            } else if (searchType === "people" || searchType === "users") {
-                return dataUser(req, res);
-            } else if (searchType === "groups" || searchType === "groupEvent") {
-                return dataGroupEvent(req, res);
-            }
+        // Accept both legacy and new type names from the frontend
+        if (searchType === "events" || searchType === "event") {
+            return dataEvent(req, res);
+        } else if (searchType === "people" || searchType === "users") {
+            return dataUser(req, res);
+        } else if (searchType === "groups" || searchType === "groupEvent") {
+            return dataGroupEvent(req, res);
         }
-        return responseApi(res, [], null, "Data has been retrieved", 0);
+        return responseApi(res, [], null, "Invalid search type", 1);
     } catch (error) {
         console.log(error);
         return responseApi(res, [], null, "Server error....", 1);
