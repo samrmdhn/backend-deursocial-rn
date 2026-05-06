@@ -164,6 +164,7 @@ api.get("/api/event/post/detail/:slug", verifyToken, EventContentControllers.get
 // Batch endpoints
 api.post("/api/batch/likes", verifyToken, EventContentControllers.batchGetLikes);
 api.post("/api/batch/comments", verifyToken, EventContentControllers.batchGetComments);
+api.post("/api/batch/impressions", verifyToken, EventContentControllers.batchRecordImpressions);
 
 // Comment replies
 api.get("/api/comment/replies/:commentId", verifyToken, EventContentControllers.getCommentReplies);

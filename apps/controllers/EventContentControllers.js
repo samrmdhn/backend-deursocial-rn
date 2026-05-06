@@ -12,6 +12,7 @@ import GroupsModels from "../models/GroupsModels.js";
 import { parseToRichText } from "../../libs/ParseToRichText.js";
 import { generateNotificationMessage } from "../../helpers/notification.js";
 import { uploadPostImage, getPostImageUrl } from "../../helpers/StorageUpload.js";
+import ImpressionPostContentDetailModels from "../models/ImpressionPostContentDetailModels.js";
 
 // ═══════════════════════════════════════════════════════════════
 // HELPERS
@@ -96,19 +97,41 @@ export const getEventPosts = async (req, res) => {
 
         const replacements = { usersId: users_id, eventSlug, limit: parseInt(limit, 10), offset: parseInt(offset, 10) };
 
-        const orderBy = filter === "popular"
-            ? `(SELECT COUNT(*) FROM ir_like_post_content_details lpcds WHERE lpcds.post_content_details_id = pcds.id) DESC`
-            : `pcds.created_at DESC`;
+        const isPopular = filter === "popular";
+
+        // CTE pre-aggregates all counts once — avoids N×4 correlated subqueries
+        const popularCte = isPopular ? `
+            WITH post_scores AS (
+                SELECT
+                    pcds.id,
+                    (
+                        COALESCE((SELECT COUNT(*) FROM ir_like_post_content_details l WHERE l.post_content_details_id = pcds.id), 0) * 3
+                        + COALESCE((SELECT COUNT(*) FROM ir_comment_post_content_details c WHERE c.post_content_details_id = pcds.id), 0) * 5
+                        + COALESCE((SELECT COUNT(*) FROM ir_impression_post_content_details i WHERE i.post_content_details_id = pcds.id AND i.source = 'detail'), 0) * 2
+                        + COALESCE((SELECT COUNT(*) FROM ir_impression_post_content_details i WHERE i.post_content_details_id = pcds.id AND i.source = 'feed'), 0) * 1
+                    ) AS score
+                FROM ir_post_content_details pcds
+                JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
+                JOIN ir_content_details cd ON cd.id = spcd.content_details_id
+                WHERE pcds.is_accepted = 1 AND pcds.type = 1 AND pcds.post_category = 0
+                  AND pcds.is_official = 0 AND cd.slug = :eventSlug
+            )` : ``;
+
+        const orderBy = isPopular ? `ps.score DESC, pcds.created_at DESC` : `pcds.created_at DESC`;
+        const scoreJoin = isPopular ? `JOIN post_scores ps ON ps.id = pcds.id` : ``;
 
         const query = `
+            ${popularCte}
             SELECT ${POST_SELECT_FIELDS},
                 ${POST_IS_LIKED_FIELD(users_id)},
                 ${POST_GROUP_FIELD},
                 ${POST_EVENT_FIELD}
+                ${isPopular ? ', ps.score' : ''}
             FROM ir_post_content_details pcds
             JOIN ir_users u ON pcds.users_id = u.id
             JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
             JOIN ir_content_details cd ON cd.id = spcd.content_details_id
+            ${scoreJoin}
             WHERE pcds.is_accepted = 1
               AND pcds.type = 1
               AND pcds.post_category = 0
@@ -559,6 +582,72 @@ export const batchGetComments = async (req, res) => {
     }
 };
 
+// ─── Shared impression helper ───────────────────────────────────
+// Uses a single INSERT ... ON CONFLICT DO NOTHING per batch instead of
+// N×2 SELECT queries. source: 'feed' | 'detail'
+async function recordImpressionsBatch(slugs, users_id, source = 'feed') {
+    if (!slugs.length) return;
+
+    // 1. Resolve all slugs → post IDs in one query
+    const posts = await db.query(
+        `SELECT id, slug FROM ir_post_content_details WHERE slug IN (:slugs)`,
+        { type: db.QueryTypes.SELECT, replacements: { slugs } }
+    );
+    if (!posts.length) return;
+
+    // 2. INSERT ... ON CONFLICT DO NOTHING — no duplicate check needed
+    const now = Date.now();
+    const values = posts
+        .map((p) => `(${users_id}, ${p.id}, '${source}', ${now}, ${now})`)
+        .join(', ');
+
+    await db.query(
+        `INSERT INTO ir_impression_post_content_details
+            (users_id, post_content_details_id, source, created_at, updated_at)
+         VALUES ${values}
+         ON CONFLICT DO NOTHING`,
+        { type: db.QueryTypes.INSERT }
+    );
+
+    // 3. Sync impression_count for the posts that were newly inserted
+    //    (only increment for rows that didn't already exist)
+    //    Done as a single UPDATE using subquery — no N+1
+    const postIds = posts.map((p) => p.id).join(', ');
+    await db.query(
+        `UPDATE ir_post_content_details
+         SET impression_count = (
+             SELECT COUNT(*) FROM ir_impression_post_content_details
+             WHERE post_content_details_id = ir_post_content_details.id
+         )
+         WHERE id IN (${postIds})`,
+        { type: db.QueryTypes.UPDATE }
+    );
+}
+
+/**
+ * POST /api/batch/impressions
+ * Body: { slugs: ["slug1", "slug2", ...] }
+ * X-style: called from feed when cards scroll into view.
+ * Fire-and-forget on client — always returns 200 immediately.
+ */
+export const batchRecordImpressions = async (req, res) => {
+    // Respond immediately — client doesn't need to wait
+    responseApi(res, {}, null, "ok", 0);
+
+    try {
+        const usersToken = getDataUserUsingToken(req, res);
+        const users_id = usersToken?.tod;
+        const { slugs, source = 'feed' } = req.body;
+        if (!users_id || !Array.isArray(slugs) || slugs.length === 0) return;
+
+        // Cap to 50 slugs per request to prevent abuse
+        const safeSlugs = slugs.slice(0, 50);
+        await recordImpressionsBatch(safeSlugs, users_id, source);
+    } catch (e) {
+        console.log("error batchRecordImpressions", e);
+    }
+};
+
 // ═══════════════════════════════════════════════════════════════
 // COMMENT REPLIES (nested 1-level)
 // ═══════════════════════════════════════════════════════════════
@@ -924,7 +1013,14 @@ export const getEventPostDetail = async (req, res) => {
 
         if (!data) return responseApi(res, [], null, "Post not found", 400);
 
-        return responseApi(res, data, { assets_image_url: process.env.APP_BUCKET_IMAGE }, "Data has been retrieved", 0);
+        // Fire-and-forget: respond immediately, record impression in background
+        responseApi(res, data, { assets_image_url: process.env.APP_BUCKET_IMAGE }, "Data has been retrieved", 0);
+
+        if (Number(users_id) > 0) {
+            recordImpressionsBatch([slug], users_id, 'detail').catch((e) =>
+                console.log("error recording detail impression", e)
+            );
+        }
     } catch (error) {
         console.log("error getEventPostDetail", error);
         return responseApi(res, [], null, "Server error", 1);
@@ -966,9 +1062,7 @@ export const getHomeFeed = async (req, res) => {
 
         const followedIds = followedRows.map(r => r.content_details_id);
 
-        const orderBy = sort === 'popular'
-            ? `pcds.impression_count DESC, pcds.created_at DESC`
-            : `pcds.created_at DESC`;
+        const isPopular = sort === 'popular';
 
         const eventWhere = event_slug
             ? `AND cd.slug = :eventSlug`
@@ -988,7 +1082,30 @@ export const getHomeFeed = async (req, res) => {
             ...(event_slug ? { eventSlug: event_slug } : {}),
         };
 
+        // CTE pre-aggregates scores once — avoids N×4 correlated subqueries per row
+        const popularCte = isPopular ? `
+            WITH post_scores AS (
+                SELECT
+                    pcds.id,
+                    (
+                        COALESCE((SELECT COUNT(*) FROM ir_like_post_content_details l WHERE l.post_content_details_id = pcds.id), 0) * 3
+                        + COALESCE((SELECT COUNT(*) FROM ir_comment_post_content_details c WHERE c.post_content_details_id = pcds.id), 0) * 5
+                        + COALESCE((SELECT COUNT(*) FROM ir_impression_post_content_details i WHERE i.post_content_details_id = pcds.id AND i.source = 'detail'), 0) * 2
+                        + COALESCE((SELECT COUNT(*) FROM ir_impression_post_content_details i WHERE i.post_content_details_id = pcds.id AND i.source = 'feed'), 0) * 1
+                    ) AS score
+                FROM ir_post_content_details pcds
+                JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
+                JOIN ir_content_details cd ON cd.id = spcd.content_details_id
+                WHERE pcds.is_accepted = 1 AND pcds.type = 1
+                  ${eventWhere}
+                  ${contentTypeWhere}
+            )` : ``;
+
+        const orderBy = isPopular ? `ps.score DESC, pcds.created_at DESC` : `pcds.created_at DESC`;
+        const scoreJoin = isPopular ? `JOIN post_scores ps ON ps.id = pcds.id` : ``;
+
         const query = `
+            ${popularCte}
             SELECT
                 pcds.id,
                 pcds.slug,
@@ -1019,10 +1136,12 @@ export const getHomeFeed = async (req, res) => {
                     FROM ir_file_post_content_details fpcds
                     WHERE fpcds.post_content_details_id = pcds.id
                 ) AS images
+                ${isPopular ? ', ps.score' : ''}
             FROM ir_post_content_details pcds
             JOIN ir_users u ON pcds.users_id = u.id
             JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
             JOIN ir_content_details cd ON cd.id = spcd.content_details_id
+            ${scoreJoin}
             WHERE pcds.is_accepted = 1
               AND pcds.type = 1
               ${eventWhere}
