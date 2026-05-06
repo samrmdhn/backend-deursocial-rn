@@ -127,6 +127,7 @@ export {
     getMomentsFeed,
     batchGetLikes,
     batchGetComments,
+    batchRecordImpressions,
     commentWithReply,
     getCommentReplies,
     toggleCommentLike,
