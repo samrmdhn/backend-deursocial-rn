@@ -41,7 +41,7 @@ const POST_SELECT_FIELDS = `
         ELSE 'ticket' 
     END AS post_type,
     (SELECT COUNT(*) FROM ir_like_post_content_details lpcds WHERE lpcds.post_content_details_id = pcds.id) AS total_likes,
-    (SELECT COUNT(*) FROM ir_comment_post_content_details cpcds WHERE cpcds.post_content_details_id = pcds.id AND cpcds.parent_id IS NULL) AS total_comments,
+    (SELECT COUNT(*) FROM ir_comment_post_content_details cpcds WHERE cpcds.post_content_details_id = pcds.id) AS total_comments,
     (SELECT COUNT(*) FROM ir_impression_post_content_details ipcds WHERE ipcds.post_content_details_id = pcds.id) AS total_impressions,
     TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS created_at,
     json_build_object(
@@ -114,7 +114,7 @@ export const getEventPosts = async (req, res) => {
                 JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
                 JOIN ir_content_details cd ON cd.id = spcd.content_details_id
                 WHERE pcds.is_accepted = 1 AND pcds.type = 1 AND pcds.post_category = 0
-                  AND pcds.is_official = 0 AND cd.slug = :eventSlug
+                  AND cd.slug = :eventSlug
             )` : ``;
 
         const orderBy = isPopular ? `ps.score DESC, pcds.created_at DESC` : `pcds.created_at DESC`;
@@ -135,7 +135,6 @@ export const getEventPosts = async (req, res) => {
             WHERE pcds.is_accepted = 1
               AND pcds.type = 1
               AND pcds.post_category = 0
-              AND pcds.is_official = 0
               AND cd.slug = :eventSlug
             ORDER BY ${orderBy}
             LIMIT :limit OFFSET :offset
@@ -148,7 +147,7 @@ export const getEventPosts = async (req, res) => {
             FROM ir_post_content_details pcds
             JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
             JOIN ir_content_details cd ON cd.id = spcd.content_details_id
-            WHERE pcds.is_accepted = 1 AND pcds.type = 1 AND pcds.post_category = 0 AND pcds.is_official = 0 AND cd.slug = :eventSlug
+            WHERE pcds.is_accepted = 1 AND pcds.type = 1 AND pcds.post_category = 0 AND cd.slug = :eventSlug
         `, { type: db.QueryTypes.SELECT, replacements });
 
         return responseApi(res, data, {
@@ -988,6 +987,95 @@ export const getMomentsByUser = async (req, res) => {
 };
 
 /**
+ * GET /api/organizer/:id/posts
+ * Community posts across all events by an organizer
+ */
+export const getPostsByOrganizer = async (req, res) => {
+    try {
+        const usersToken = getDataUserUsingToken(req, res);
+        const viewer_id = usersToken.tod;
+        const { id } = req.params;
+        const { page = 1, limit = 10 } = req.query;
+        const offset = (page - 1) * limit;
+
+        const replacements = { usersId: viewer_id, organizerId: id, limit: parseInt(limit, 10), offset: parseInt(offset, 10) };
+
+        const query = `
+            SELECT ${POST_SELECT_FIELDS},
+                ${POST_IS_LIKED_FIELD(viewer_id)},
+                ${POST_EVENT_FIELD},
+                ${POST_GROUP_FIELD}
+            FROM ir_post_content_details pcds
+            JOIN ir_users u ON pcds.users_id = u.id
+            JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
+            JOIN ir_content_details cd ON cd.id = spcd.content_details_id
+            WHERE pcds.is_accepted = 1 AND pcds.post_category = 0 AND cd.event_organizers_id = :organizerId
+            ORDER BY pcds.created_at DESC
+            LIMIT :limit OFFSET :offset
+        `;
+
+        const data = await db.query(query, { type: db.QueryTypes.SELECT, replacements });
+
+        const [{ total_count }] = await db.query(`
+            SELECT COUNT(*) AS total_count
+            FROM ir_post_content_details pcds
+            JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
+            JOIN ir_content_details cd ON cd.id = spcd.content_details_id
+            WHERE pcds.is_accepted = 1 AND pcds.post_category = 0 AND cd.event_organizers_id = :organizerId
+        `, { type: db.QueryTypes.SELECT, replacements });
+
+        return responseApi(res, data, buildPaginationMeta(page, limit, total_count), "Data has been retrieved", 0);
+    } catch (error) {
+        console.log("error getPostsByOrganizer", error);
+        return responseApi(res, [], null, "Server error", 1);
+    }
+};
+
+/**
+ * GET /api/organizer/:id/moments
+ * Moments across all events by an organizer
+ */
+export const getMomentsByOrganizer = async (req, res) => {
+    try {
+        const usersToken = getDataUserUsingToken(req, res);
+        const viewer_id = usersToken.tod;
+        const { id } = req.params;
+        const { page = 1, limit = 12 } = req.query;
+        const offset = (page - 1) * limit;
+
+        const replacements = { usersId: viewer_id, organizerId: id, limit: parseInt(limit, 10), offset: parseInt(offset, 10) };
+
+        const query = `
+            SELECT ${POST_SELECT_FIELDS},
+                ${POST_IS_LIKED_FIELD(viewer_id)},
+                ${POST_EVENT_FIELD}
+            FROM ir_post_content_details pcds
+            JOIN ir_users u ON pcds.users_id = u.id
+            JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
+            JOIN ir_content_details cd ON cd.id = spcd.content_details_id
+            WHERE pcds.is_accepted = 1 AND pcds.post_category = 1 AND cd.event_organizers_id = :organizerId
+            ORDER BY pcds.created_at DESC
+            LIMIT :limit OFFSET :offset
+        `;
+
+        const data = await db.query(query, { type: db.QueryTypes.SELECT, replacements });
+
+        const [{ total_count }] = await db.query(`
+            SELECT COUNT(*) AS total_count
+            FROM ir_post_content_details pcds
+            JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
+            JOIN ir_content_details cd ON cd.id = spcd.content_details_id
+            WHERE pcds.is_accepted = 1 AND pcds.post_category = 1 AND cd.event_organizers_id = :organizerId
+        `, { type: db.QueryTypes.SELECT, replacements });
+
+        return responseApi(res, data, buildPaginationMeta(page, limit, total_count), "Data has been retrieved", 0);
+    } catch (error) {
+        console.log("error getMomentsByOrganizer", error);
+        return responseApi(res, [], null, "Server error", 1);
+    }
+};
+
+/**
  * GET /api/event/post/detail/:slug
  * Single post detail (works for any post type)
  */
@@ -1116,7 +1204,7 @@ export const getHomeFeed = async (req, res) => {
                 pcds.caption_post_raw AS caption_raw,
                 pcds.impression_count,
                 (SELECT COUNT(*) FROM ir_like_post_content_details lpcds WHERE lpcds.post_content_details_id = pcds.id) AS total_likes,
-                (SELECT COUNT(*) FROM ir_comment_post_content_details cpcds WHERE cpcds.post_content_details_id = pcds.id AND cpcds.parent_id IS NULL) AS total_comments,
+                (SELECT COUNT(*) FROM ir_comment_post_content_details cpcds WHERE cpcds.post_content_details_id = pcds.id) AS total_comments,
                 (SELECT EXISTS (
                     SELECT 1 FROM ir_like_post_content_details l
                     WHERE l.post_content_details_id = pcds.id AND l.users_id = :usersId
@@ -1242,6 +1330,127 @@ export const getHomeFeedNewCount = async (req, res) => {
         return responseApi(res, { count: countNum, has_new: countNum > 0 }, null, "Data has been retrieved", 0);
     } catch (error) {
         console.log("error getHomeFeedNewCount", error);
+        return responseApi(res, [], null, "Server error", 1);
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// EO CONTENT BROWSER
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/eo/events/:eventSlug/posts
+ * All posts (community + official) for an event — EO operator view
+ */
+export const getEOEventPosts = async (req, res) => {
+    try {
+        const usersToken = getDataUserUsingToken(req, res);
+        const users_id = usersToken.tod;
+        const { eventSlug } = req.params;
+        const { page = 1, limit = 20 } = req.query;
+        const offset = (page - 1) * limit;
+
+        // Verify caller is EO for this event
+        const [eoCheck] = await db.query(`
+            SELECT ua.id FROM ir_users_admin ua
+            JOIN ir_content_details cd ON cd.event_organizers_id = ua.event_organizers_id
+            WHERE ua.users_id = :usersId AND cd.slug = :eventSlug AND ua.roles_id = 2
+        `, { type: db.QueryTypes.SELECT, replacements: { usersId: users_id, eventSlug } });
+        if (!eoCheck) return responseApi(res, [], null, "Not authorized as event organizer", 2);
+
+        const replacements = { usersId: users_id, eventSlug, limit: parseInt(limit, 10), offset: parseInt(offset, 10) };
+
+        const rows = await db.query(`
+            SELECT
+                pcds.id, pcds.slug, pcds.caption_post AS caption, pcds.is_official,
+                pcds.post_category,
+                TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS created_at,
+                json_build_object('name', u.display_name, 'username', u.username, 'image', u.photo) AS author,
+                (SELECT COUNT(*) FROM ir_like_post_content_details l WHERE l.post_content_details_id = pcds.id) AS total_likes,
+                (SELECT COUNT(*) FROM ir_comment_post_content_details c WHERE c.post_content_details_id = pcds.id) AS total_comments,
+                (SELECT EXISTS (SELECT 1 FROM ir_like_post_content_details l WHERE l.post_content_details_id = pcds.id AND l.users_id = :usersId)) AS is_liked,
+                (SELECT COALESCE(json_agg(json_build_object('image', fpcds.file)), '[]') FROM ir_file_post_content_details fpcds WHERE fpcds.post_content_details_id = pcds.id) AS images
+            FROM ir_post_content_details pcds
+            JOIN ir_users u ON pcds.users_id = u.id
+            JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
+            JOIN ir_content_details cd ON cd.id = spcd.content_details_id
+            WHERE pcds.is_accepted = 1 AND pcds.type = 1 AND pcds.post_category = 0 AND cd.slug = :eventSlug
+            ORDER BY pcds.created_at DESC
+            LIMIT :limit OFFSET :offset
+        `, { type: db.QueryTypes.SELECT, replacements });
+
+        const [{ total_count }] = await db.query(`
+            SELECT COUNT(*) AS total_count
+            FROM ir_post_content_details pcds
+            JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
+            JOIN ir_content_details cd ON cd.id = spcd.content_details_id
+            WHERE pcds.is_accepted = 1 AND pcds.type = 1 AND pcds.post_category = 0 AND cd.slug = :eventSlug
+        `, { type: db.QueryTypes.SELECT, replacements });
+
+        return responseApi(res, rows, {
+            ...buildPaginationMeta(page, limit, total_count),
+            assets_image_url: process.env.APP_BUCKET_IMAGE,
+        }, "Data has been retrieved", 0);
+    } catch (error) {
+        console.log("error getEOEventPosts", error);
+        return responseApi(res, [], null, "Server error", 1);
+    }
+};
+
+/**
+ * GET /api/eo/events/:eventSlug/moments
+ * All moments for an event — EO operator view
+ */
+export const getEOEventMoments = async (req, res) => {
+    try {
+        const usersToken = getDataUserUsingToken(req, res);
+        const users_id = usersToken.tod;
+        const { eventSlug } = req.params;
+        const { page = 1, limit = 20 } = req.query;
+        const offset = (page - 1) * limit;
+
+        // Verify caller is EO for this event
+        const [eoCheck] = await db.query(`
+            SELECT ua.id FROM ir_users_admin ua
+            JOIN ir_content_details cd ON cd.event_organizers_id = ua.event_organizers_id
+            WHERE ua.users_id = :usersId AND cd.slug = :eventSlug AND ua.roles_id = 2
+        `, { type: db.QueryTypes.SELECT, replacements: { usersId: users_id, eventSlug } });
+        if (!eoCheck) return responseApi(res, [], null, "Not authorized as event organizer", 2);
+
+        const replacements = { usersId: users_id, eventSlug, limit: parseInt(limit, 10), offset: parseInt(offset, 10) };
+
+        const rows = await db.query(`
+            SELECT
+                pcds.id, pcds.slug, pcds.caption_post AS caption, pcds.is_official,
+                TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS created_at,
+                json_build_object('name', u.display_name, 'username', u.username, 'image', u.photo) AS author,
+                (SELECT COUNT(*) FROM ir_like_post_content_details l WHERE l.post_content_details_id = pcds.id) AS total_likes,
+                (SELECT COUNT(*) FROM ir_comment_post_content_details c WHERE c.post_content_details_id = pcds.id) AS total_comments,
+                (SELECT EXISTS (SELECT 1 FROM ir_like_post_content_details l WHERE l.post_content_details_id = pcds.id AND l.users_id = :usersId)) AS is_liked,
+                (SELECT COALESCE(json_agg(json_build_object('image', fpcds.file)), '[]') FROM ir_file_post_content_details fpcds WHERE fpcds.post_content_details_id = pcds.id) AS images
+            FROM ir_post_content_details pcds
+            JOIN ir_users u ON pcds.users_id = u.id
+            JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
+            JOIN ir_content_details cd ON cd.id = spcd.content_details_id
+            WHERE pcds.is_accepted = 1 AND pcds.type = 1 AND pcds.post_category = 1 AND cd.slug = :eventSlug
+            ORDER BY pcds.created_at DESC
+            LIMIT :limit OFFSET :offset
+        `, { type: db.QueryTypes.SELECT, replacements });
+
+        const [{ total_count }] = await db.query(`
+            SELECT COUNT(*) AS total_count
+            FROM ir_post_content_details pcds
+            JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
+            JOIN ir_content_details cd ON cd.id = spcd.content_details_id
+            WHERE pcds.is_accepted = 1 AND pcds.type = 1 AND pcds.post_category = 1 AND cd.slug = :eventSlug
+        `, { type: db.QueryTypes.SELECT, replacements });
+
+        return responseApi(res, rows, {
+            ...buildPaginationMeta(page, limit, total_count),
+            assets_image_url: process.env.APP_BUCKET_IMAGE,
+        }, "Data has been retrieved", 0);
+    } catch (error) {
+        console.log("error getEOEventMoments", error);
         return responseApi(res, [], null, "Server error", 1);
     }
 };

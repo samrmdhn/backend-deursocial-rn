@@ -623,6 +623,99 @@ export const createTypeContentDetails = async (req, res) => {
 };
 
 /**
+ * GET /api/organizer/:id
+ * EO profile: organizer info + their events list with pagination
+ */
+export const getOrganizerProfile = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { page = 1, limit = 10 } = req.query;
+        const offset = (page - 1) * limit;
+
+        const organizer = await EventOrganizersModels.findByPk(id, {
+            attributes: ["id", "name", "image", "detail"],
+        });
+        if (!organizer) return responseApi(res, null, null, "Organizer not found", 1);
+
+        const eventsQuery = `
+            SELECT
+                cd.id,
+                cd.title,
+                cd.slug,
+                cd.image,
+                TO_CHAR(TO_TIMESTAMP(cd.date_start), 'YYYY-MM-DD HH24:MI:SS') AS date_start,
+                TO_CHAR(TO_TIMESTAMP(cd.date_end), 'YYYY-MM-DD HH24:MI:SS') AS date_end,
+                CASE
+                    WHEN cd.status = 0 THEN 'ended'
+                    WHEN cd.status = 1 THEN 'ongoing'
+                    ELSE 'upcoming'
+                END AS status,
+                (SELECT COUNT(*) FROM ir_segmented_post_content_details spcd WHERE spcd.content_details_id = cd.id) AS total_posts,
+                (SELECT COUNT(*) FROM ir_groups g WHERE g.content_details_id = cd.id) AS total_groups,
+                json_build_object(
+                    'total_followers', (SELECT COUNT(*) FROM ir_content_detail_followers cdf WHERE cdf.content_details_id = cd.id),
+                    'users', (
+                        SELECT COALESCE(json_agg(json_build_object('id', u.id, 'display_name', u.display_name, 'image', u.photo)), '[]')
+                        FROM (
+                            SELECT u.id, u.display_name, u.photo
+                            FROM ir_content_detail_followers cdf2
+                            JOIN ir_users u ON cdf2.users_id = u.id
+                            WHERE cdf2.content_details_id = cd.id
+                            LIMIT 4
+                        ) u
+                    )
+                ) AS followers,
+                json_build_object(
+                    'city', json_build_object('name', ci.title),
+                    'venue', json_build_object('name', v.title)
+                ) AS location
+            FROM ir_content_details cd
+            LEFT JOIN ir_vanues v ON cd.vanues_id = v.id
+            LEFT JOIN ir_citys ci ON v.citys_id = ci.id
+            WHERE cd.event_organizers_id = :organizerId
+            ORDER BY cd.date_start DESC
+            LIMIT :limit OFFSET :offset
+        `;
+
+        const [events, [{ total_count }]] = await Promise.all([
+            db.query(eventsQuery, {
+                type: db.QueryTypes.SELECT,
+                replacements: { organizerId: id, limit: parseInt(limit, 10), offset: parseInt(offset, 10) },
+            }),
+            db.query(
+                `SELECT COUNT(*) AS total_count FROM ir_content_details WHERE event_organizers_id = :organizerId`,
+                { type: db.QueryTypes.SELECT, replacements: { organizerId: id } }
+            ),
+        ]);
+
+        const normalizedEvents = events.map((e) => ({ ...e, image: normalizeImage(e.image) }));
+        const eoImage = organizer.image ? normalizeImage(organizer.image) : null;
+
+        return responseApi(
+            res,
+            {
+                organizer: { id: organizer.id, name: organizer.name, image: eoImage, detail: organizer.detail },
+                events: normalizedEvents,
+            },
+            {
+                assets_image_url: process.env.APP_BUCKET_IMAGE,
+                pagination: {
+                    current_page: parseInt(page, 10),
+                    per_page: parseInt(limit, 10),
+                    total: parseInt(total_count, 10),
+                    total_page: Math.ceil(total_count / limit),
+                },
+            },
+            "Data Success Retrieved",
+            0
+        );
+    } catch (error) {
+        console.log("error getOrganizerProfile", error);
+        return responseApi(res, null, null, "Server error", 1);
+    }
+};
+
+/**
  * Fungsi untuk get data event organizers.
  * @param {*} req
  * @param {*} res

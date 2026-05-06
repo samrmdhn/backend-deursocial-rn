@@ -26,6 +26,7 @@ export {
     deleteEventPoster,
     getEventPosters,
     updateEventSocial,
+    getOrganizerProfile,
 } from "./controllers/HomepageControllers.js";
 export {
     visitorToken,
@@ -139,6 +140,10 @@ export {
     getMomentsByUser,
     getHomeFeed,
     getHomeFeedNewCount,
+    getEOEventPosts,
+    getEOEventMoments,
+    getPostsByOrganizer,
+    getMomentsByOrganizer,
 } from "./controllers/EventContentControllers.js";
 
 export {

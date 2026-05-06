@@ -172,6 +172,15 @@ api.get("/api/comment/replies/:commentId", verifyToken, EventContentControllers.
 // Comment likes
 api.post("/api/like/comment/:commentId", verifyToken, EventContentControllers.toggleCommentLike);
 
+// EO content browser
+api.get("/api/eo/events/:eventSlug/posts", verifyToken, EventContentControllers.getEOEventPosts);
+api.get("/api/eo/events/:eventSlug/moments", verifyToken, EventContentControllers.getEOEventMoments);
+
+// Organizer profile
+api.get("/api/organizer/:id", verifyToken, HomepageControllers.getOrganizerProfile);
+api.get("/api/organizer/:id/posts", verifyToken, EventContentControllers.getPostsByOrganizer);
+api.get("/api/organizer/:id/moments", verifyToken, EventContentControllers.getMomentsByOrganizer);
+
 api.get('/pink', async (req, res) => {
   res.send({ message: 'ponk' });
 });
