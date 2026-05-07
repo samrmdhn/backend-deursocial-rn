@@ -1026,7 +1026,15 @@ export const getPostsCommentedByUser = async (req, res) => {
             SELECT ${POST_SELECT_FIELDS},
                 ${POST_IS_LIKED_FIELD(viewer_id)},
                 ${POST_EVENT_FIELD},
-                ${POST_GROUP_FIELD}
+                ${POST_GROUP_FIELD},
+                (
+                    SELECT c.comment_post
+                    FROM ir_comment_post_content_details c
+                    JOIN ir_users cu ON cu.id = c.users_id AND cu.username = :username
+                    WHERE c.post_content_details_id = pcds.id
+                    ORDER BY c.created_at DESC
+                    LIMIT 1
+                ) AS latest_comment
             FROM ir_post_content_details pcds
             JOIN ir_users u ON pcds.users_id = u.id
             WHERE pcds.is_accepted = 1
