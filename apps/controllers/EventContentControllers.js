@@ -339,6 +339,22 @@ export const createEventOfficialPost = withTransaction(async (req, res, transact
             created_at: dateToEpochTime(req.headers["x-date-for"]),
         }, { transaction });
 
+        // Accept pre-uploaded image URLs from CMS (image_urls[] in body)
+        let imageUrls = req.body?.image_urls;
+        if (imageUrls) {
+            if (!Array.isArray(imageUrls)) imageUrls = [imageUrls];
+            for (const url of imageUrls) {
+                if (url) {
+                    await FilePostContentDetailModels.create({
+                        post_content_details_id: post.id,
+                        file: url,
+                        created_at: dateToEpochTime(req.headers["x-date-for"]),
+                    }, { transaction });
+                }
+            }
+        }
+
+        // Accept raw file uploads (mobile app)
         let files = req.files && req.files.images;
         if (files) {
             if (!Array.isArray(files)) files = [files];
