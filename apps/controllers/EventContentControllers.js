@@ -1034,7 +1034,15 @@ export const getPostsCommentedByUser = async (req, res) => {
                     WHERE c.post_content_details_id = pcds.id
                     ORDER BY c.created_at DESC
                     LIMIT 1
-                ) AS latest_comment
+                ) AS latest_comment,
+                (
+                    SELECT TO_CHAR(TO_TIMESTAMP(c.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS')
+                    FROM ir_comment_post_content_details c
+                    JOIN ir_users cu ON cu.id = c.users_id AND cu.username = :username
+                    WHERE c.post_content_details_id = pcds.id
+                    ORDER BY c.created_at DESC
+                    LIMIT 1
+                ) AS latest_comment_at
             FROM ir_post_content_details pcds
             JOIN ir_users u ON pcds.users_id = u.id
             WHERE pcds.is_accepted = 1
