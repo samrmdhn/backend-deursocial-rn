@@ -257,6 +257,7 @@ export const getEventOfficialPosts = async (req, res) => {
         const query = `
             SELECT ${POST_SELECT_FIELDS},
                 ${POST_IS_LIKED_FIELD(users_id)},
+                cd.event_organizers_id AS eo_id,
                 json_build_object('name', eo.name, 'image', eo.image) AS event_organizer
             FROM ir_post_content_details pcds
             JOIN ir_users u ON pcds.users_id = u.id
