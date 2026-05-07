@@ -1361,7 +1361,15 @@ export const getHomeFeed = async (req, res) => {
                     SELECT COALESCE(json_agg(json_build_object('image', fpcds.file)), '[]')
                     FROM ir_file_post_content_details fpcds
                     WHERE fpcds.post_content_details_id = pcds.id
-                ) AS images
+                ) AS images,
+                CASE WHEN pcds.is_eo_post = 1 OR pcds.is_official = 1 THEN
+                    COALESCE(
+                        (SELECT ua.event_organizers_id FROM ir_users_admin ua WHERE ua.users_id = pcds.users_id LIMIT 1),
+                        (SELECT cd2.event_organizers_id FROM ir_segmented_post_content_details spcd2
+                         JOIN ir_content_details cd2 ON cd2.id = spcd2.content_details_id
+                         WHERE spcd2.post_content_details_id = pcds.id LIMIT 1)
+                    )
+                ELSE NULL END AS eo_id
                 ${isPopular ? ', ps.score' : ''}
             FROM ir_post_content_details pcds
             JOIN ir_users u ON pcds.users_id = u.id
