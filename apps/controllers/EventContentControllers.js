@@ -977,7 +977,7 @@ export const getPostsLikedByUser = async (req, res) => {
         const { page = 1, limit = 10 } = req.query;
         const offset = (page - 1) * limit;
 
-        const replacements = { viewer_id, username, limit: parseInt(limit, 10), offset: parseInt(offset, 10) };
+        const replacements = { usersId: viewer_id, username, limit: parseInt(limit, 10), offset: parseInt(offset, 10) };
 
         const data = await db.query(`
             SELECT ${POST_SELECT_FIELDS},
@@ -1020,7 +1020,7 @@ export const getPostsCommentedByUser = async (req, res) => {
         const { page = 1, limit = 10 } = req.query;
         const offset = (page - 1) * limit;
 
-        const replacements = { viewer_id, username, limit: parseInt(limit, 10), offset: parseInt(offset, 10) };
+        const replacements = { usersId: viewer_id, username, limit: parseInt(limit, 10), offset: parseInt(offset, 10) };
 
         const data = await db.query(`
             SELECT ${POST_SELECT_FIELDS},
