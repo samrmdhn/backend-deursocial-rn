@@ -35,7 +35,9 @@ const POST_SELECT_FIELDS = `
     pcds.slug,
     pcds.post_category,
     pcds.is_official,
-    CASE 
+    pcds.is_eo_post,
+    (SELECT ua.event_organizers_id FROM ir_users_admin ua WHERE ua.users_id = pcds.users_id LIMIT 1) AS eo_id,
+    CASE
         WHEN pcds.type = 0 THEN 'global'
         WHEN pcds.type = 1 THEN 'event'
         ELSE 'ticket' 
@@ -959,6 +961,102 @@ export const getPostsByUser = async (req, res) => {
         return responseApi(res, data, buildPaginationMeta(page, limit, total_count), "Data has been retrieved", 0);
     } catch (error) {
         console.log("error getPostsByUser", error);
+        return responseApi(res, [], null, "Server error", 1);
+    }
+};
+
+/**
+ * GET /api/event/posts/liked/:username
+ * Posts liked by a user
+ */
+export const getPostsLikedByUser = async (req, res) => {
+    try {
+        const usersToken = getDataUserUsingToken(req, res);
+        const viewer_id = usersToken?.tod ?? 0;
+        const { username } = req.params;
+        const { page = 1, limit = 10 } = req.query;
+        const offset = (page - 1) * limit;
+
+        const replacements = { viewer_id, username, limit: parseInt(limit, 10), offset: parseInt(offset, 10) };
+
+        const data = await db.query(`
+            SELECT ${POST_SELECT_FIELDS},
+                ${POST_IS_LIKED_FIELD(viewer_id)},
+                ${POST_EVENT_FIELD},
+                ${POST_GROUP_FIELD}
+            FROM ir_post_content_details pcds
+            JOIN ir_users u ON pcds.users_id = u.id
+            JOIN ir_like_post_content_details lk ON lk.post_content_details_id = pcds.id
+            JOIN ir_users lu ON lu.id = lk.users_id AND lu.username = :username
+            WHERE pcds.is_accepted = 1
+            ORDER BY lk.created_at DESC
+            LIMIT :limit OFFSET :offset
+        `, { type: db.QueryTypes.SELECT, replacements });
+
+        const [{ total_count }] = await db.query(`
+            SELECT COUNT(*) AS total_count
+            FROM ir_post_content_details pcds
+            JOIN ir_like_post_content_details lk ON lk.post_content_details_id = pcds.id
+            JOIN ir_users lu ON lu.id = lk.users_id AND lu.username = :username
+            WHERE pcds.is_accepted = 1
+        `, { type: db.QueryTypes.SELECT, replacements });
+
+        return responseApi(res, data, buildPaginationMeta(page, limit, total_count), "Data has been retrieved", 0);
+    } catch (error) {
+        console.log("error getPostsLikedByUser", error);
+        return responseApi(res, [], null, "Server error", 1);
+    }
+};
+
+/**
+ * GET /api/event/posts/commented/:username
+ * Posts commented on by a user (distinct, latest comment first)
+ */
+export const getPostsCommentedByUser = async (req, res) => {
+    try {
+        const usersToken = getDataUserUsingToken(req, res);
+        const viewer_id = usersToken?.tod ?? 0;
+        const { username } = req.params;
+        const { page = 1, limit = 10 } = req.query;
+        const offset = (page - 1) * limit;
+
+        const replacements = { viewer_id, username, limit: parseInt(limit, 10), offset: parseInt(offset, 10) };
+
+        const data = await db.query(`
+            SELECT ${POST_SELECT_FIELDS},
+                ${POST_IS_LIKED_FIELD(viewer_id)},
+                ${POST_EVENT_FIELD},
+                ${POST_GROUP_FIELD}
+            FROM ir_post_content_details pcds
+            JOIN ir_users u ON pcds.users_id = u.id
+            WHERE pcds.is_accepted = 1
+              AND EXISTS (
+                SELECT 1 FROM ir_comment_post_content_details c
+                JOIN ir_users cu ON cu.id = c.users_id AND cu.username = :username
+                WHERE c.post_content_details_id = pcds.id
+              )
+            ORDER BY (
+                SELECT MAX(c.created_at) FROM ir_comment_post_content_details c
+                JOIN ir_users cu ON cu.id = c.users_id AND cu.username = :username
+                WHERE c.post_content_details_id = pcds.id
+            ) DESC
+            LIMIT :limit OFFSET :offset
+        `, { type: db.QueryTypes.SELECT, replacements });
+
+        const [{ total_count }] = await db.query(`
+            SELECT COUNT(DISTINCT pcds.id) AS total_count
+            FROM ir_post_content_details pcds
+            WHERE pcds.is_accepted = 1
+              AND EXISTS (
+                SELECT 1 FROM ir_comment_post_content_details c
+                JOIN ir_users cu ON cu.id = c.users_id AND cu.username = :username
+                WHERE c.post_content_details_id = pcds.id
+              )
+        `, { type: db.QueryTypes.SELECT, replacements });
+
+        return responseApi(res, data, buildPaginationMeta(page, limit, total_count), "Data has been retrieved", 0);
+    } catch (error) {
+        console.log("error getPostsCommentedByUser", error);
         return responseApi(res, [], null, "Server error", 1);
     }
 };

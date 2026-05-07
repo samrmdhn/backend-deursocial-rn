@@ -137,6 +137,8 @@ export {
     deleteEventPost,
     toggleEventPostLike,
     getPostsByUser,
+    getPostsLikedByUser,
+    getPostsCommentedByUser,
     getMomentsByUser,
     getHomeFeed,
     getHomeFeedNewCount,
