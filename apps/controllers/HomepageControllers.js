@@ -1144,6 +1144,12 @@ export const getContentDetails = async (req, res) => {
                     SELECT COUNT(*) AS total_groups
                     FROM ir_groups g WHERE g.content_details_id = cd.id
                 ) AS total_groups,
+                (
+                    SELECT COUNT(*) AS total_moments
+                    FROM ir_post_content_details pcds
+                    LEFT JOIN ir_segmented_post_content_details spcds ON pcds.id = spcds.post_content_details_id
+                    WHERE spcds.content_details_id = cd.id AND pcds.is_accepted = 1 AND pcds.post_category = 1
+                ) AS total_moments,
                 json_build_object(
                     'id', tcd.id,
                     'name', tcd.name

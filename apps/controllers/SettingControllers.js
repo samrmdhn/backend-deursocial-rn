@@ -749,6 +749,32 @@ export const updateStatusNotification = async (req, res) => {
     }
 }
 
+export const deleteAccount = async (req, res) => {
+    try {
+        const getToken = getDataUserUsingToken(req, res);
+        const userId = getToken.tod;
+        const userFind = await UsersModels.findOne({ where: { id: userId } });
+        if (!userFind) {
+            return responseApi(res, [], null, "User not found", 418);
+        }
+        const anonSuffix = `_deleted_${userId}_${Date.now()}`;
+        await UsersModels.update(
+            {
+                deleted_at: Math.floor(Date.now() / 1000),
+                username: `deleted_user${anonSuffix}`,
+                email: `deleted${anonSuffix}@deleted.local`,
+                display_name: "Deleted User",
+                photo: null,
+            },
+            { where: { id: userId } }
+        );
+        return responseApi(res, {}, null, "Account deleted", 0);
+    } catch (error) {
+        console.error("[Error] delete account:", error);
+        return responseApi(res, [], null, "Server error", 418);
+    }
+}
+
 export const deactiveAccount = async (req, res) => {
     try {
         const getToken = getDataUserUsingToken(req, res);

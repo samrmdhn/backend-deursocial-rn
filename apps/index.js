@@ -42,7 +42,8 @@ export {
     getAnyNotif,
     getNotification,
     updateStatusNotification,
-    deactiveAccount
+    deactiveAccount,
+    deleteAccount
 } from "./controllers/SettingControllers.js";
 
 export {

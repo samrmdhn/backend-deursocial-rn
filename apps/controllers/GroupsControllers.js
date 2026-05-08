@@ -254,7 +254,7 @@ export const getGroups = async (req, res) => {
         });
 
         const contentDetailSlugs = req.params.contentDetailSlugs;
-        const { page = 1, search_text = "", filter = "all" } = req.query;
+        const { page = 1, search_text = "", filter = "all", gender_filter = "" } = req.query;
         const limit = 10;
         const offset = (page - 1) * limit;
 
@@ -268,16 +268,23 @@ export const getGroups = async (req, res) => {
             whereClause += ` AND g.title ILIKE :search_text`;
             replacements.search_text = `%${search_text}%`;
         }
-        if (filter === "open") {
+        if (filter === "open" || gender_filter === "open") {
             whereClause += ` AND g.max_members > (SELECT COUNT(*) FROM ir_group_members gm2 WHERE gm2.groups_id = g.id AND gm2.status = 1)`;
         } else if (filter === "full") {
             whereClause += ` AND g.max_members <= (SELECT COUNT(*) FROM ir_group_members gm2 WHERE gm2.groups_id = g.id AND gm2.status = 1)`;
+        }
+        if (gender_filter === "male") {
+            whereClause += ` AND g.is_gender = 1`;
+        } else if (gender_filter === "female") {
+            whereClause += ` AND g.is_gender = 2`;
+        } else if (gender_filter === "private") {
+            whereClause += ` AND g.is_private = 1`;
         }
         if (dataUser) {
             if (dataUser.is_anonymous == 0) {
                 whereClause += ` AND g.is_anonymous = 0`;
             }
-            whereClause += ` AND g.is_gender in (0, ${dataUser.gender})`;
+            // Removed gender visibility filter — show all groups, enforce on join
         }
 
         const query = `
@@ -399,7 +406,7 @@ export const getGroups = async (req, res) => {
             LEFT JOIN ir_group_members gm ON gm.groups_id = g.id
             ${whereClause}
             GROUP BY g.id, u.id, c.id, cds.id
-            ORDER BY g.id DESC
+            ORDER BY g.created_at DESC
             LIMIT :limit OFFSET :offset;
         `;
 

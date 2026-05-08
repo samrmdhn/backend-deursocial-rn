@@ -118,6 +118,7 @@ api.get("/api/post/profile/:username", verifyToken, PostControllers.getPostPerUs
 api.get("/api/reminder/all/users", EmailControllers.reminderForUserManualSchedule)
 
 api.post("/api/deactive/account/:usernameEncoding", SettingControllers.deactiveAccount)
+api.delete("/api/user/account", verifyToken, SettingControllers.deleteAccount)
 
 api.get("/api/get/report", verifyToken, ReportControllers.getDataReport)
 api.post("/api/reported/post", verifyToken, ReportControllers.saveReportedByUsers)
