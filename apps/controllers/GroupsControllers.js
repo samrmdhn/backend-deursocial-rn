@@ -269,7 +269,7 @@ export const getGroups = async (req, res) => {
             replacements.search_text = `%${search_text}%`;
         }
         if (filter === "open" || gender_filter === "open") {
-            whereClause += ` AND g.max_members > (SELECT COUNT(*) FROM ir_group_members gm2 WHERE gm2.groups_id = g.id AND gm2.status = 1)`;
+            whereClause += ` AND g.max_members > (SELECT COUNT(*) FROM ir_group_members gm2 WHERE gm2.groups_id = g.id AND gm2.status = 1) AND g.is_private = 0`;
         } else if (filter === "full") {
             whereClause += ` AND g.max_members <= (SELECT COUNT(*) FROM ir_group_members gm2 WHERE gm2.groups_id = g.id AND gm2.status = 1)`;
         }
