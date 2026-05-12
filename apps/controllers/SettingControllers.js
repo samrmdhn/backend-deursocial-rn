@@ -780,6 +780,16 @@ export const deleteAccount = async (req, res) => {
             },
             { where: { id: userId } }
         );
+        // Mark all Supabase chat messages from this user as deleted
+        try {
+            await db.query(
+                `UPDATE messages SET is_deleted = true WHERE user_id = :userId`,
+                { replacements: { userId: String(userId) }, type: db.QueryTypes.UPDATE }
+            );
+        } catch (e) {
+            // Non-fatal — messages table may not have column yet (run migration first)
+            console.warn("[deleteAccount] messages update skipped:", e.message);
+        }
         return responseApi(
             res,
             { scheduled_hard_delete_at: new Date((now + thirtyDays) * 1000).toISOString() },
