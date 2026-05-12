@@ -120,10 +120,12 @@ export const getEventPosts = async (req, res) => {
                         + COALESCE((SELECT COUNT(*) FROM ir_impression_post_content_details i WHERE i.post_content_details_id = pcds.id AND i.source = 'feed'), 0) * 1
                     ) AS score
                 FROM ir_post_content_details pcds
+                JOIN ir_users u ON pcds.users_id = u.id
                 JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
                 JOIN ir_content_details cd ON cd.id = spcd.content_details_id
                 WHERE pcds.is_accepted = 1 AND pcds.type = 1 AND pcds.post_category = 0
                   AND cd.slug = :eventSlug
+                  AND (u.is_deleted IS NULL OR u.is_deleted = 0)
             )` : ``;
 
         const orderBy = isPopular ? `ps.score DESC, pcds.created_at DESC` : `pcds.created_at DESC`;
@@ -145,6 +147,7 @@ export const getEventPosts = async (req, res) => {
               AND pcds.type = 1
               AND pcds.post_category = 0
               AND cd.slug = :eventSlug
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
             ORDER BY ${orderBy}
             LIMIT :limit OFFSET :offset
         `;
@@ -154,9 +157,11 @@ export const getEventPosts = async (req, res) => {
         const [{ total_count }] = await db.query(`
             SELECT COUNT(*) AS total_count
             FROM ir_post_content_details pcds
+            JOIN ir_users u ON pcds.users_id = u.id
             JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
             JOIN ir_content_details cd ON cd.id = spcd.content_details_id
             WHERE pcds.is_accepted = 1 AND pcds.type = 1 AND pcds.post_category = 0 AND cd.slug = :eventSlug
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
         `, { type: db.QueryTypes.SELECT, replacements });
 
         return responseApi(res, data, {
@@ -416,6 +421,7 @@ export const getEventMoments = async (req, res) => {
               AND pcds.type = 1
               AND pcds.post_category = 1
               AND cd.slug = :eventSlug
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
             ORDER BY pcds.created_at DESC
             LIMIT :limit OFFSET :offset
         `;
@@ -425,9 +431,11 @@ export const getEventMoments = async (req, res) => {
         const [{ total_count }] = await db.query(`
             SELECT COUNT(*) AS total_count
             FROM ir_post_content_details pcds
+            JOIN ir_users u ON pcds.users_id = u.id
             JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
             JOIN ir_content_details cd ON cd.id = spcd.content_details_id
             WHERE pcds.is_accepted = 1 AND pcds.type = 1 AND pcds.post_category = 1 AND cd.slug = :eventSlug
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
         `, { type: db.QueryTypes.SELECT, replacements });
 
         return responseApi(res, data, {
@@ -465,6 +473,7 @@ export const getPostsFeed = async (req, res) => {
             FROM ir_post_content_details pcds
             JOIN ir_users u ON pcds.users_id = u.id
             WHERE pcds.is_accepted = 1 AND pcds.post_category = 0
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
             ORDER BY pcds.created_at DESC
             LIMIT :limit OFFSET :offset
         `;
@@ -506,6 +515,7 @@ export const getMomentsFeed = async (req, res) => {
             FROM ir_post_content_details pcds
             JOIN ir_users u ON pcds.users_id = u.id
             WHERE pcds.is_accepted = 1 AND pcds.post_category = 1
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
             ORDER BY pcds.created_at DESC
             LIMIT :limit OFFSET :offset
         `;
