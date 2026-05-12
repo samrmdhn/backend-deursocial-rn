@@ -130,6 +130,10 @@ const UsersModels = db.define(
             type: TYPES.STRING(100),
             allowNull: true,
         },
+        original_photo: {
+            type: TYPES.STRING(500),
+            allowNull: true,
+        },
     },
     {
         freezeTableName: true,

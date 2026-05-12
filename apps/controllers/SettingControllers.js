@@ -800,6 +800,7 @@ export const deleteAccount = async (req, res) => {
                 original_username: userFind.username,
                 original_email: userFind.email,
                 original_display_name: userFind.display_name,
+                original_photo: userFind.photo,
                 username: `deleted_user${anonSuffix}`,
                 email: `deleted${anonSuffix}@deleted.local`,
                 display_name: "Deleted User",
@@ -851,17 +852,29 @@ export const cancelDeleteAccount = async (req, res) => {
                 username: userFind.original_username,
                 email: userFind.original_email,
                 display_name: userFind.original_display_name ?? userFind.original_username,
+                photo: userFind.original_photo ?? null,
                 original_username: null,
                 original_email: null,
                 original_display_name: null,
+                original_photo: null,
                 status: 1,
             },
             { where: { id: userId } }
         );
+        // Restore Supabase chat messages visibility
+        try {
+            await db.query(
+                `UPDATE messages SET is_deleted = false WHERE user_id = :userId`,
+                { replacements: { userId: String(userId) }, type: db.QueryTypes.UPDATE }
+            );
+        } catch (e) {
+            console.warn("[cancelDeleteAccount] messages update skipped:", e.message);
+        }
         return responseApi(res, {
             username: userFind.original_username,
             display_name: userFind.original_display_name ?? userFind.original_username,
             email: userFind.original_email,
+            image: userFind.original_photo ?? null,
         }, null, "Account deletion cancelled", 0);
     } catch (error) {
         console.error("[Error] cancel delete account:", error);
