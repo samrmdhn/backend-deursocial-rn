@@ -423,7 +423,10 @@ export const checkAuth = async (req, res) => {
 
         const getExistingUser = await UsersModels.findOne({
             where: {
-                email: userDetails.email,
+                [Op.or]: [
+                    { email: userDetails.email },
+                    { original_email: userDetails.email },
+                ],
             },
         });
         if (getExistingUser) {
