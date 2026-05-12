@@ -49,7 +49,7 @@ export const getPost = async (req, res) => {
                 ) AS total_likes,
                 (
                     SELECT COUNT(*) FROM ir_comment_post_content_details cpcds JOIN ir_users cu ON cu.id = cpcds.users_id AND (cu.is_deleted IS NULL OR cu.is_deleted = 0)
-                    WHERE cpcds.post_content_details_id = pcds.id AND cpcds.parent_id IS NULL
+                    WHERE cpcds.post_content_details_id = pcds.id
                 ) AS total_comments,
                 TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                 json_build_object(
@@ -599,7 +599,7 @@ export const getDetailPostPerContentDetail = async (req, res) => {
                 ) AS total_likes,
                 (
                     SELECT COUNT(*) FROM ir_comment_post_content_details cpcds JOIN ir_users cu ON cu.id = cpcds.users_id AND (cu.is_deleted IS NULL OR cu.is_deleted = 0)
-                    WHERE cpcds.post_content_details_id = pcds.id AND cpcds.parent_id IS NULL
+                    WHERE cpcds.post_content_details_id = pcds.id
                 ) AS total_comments,
                 TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                 json_build_object(
@@ -729,7 +729,7 @@ export const getDetailPostPerContentDetailPerTopic = async (req, res) => {
                 ) AS total_likes,
                 (
                     SELECT COUNT(*) FROM ir_comment_post_content_details cpcds JOIN ir_users cu ON cu.id = cpcds.users_id AND (cu.is_deleted IS NULL OR cu.is_deleted = 0)
-                    WHERE cpcds.post_content_details_id = pcds.id AND cpcds.parent_id IS NULL
+                    WHERE cpcds.post_content_details_id = pcds.id
                 ) AS total_comments,
                 TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                 json_build_object(
@@ -842,7 +842,7 @@ export const getPostPerUsers = async (req, res) => {
                 ) AS total_likes,
                 (
                     SELECT COUNT(*) FROM ir_comment_post_content_details cpcds JOIN ir_users cu ON cu.id = cpcds.users_id AND (cu.is_deleted IS NULL OR cu.is_deleted = 0)
-                    WHERE cpcds.post_content_details_id = pcds.id AND cpcds.parent_id IS NULL
+                    WHERE cpcds.post_content_details_id = pcds.id
                 ) AS total_comments,
                 TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                 json_build_object(

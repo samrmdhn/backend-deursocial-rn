@@ -558,7 +558,7 @@ export const batchGetLikes = async (req, res) => {
 
         const query = `
             SELECT pcds.slug,
-                (SELECT COUNT(*) FROM ir_like_post_content_details l WHERE l.post_content_details_id = pcds.id) AS count,
+                (SELECT COUNT(*) FROM ir_like_post_content_details l JOIN ir_users lu ON lu.id = l.users_id AND (lu.is_deleted IS NULL OR lu.is_deleted = 0) WHERE l.post_content_details_id = pcds.id) AS count,
                 (SELECT EXISTS(SELECT 1 FROM ir_like_post_content_details l WHERE l.post_content_details_id = pcds.id AND l.users_id = :usersId)) AS is_liked
             FROM ir_post_content_details pcds
             WHERE pcds.slug IN (:slugs)
@@ -595,7 +595,7 @@ export const batchGetComments = async (req, res) => {
 
         const query = `
             SELECT pcds.slug,
-                (SELECT COUNT(*) FROM ir_comment_post_content_details c WHERE c.post_content_details_id = pcds.id) AS count
+                (SELECT COUNT(*) FROM ir_comment_post_content_details c JOIN ir_users cu ON cu.id = c.users_id AND (cu.is_deleted IS NULL OR cu.is_deleted = 0) WHERE c.post_content_details_id = pcds.id) AS count
             FROM ir_post_content_details pcds
             WHERE pcds.slug IN (:slugs)
         `;
@@ -1360,8 +1360,8 @@ export const getHomeFeed = async (req, res) => {
                 pcds.caption_post AS caption,
                 pcds.caption_post_raw AS caption_raw,
                 pcds.impression_count,
-                (SELECT COUNT(*) FROM ir_like_post_content_details lpcds WHERE lpcds.post_content_details_id = pcds.id) AS total_likes,
-                (SELECT COUNT(*) FROM ir_comment_post_content_details cpcds WHERE cpcds.post_content_details_id = pcds.id) AS total_comments,
+                (SELECT COUNT(*) FROM ir_like_post_content_details lpcds JOIN ir_users lu ON lu.id = lpcds.users_id AND (lu.is_deleted IS NULL OR lu.is_deleted = 0) WHERE lpcds.post_content_details_id = pcds.id) AS total_likes,
+                (SELECT COUNT(*) FROM ir_comment_post_content_details cpcds JOIN ir_users cu ON cu.id = cpcds.users_id AND (cu.is_deleted IS NULL OR cu.is_deleted = 0) WHERE cpcds.post_content_details_id = pcds.id) AS total_comments,
                 (SELECT EXISTS (
                     SELECT 1 FROM ir_like_post_content_details l
                     WHERE l.post_content_details_id = pcds.id AND l.users_id = :usersId
@@ -1534,8 +1534,8 @@ export const getEOEventPosts = async (req, res) => {
                 pcds.post_category,
                 TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS created_at,
                 json_build_object('name', u.display_name, 'username', u.username, 'image', u.photo) AS author,
-                (SELECT COUNT(*) FROM ir_like_post_content_details l WHERE l.post_content_details_id = pcds.id) AS total_likes,
-                (SELECT COUNT(*) FROM ir_comment_post_content_details c WHERE c.post_content_details_id = pcds.id) AS total_comments,
+                (SELECT COUNT(*) FROM ir_like_post_content_details l JOIN ir_users lu ON lu.id = l.users_id AND (lu.is_deleted IS NULL OR lu.is_deleted = 0) WHERE l.post_content_details_id = pcds.id) AS total_likes,
+                (SELECT COUNT(*) FROM ir_comment_post_content_details c JOIN ir_users cu ON cu.id = c.users_id AND (cu.is_deleted IS NULL OR cu.is_deleted = 0) WHERE c.post_content_details_id = pcds.id) AS total_comments,
                 (SELECT EXISTS (SELECT 1 FROM ir_like_post_content_details l WHERE l.post_content_details_id = pcds.id AND l.users_id = :usersId)) AS is_liked,
                 (SELECT COALESCE(json_agg(json_build_object('image', fpcds.file)), '[]') FROM ir_file_post_content_details fpcds WHERE fpcds.post_content_details_id = pcds.id) AS images
             FROM ir_post_content_details pcds
@@ -1592,8 +1592,8 @@ export const getEOEventMoments = async (req, res) => {
                 pcds.id, pcds.slug, pcds.caption_post AS caption, pcds.is_official,
                 TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS created_at,
                 json_build_object('name', u.display_name, 'username', u.username, 'image', u.photo) AS author,
-                (SELECT COUNT(*) FROM ir_like_post_content_details l WHERE l.post_content_details_id = pcds.id) AS total_likes,
-                (SELECT COUNT(*) FROM ir_comment_post_content_details c WHERE c.post_content_details_id = pcds.id) AS total_comments,
+                (SELECT COUNT(*) FROM ir_like_post_content_details l JOIN ir_users lu ON lu.id = l.users_id AND (lu.is_deleted IS NULL OR lu.is_deleted = 0) WHERE l.post_content_details_id = pcds.id) AS total_likes,
+                (SELECT COUNT(*) FROM ir_comment_post_content_details c JOIN ir_users cu ON cu.id = c.users_id AND (cu.is_deleted IS NULL OR cu.is_deleted = 0) WHERE c.post_content_details_id = pcds.id) AS total_comments,
                 (SELECT EXISTS (SELECT 1 FROM ir_like_post_content_details l WHERE l.post_content_details_id = pcds.id AND l.users_id = :usersId)) AS is_liked,
                 (SELECT COALESCE(json_agg(json_build_object('image', fpcds.file)), '[]') FROM ir_file_post_content_details fpcds WHERE fpcds.post_content_details_id = pcds.id) AS images
             FROM ir_post_content_details pcds
