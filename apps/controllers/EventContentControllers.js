@@ -1320,9 +1320,11 @@ export const getHomeFeed = async (req, res) => {
                         + COALESCE((SELECT COUNT(*) FROM ir_impression_post_content_details i WHERE i.post_content_details_id = pcds.id AND i.source = 'feed'), 0) * 1
                     ) AS score
                 FROM ir_post_content_details pcds
+                JOIN ir_users u ON pcds.users_id = u.id
                 JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
                 JOIN ir_content_details cd ON cd.id = spcd.content_details_id
                 WHERE pcds.is_accepted = 1 AND pcds.type = 1
+                  AND (u.is_deleted IS NULL OR u.is_deleted = 0)
                   ${eventWhere}
                   ${contentTypeWhere}
             )` : ``;
@@ -1378,6 +1380,7 @@ export const getHomeFeed = async (req, res) => {
             ${scoreJoin}
             WHERE pcds.is_accepted = 1
               AND pcds.type = 1
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
               ${eventWhere}
               ${contentTypeWhere}
             ORDER BY ${orderBy}
@@ -1387,10 +1390,12 @@ export const getHomeFeed = async (req, res) => {
         const countQuery = `
             SELECT COUNT(DISTINCT pcds.id) AS total_count
             FROM ir_post_content_details pcds
+            JOIN ir_users u ON pcds.users_id = u.id
             JOIN ir_segmented_post_content_details spcd ON spcd.post_content_details_id = pcds.id
             JOIN ir_content_details cd ON cd.id = spcd.content_details_id
             WHERE pcds.is_accepted = 1
               AND pcds.type = 1
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
               ${eventWhere}
         `;
 
