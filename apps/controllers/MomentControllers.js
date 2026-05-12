@@ -64,18 +64,20 @@ export const getMoment = async (req, res) => {
                 (
                     SELECT COUNT(*)
                     FROM ir_like_post_content_details lpcds
+                    JOIN ir_users lu ON lu.id = lpcds.users_id AND (lu.is_deleted IS NULL OR lu.is_deleted = 0)
                     WHERE lpcds.post_content_details_id = pcds.id
                 ) AS total_likes,
                 (
                     SELECT COUNT(*)
                     FROM ir_comment_post_content_details cpcds
-                    WHERE cpcds.post_content_details_id = pcds.id
+                    JOIN ir_users cu ON cu.id = cpcds.users_id AND (cu.is_deleted IS NULL OR cu.is_deleted = 0)
+                    WHERE cpcds.post_content_details_id = pcds.id AND cpcds.parent_id IS NULL
                 ) AS total_comments,
                 TO_CHAR(TO_TIMESTAMP(pcds.created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at,
                 json_build_object(
                     'name', u.display_name,
                     'image', u.photo,
-                    'verified', CASE 
+                    'verified', CASE
                         WHEN u.is_verified = 1 THEN true
                         ELSE false END,
                     'username', u.username
@@ -198,18 +200,20 @@ export const getMyAllMoment = async (req, res) => {
                 (
                     SELECT COUNT(*)
                     FROM ir_like_post_content_details lpcds
+                    JOIN ir_users lu ON lu.id = lpcds.users_id AND (lu.is_deleted IS NULL OR lu.is_deleted = 0)
                     WHERE lpcds.post_content_details_id = pcds.id
                 ) AS total_likes,
                 (
                     SELECT COUNT(*)
                     FROM ir_comment_post_content_details cpcds
-                    WHERE cpcds.post_content_details_id = pcds.id
+                    JOIN ir_users cu ON cu.id = cpcds.users_id AND (cu.is_deleted IS NULL OR cu.is_deleted = 0)
+                    WHERE cpcds.post_content_details_id = pcds.id AND cpcds.parent_id IS NULL
                 ) AS total_comments,
                 TO_CHAR(TO_TIMESTAMP(pcds.created_at), 'YYYY-MM-DD HH24:MI:SS') AS created_at,
                 json_build_object(
                     'name', u.display_name,
                     'image', u.photo,
-                    'verified', CASE 
+                    'verified', CASE
                         WHEN u.is_verified = 1 THEN true
                         ELSE false END,
                     'username', u.username
@@ -426,12 +430,14 @@ export const getLikeMomentContentDetail = async (req, res) => {
                 (
                     SELECT COUNT(*)
                     FROM ir_like_post_content_details lpcds
+                    JOIN ir_users lu ON lu.id = lpcds.users_id AND (lu.is_deleted IS NULL OR lu.is_deleted = 0)
                     WHERE lpcds.post_content_details_id = pcds.id
-                ) AS total_likes,                
+                ) AS total_likes,
                 (
                     SELECT COUNT(*)
                     FROM ir_comment_post_content_details cpcds
-                    WHERE cpcds.post_content_details_id = pcds.id
+                    JOIN ir_users cu ON cu.id = cpcds.users_id AND (cu.is_deleted IS NULL OR cu.is_deleted = 0)
+                    WHERE cpcds.post_content_details_id = pcds.id AND cpcds.parent_id IS NULL
                 ) AS total_comments
             FROM ir_like_post_content_details lpcd
             JOIN ir_post_content_details pcds ON lpcd.post_content_details_id = pcds.id
@@ -610,12 +616,14 @@ export const getDetailMomentPerContentDetail = async (req, res) => {
                 (
                     SELECT COUNT(*)
                     FROM ir_like_post_content_details lpcds
+                    JOIN ir_users lu ON lu.id = lpcds.users_id AND (lu.is_deleted IS NULL OR lu.is_deleted = 0)
                     WHERE lpcds.post_content_details_id = pcds.id
                 ) AS total_likes,
                 (
                     SELECT COUNT(*)
                     FROM ir_comment_post_content_details cpcds
-                    WHERE cpcds.post_content_details_id = pcds.id
+                    JOIN ir_users cu ON cu.id = cpcds.users_id AND (cu.is_deleted IS NULL OR cu.is_deleted = 0)
+                    WHERE cpcds.post_content_details_id = pcds.id AND cpcds.parent_id IS NULL
                 ) AS total_comments,
                 TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at,
                 json_build_object(
