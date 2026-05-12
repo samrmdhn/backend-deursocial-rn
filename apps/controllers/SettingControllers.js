@@ -427,6 +427,32 @@ export const checkAuth = async (req, res) => {
             },
         });
         if (getExistingUser) {
+            if (getExistingUser.is_deleted === 1) {
+                const { datas } = makeDataJwt(req, getExistingUser.id);
+                const pendingToken = signVisitorToken({
+                    ...datas,
+                    username: getExistingUser.username,
+                    display_name: getExistingUser.display_name,
+                    display_name_anonymous: getExistingUser.display_name_anonymous,
+                    username_anonymous: getExistingUser.username_anonymous,
+                    gender: getExistingUser.gender,
+                    image: getExistingUser.photo,
+                    expired_verified: getExistingUser.expired_verified,
+                    is_verified: getExistingUser.is_verified === 1 ? true : false,
+                });
+                return responseApi(
+                    res,
+                    {
+                        access_token: pendingToken,
+                        scheduled_hard_delete_at: getExistingUser.scheduled_hard_delete_at
+                            ? new Date(getExistingUser.scheduled_hard_delete_at * 1000).toISOString()
+                            : null,
+                    },
+                    null,
+                    "account_pending_deletion",
+                    4030
+                );
+            }
             if (getExistingUser.deleted_at !== null) {
                 return responseApi(res, {}, null, "Sorry your account is deactivated", 418);
             }
