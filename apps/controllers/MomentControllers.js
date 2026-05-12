@@ -28,7 +28,7 @@ export const getMoment = async (req, res) => {
         const users_id = usersToken.tod;
         const { page = 1, limit = 10, event_slug = '' } = req.query;
         const offset = (page - 1) * limit;
-        let whereClause = `where pcds.is_accepted = 1 AND pcds.type = 1`;
+        let whereClause = `where pcds.is_accepted = 1 AND pcds.type = 1 AND (u.is_deleted IS NULL OR u.is_deleted = 0)`;
 
         let replacements = {
             usersId: users_id,
@@ -569,7 +569,7 @@ export const getDetailMomentPerContentDetail = async (req, res) => {
         const usersToken = getDataUserUsingToken(req, res);
         const users_id = usersToken.tod;
         const slugPostContentDetail = req.params.slugPostContentDetail;
-        let whereClause = `WHERE pcds.slug = :slugPostContentDetail`;
+        let whereClause = `WHERE pcds.slug = :slugPostContentDetail AND (u.is_deleted IS NULL OR u.is_deleted = 0)`;
 
         const replacements = {
             slugPostContentDetail: slugPostContentDetail,

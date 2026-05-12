@@ -94,6 +94,7 @@ export const getPost = async (req, res) => {
                 JOIN ir_users u ON pcds.users_id = u.id
             WHERE
                 pcds.is_accepted = 1 AND pcds.type = 0
+                AND (u.is_deleted IS NULL OR u.is_deleted = 0)
             ORDER BY pcds.created_at DESC
             LIMIT :limit OFFSET :offset;
         `;
@@ -104,7 +105,9 @@ export const getPost = async (req, res) => {
         const countQuery = `
             SELECT COUNT(*) AS total_count
             FROM ir_post_content_details pcds
+            JOIN ir_users u ON pcds.users_id = u.id
             WHERE pcds.is_accepted = 1 AND pcds.type = 0
+                AND (u.is_deleted IS NULL OR u.is_deleted = 0)
         `;
         const totalCountResult = await db.query(countQuery, {
             type: db.QueryTypes.SELECT,
@@ -566,7 +569,7 @@ export const getDetailPostPerContentDetail = async (req, res) => {
         const usersToken = getDataUserUsingToken(req, res);
         const users_id = usersToken.tod;
         const slugPostContentDetail = req.params.slugPostContentDetail;
-        let whereClause = `WHERE pcds.slug = :slugPostContentDetail`;
+        let whereClause = `WHERE pcds.slug = :slugPostContentDetail AND (u.is_deleted IS NULL OR u.is_deleted = 0)`;
 
         const replacements = {
             slugPostContentDetail: slugPostContentDetail,

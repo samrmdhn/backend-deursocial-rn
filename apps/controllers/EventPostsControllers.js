@@ -90,6 +90,7 @@ export const getEventPosts = async (req, res) => {
                 ep.content_details_id = :contentDetailsId
                 AND ep.is_accepted = 1
                 AND ep.post_type = 0
+                AND (u.is_deleted IS NULL OR u.is_deleted = 0)
             ${orderClause}
             LIMIT :limit OFFSET :offset;
         `;
@@ -102,9 +103,11 @@ export const getEventPosts = async (req, res) => {
         const countQuery = `
             SELECT COUNT(*) AS total_count
             FROM ir_event_posts ep
+            JOIN ir_users u ON ep.users_id = u.id
             WHERE ep.content_details_id = :contentDetailsId
                 AND ep.is_accepted = 1
                 AND ep.post_type = 0
+                AND (u.is_deleted IS NULL OR u.is_deleted = 0)
         `;
         const totalCountResult = await db.query(countQuery, {
             type: db.QueryTypes.SELECT,
@@ -447,6 +450,7 @@ export const getEventPostDetail = async (req, res) => {
             WHERE
                 ep.slug = :slug
                 AND ep.is_accepted = 1
+                AND (u.is_deleted IS NULL OR u.is_deleted = 0)
         `;
 
         const data = await db.query(query, {
