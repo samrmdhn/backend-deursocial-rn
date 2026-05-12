@@ -64,11 +64,13 @@ export const getDetailUser = async (req, res) => {
                 (
                     SELECT COUNT(*)
                     FROM ir_following_users f
+                    JOIN ir_users fu ON fu.id = f.following_id AND (fu.is_deleted IS NULL OR fu.is_deleted = 0)
                     WHERE f.users_id = u.id
                 ) AS total_followers,
                 (
                     SELECT COUNT(*)
                     FROM ir_following_users f
+                    JOIN ir_users fu ON fu.id = f.users_id AND (fu.is_deleted IS NULL OR fu.is_deleted = 0)
                     WHERE f.following_id = u.id
                 ) AS total_following,
                 (

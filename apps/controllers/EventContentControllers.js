@@ -49,8 +49,8 @@ const POST_SELECT_FIELDS = `
         WHEN pcds.type = 1 THEN 'event'
         ELSE 'ticket' 
     END AS post_type,
-    (SELECT COUNT(*) FROM ir_like_post_content_details lpcds WHERE lpcds.post_content_details_id = pcds.id) AS total_likes,
-    (SELECT COUNT(*) FROM ir_comment_post_content_details cpcds WHERE cpcds.post_content_details_id = pcds.id) AS total_comments,
+    (SELECT COUNT(*) FROM ir_like_post_content_details lpcds JOIN ir_users lu ON lu.id = lpcds.users_id AND (lu.is_deleted IS NULL OR lu.is_deleted = 0) WHERE lpcds.post_content_details_id = pcds.id) AS total_likes,
+    (SELECT COUNT(*) FROM ir_comment_post_content_details cpcds JOIN ir_users cu ON cu.id = cpcds.users_id AND (cu.is_deleted IS NULL OR cu.is_deleted = 0) WHERE cpcds.post_content_details_id = pcds.id) AS total_comments,
     (SELECT COUNT(*) FROM ir_impression_post_content_details ipcds WHERE ipcds.post_content_details_id = pcds.id) AS total_impressions,
     TO_CHAR(TO_TIMESTAMP(pcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS created_at,
     json_build_object(
@@ -758,6 +758,7 @@ export const getCommentReplies = async (req, res) => {
             FROM ir_comment_post_content_details c
             JOIN ir_users u ON c.users_id = u.id
             WHERE c.parent_id = :commentId
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
             ORDER BY c.created_at ASC
             LIMIT :limit OFFSET :offset
         `;
@@ -1007,6 +1008,7 @@ export const getPostsLikedByUser = async (req, res) => {
             JOIN ir_like_post_content_details lk ON lk.post_content_details_id = pcds.id
             JOIN ir_users lu ON lu.id = lk.users_id AND lu.username = :username
             WHERE pcds.is_accepted = 1
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
             ORDER BY lk.created_at DESC
             LIMIT :limit OFFSET :offset
         `, { type: db.QueryTypes.SELECT, replacements });
@@ -1014,9 +1016,11 @@ export const getPostsLikedByUser = async (req, res) => {
         const [{ total_count }] = await db.query(`
             SELECT COUNT(*) AS total_count
             FROM ir_post_content_details pcds
+            JOIN ir_users u ON pcds.users_id = u.id
             JOIN ir_like_post_content_details lk ON lk.post_content_details_id = pcds.id
             JOIN ir_users lu ON lu.id = lk.users_id AND lu.username = :username
             WHERE pcds.is_accepted = 1
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
         `, { type: db.QueryTypes.SELECT, replacements });
 
         return responseApi(res, data, buildPaginationMeta(page, limit, total_count), "Data has been retrieved", 0);
@@ -1064,6 +1068,7 @@ export const getPostsCommentedByUser = async (req, res) => {
             FROM ir_post_content_details pcds
             JOIN ir_users u ON pcds.users_id = u.id
             WHERE pcds.is_accepted = 1
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
               AND EXISTS (
                 SELECT 1 FROM ir_comment_post_content_details c
                 JOIN ir_users cu ON cu.id = c.users_id AND cu.username = :username
@@ -1080,7 +1085,9 @@ export const getPostsCommentedByUser = async (req, res) => {
         const [{ total_count }] = await db.query(`
             SELECT COUNT(DISTINCT pcds.id) AS total_count
             FROM ir_post_content_details pcds
+            JOIN ir_users u ON pcds.users_id = u.id
             WHERE pcds.is_accepted = 1
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
               AND EXISTS (
                 SELECT 1 FROM ir_comment_post_content_details c
                 JOIN ir_users cu ON cu.id = c.users_id AND cu.username = :username

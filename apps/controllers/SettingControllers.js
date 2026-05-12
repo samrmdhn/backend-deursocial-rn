@@ -28,6 +28,7 @@ import axios from "axios";
 import { encrypt } from "../../helpers/CustomShortEncrypt.js";
 import AboutModels from "../models/AboutModels.js";
 import NotificationModels from "../models/NotificationModels.js";
+import supabase from "../../configs/Supabase.js";
 
 const Op = Sequelize.Op;
 
@@ -810,15 +811,20 @@ export const deleteAccount = async (req, res) => {
             },
             { where: { id: userId } }
         );
-        // Mark all Supabase chat messages from this user as deleted
+        // Mark all Supabase chat messages + comments from this user as deleted
         try {
             await db.query(
                 `UPDATE messages SET is_deleted = true WHERE user_id = :userId`,
                 { replacements: { userId: String(userId) }, type: db.QueryTypes.UPDATE }
             );
         } catch (e) {
-            // Non-fatal — messages table may not have column yet (run migration first)
             console.warn("[deleteAccount] messages update skipped:", e.message);
+        }
+        try {
+            await supabase.from("event_post_comments").update({ is_deleted: true }).eq("user_id", String(userId));
+            await supabase.from("event_moment_comments").update({ is_deleted: true }).eq("user_id", String(userId));
+        } catch (e) {
+            console.warn("[deleteAccount] supabase comments update skipped:", e.message);
         }
         return responseApi(
             res,
@@ -861,7 +867,7 @@ export const cancelDeleteAccount = async (req, res) => {
             },
             { where: { id: userId } }
         );
-        // Restore Supabase chat messages visibility
+        // Restore Supabase chat messages + comments visibility
         try {
             await db.query(
                 `UPDATE messages SET is_deleted = false WHERE user_id = :userId`,
@@ -869,6 +875,12 @@ export const cancelDeleteAccount = async (req, res) => {
             );
         } catch (e) {
             console.warn("[cancelDeleteAccount] messages update skipped:", e.message);
+        }
+        try {
+            await supabase.from("event_post_comments").update({ is_deleted: false }).eq("user_id", String(userId));
+            await supabase.from("event_moment_comments").update({ is_deleted: false }).eq("user_id", String(userId));
+        } catch (e) {
+            console.warn("[cancelDeleteAccount] supabase comments update skipped:", e.message);
         }
         return responseApi(res, {
             username: userFind.original_username,

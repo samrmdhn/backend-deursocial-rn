@@ -1177,6 +1177,7 @@ export const getFollowerOnProfile = async (req, res) => {
             FROM ir_following_users f
             JOIN ir_users u ON u.id = f.following_id
             WHERE f.users_id = :users_id
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
             LIMIT :limit OFFSET :offset
         `;
 
@@ -1187,8 +1188,10 @@ export const getFollowerOnProfile = async (req, res) => {
 
         const countQuery = `
             SELECT COUNT(*) AS total_count
-            FROM ir_following_users
-            WHERE users_id = :users_id
+            FROM ir_following_users f
+            JOIN ir_users u ON u.id = f.following_id
+            WHERE f.users_id = :users_id
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
         `;
 
         const totalResult = await db.query(countQuery, {
@@ -1266,6 +1269,7 @@ export const getFollowingOnProfile = async (req, res) => {
             FROM ir_following_users f
             JOIN ir_users u ON u.id = f.users_id
             WHERE f.following_id = :users_id
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
             LIMIT :limit OFFSET :offset
         `;
 
@@ -1276,8 +1280,10 @@ export const getFollowingOnProfile = async (req, res) => {
 
         const countQuery = `
             SELECT COUNT(*) AS total_count
-            FROM ir_following_users
-            WHERE following_id = :users_id
+            FROM ir_following_users f
+            JOIN ir_users u ON u.id = f.users_id
+            WHERE f.following_id = :users_id
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
         `;
 
         const totalResult = await db.query(countQuery, {
