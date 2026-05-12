@@ -858,7 +858,11 @@ export const cancelDeleteAccount = async (req, res) => {
             },
             { where: { id: userId } }
         );
-        return responseApi(res, {}, null, "Account deletion cancelled", 0);
+        return responseApi(res, {
+            username: userFind.original_username,
+            display_name: userFind.original_display_name ?? userFind.original_username,
+            email: userFind.original_email,
+        }, null, "Account deletion cancelled", 0);
     } catch (error) {
         console.error("[Error] cancel delete account:", error);
         return responseApi(res, [], null, "Server error", 418);
