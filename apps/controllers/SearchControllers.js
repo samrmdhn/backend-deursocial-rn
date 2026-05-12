@@ -342,7 +342,7 @@ export const dataUser = async (req, res) => {
         const limit = 10;
         const offset = (page - 1) * limit;
 
-        const whereClause = `WHERE (u.display_name ILIKE :search_text OR u.username ILIKE :search_text)`;
+        const whereClause = `WHERE (u.display_name ILIKE :search_text OR u.username ILIKE :search_text) AND (u.is_deleted IS NULL OR u.is_deleted = 0)`;
 
         const query = `
             SELECT

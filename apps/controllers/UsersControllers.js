@@ -121,6 +121,7 @@ export const getDetailUser = async (req, res) => {
             followed_user: isOwner ? false : queryUser.followed_user,
             total_post: queryUser.total_post,
             total_event_followed: queryUser.total_event_followed,
+            is_deleted: userData.is_deleted === 1,
         };
 
         return responseApi(res, response, null, "Data has been retrieved", 0);

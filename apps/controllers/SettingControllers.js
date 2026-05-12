@@ -757,20 +757,71 @@ export const deleteAccount = async (req, res) => {
         if (!userFind) {
             return responseApi(res, [], null, "User not found", 418);
         }
+        if (userFind.is_deleted === 1) {
+            return responseApi(res, {}, null, "Account already scheduled for deletion", 0);
+        }
+        const now = Math.floor(Date.now() / 1000);
+        const thirtyDays = 30 * 24 * 60 * 60;
         const anonSuffix = `_deleted_${userId}_${Date.now()}`;
         await UsersModels.update(
             {
-                deleted_at: Math.floor(Date.now() / 1000),
+                is_deleted: 1,
+                deleted_at: now,
+                scheduled_hard_delete_at: now + thirtyDays,
+                original_username: userFind.username,
+                original_email: userFind.email,
+                original_display_name: userFind.display_name,
                 username: `deleted_user${anonSuffix}`,
                 email: `deleted${anonSuffix}@deleted.local`,
                 display_name: "Deleted User",
                 photo: null,
+                description: null,
+                status: 0,
             },
             { where: { id: userId } }
         );
-        return responseApi(res, {}, null, "Account deleted", 0);
+        return responseApi(
+            res,
+            { scheduled_hard_delete_at: new Date((now + thirtyDays) * 1000).toISOString() },
+            null,
+            "Account scheduled for deletion",
+            0
+        );
     } catch (error) {
         console.error("[Error] delete account:", error);
+        return responseApi(res, [], null, "Server error", 418);
+    }
+}
+
+export const cancelDeleteAccount = async (req, res) => {
+    try {
+        const getToken = getDataUserUsingToken(req, res);
+        const userId = getToken.tod;
+        const userFind = await UsersModels.findOne({ where: { id: userId } });
+        if (!userFind) {
+            return responseApi(res, [], null, "User not found", 418);
+        }
+        if (userFind.is_deleted !== 1) {
+            return responseApi(res, {}, null, "Account is not pending deletion", 0);
+        }
+        await UsersModels.update(
+            {
+                is_deleted: 0,
+                deleted_at: null,
+                scheduled_hard_delete_at: null,
+                username: userFind.original_username,
+                email: userFind.original_email,
+                display_name: userFind.original_display_name ?? userFind.original_username,
+                original_username: null,
+                original_email: null,
+                original_display_name: null,
+                status: 1,
+            },
+            { where: { id: userId } }
+        );
+        return responseApi(res, {}, null, "Account deletion cancelled", 0);
+    } catch (error) {
+        console.error("[Error] cancel delete account:", error);
         return responseApi(res, [], null, "Server error", 418);
     }
 }

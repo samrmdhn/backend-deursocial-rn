@@ -109,6 +109,27 @@ const UsersModels = db.define(
             type: TYPES.BIGINT,
             allowNull: true,
         },
+        is_deleted: {
+            type: TYPES.TINYINT,
+            allowNull: true,
+            defaultValue: 0,
+        },
+        scheduled_hard_delete_at: {
+            type: TYPES.BIGINT,
+            allowNull: true,
+        },
+        original_username: {
+            type: TYPES.STRING(100),
+            allowNull: true,
+        },
+        original_email: {
+            type: TYPES.STRING(100),
+            allowNull: true,
+        },
+        original_display_name: {
+            type: TYPES.STRING(100),
+            allowNull: true,
+        },
     },
     {
         freezeTableName: true,

@@ -43,7 +43,8 @@ export {
     getNotification,
     updateStatusNotification,
     deactiveAccount,
-    deleteAccount
+    deleteAccount,
+    cancelDeleteAccount
 } from "./controllers/SettingControllers.js";
 
 export {
