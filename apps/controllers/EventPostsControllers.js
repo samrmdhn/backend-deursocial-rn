@@ -218,6 +218,7 @@ export const getEventOfficialPosts = async (req, res) => {
                 ep.content_details_id = :contentDetailsId
                 AND ep.is_accepted = 1
                 AND ep.post_type = 1
+                AND (u.is_deleted IS NULL OR u.is_deleted = 0)
             ORDER BY ep.created_at DESC
             LIMIT :limit OFFSET :offset;
         `;
@@ -230,9 +231,11 @@ export const getEventOfficialPosts = async (req, res) => {
         const countQuery = `
             SELECT COUNT(*) AS total_count
             FROM ir_event_posts ep
+            JOIN ir_users u ON ep.users_id = u.id
             WHERE ep.content_details_id = :contentDetailsId
                 AND ep.is_accepted = 1
                 AND ep.post_type = 1
+                AND (u.is_deleted IS NULL OR u.is_deleted = 0)
         `;
         const totalCountResult = await db.query(countQuery, {
             type: db.QueryTypes.SELECT,
@@ -613,6 +616,7 @@ export const getEventPostComments = async (req, res) => {
                 LEFT JOIN ir_event_posts ep ON epc.event_posts_id = ep.id
                 LEFT JOIN ir_users u ON epc.users_id = u.id
             WHERE ep.slug = :slug
+                AND (u.is_deleted IS NULL OR u.is_deleted = 0)
             ORDER BY epc.created_at DESC
             LIMIT :limit OFFSET :offset;
         `;
@@ -626,7 +630,9 @@ export const getEventPostComments = async (req, res) => {
             SELECT COUNT(*) AS total_count
             FROM ir_event_posts_comments epc
             LEFT JOIN ir_event_posts ep ON epc.event_posts_id = ep.id
+            LEFT JOIN ir_users u ON epc.users_id = u.id
             WHERE ep.slug = :slug
+                AND (u.is_deleted IS NULL OR u.is_deleted = 0)
         `;
         const totalCountResult = await db.query(countQuery, {
             replacements,

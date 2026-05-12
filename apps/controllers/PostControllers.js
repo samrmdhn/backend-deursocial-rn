@@ -346,7 +346,7 @@ export const commentPostPerContentDetail = withTransaction(
 export const getCommentPostPerContentDetail = async (req, res) => {
     try {
         const slugPostContentDetail = req.params.slugPost;
-        let whereClause = `WHERE pcds.slug = :slugPostContentDetail`;
+        let whereClause = `WHERE pcds.slug = :slugPostContentDetail AND (u.is_deleted IS NULL OR u.is_deleted = 0)`;
         const { page = 1 } = req.query;
         const limit = 10;
         const offset = (page - 1) * limit;

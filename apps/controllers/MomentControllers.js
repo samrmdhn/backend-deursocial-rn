@@ -439,6 +439,7 @@ export const getLikeMomentContentDetail = async (req, res) => {
             LEFT JOIN ir_segmented_post_content_details spcds ON spcds.post_content_details_id = pcds.id
             LEFT JOIN ir_content_details cds ON cds.id = spcds.content_details_id
             ${whereClause}
+            AND (u.is_deleted IS NULL OR u.is_deleted = 0)
             ORDER BY lpcd.created_at DESC
             LIMIT :limit OFFSET :offset
         `;
@@ -836,11 +837,12 @@ export const commentGetPerContentDetail = async (req, res) => {
                         'username', u.username
                 ) AS user,
             TO_CHAR(TO_TIMESTAMP(cpcds.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') as created_at
-            FROM 
-            ir_comment_post_content_details cpcds 
+            FROM
+            ir_comment_post_content_details cpcds
             LEFT JOIN ir_post_content_details pcds ON cpcds.post_content_details_id = pcds.id
             LEFT JOIN ir_users u ON cpcds.users_id = u.id
             ${whereClause}
+            AND (u.is_deleted IS NULL OR u.is_deleted = 0)
             ORDER BY cpcds.created_at DESC
             LIMIT :limit OFFSET :offset;
         `;
@@ -1000,6 +1002,7 @@ export const getCommentMomentContentDetail = async (req, res) => {
             JOIN ir_users commenter ON cpcds.users_id = commenter.id
             JOIN ir_users upost ON pcds.users_id = upost.id
             WHERE cpcds.users_id = :users_id
+            AND (upost.is_deleted IS NULL OR upost.is_deleted = 0)
             ORDER BY cpcds.created_at DESC
             LIMIT :limit OFFSET :offset
         `;
@@ -1086,6 +1089,7 @@ export const getMomentPerProfile = async (req, res) => {
             JOIN ir_segmented_post_content_details spcds ON spcds.post_content_details_id = pcds.id
             JOIN ir_users u ON pcds.users_id = u.id
             WHERE pcds.users_id = :users_id AND pcds.is_accepted = 1 AND pcds.type = 1
+            AND (u.is_deleted IS NULL OR u.is_deleted = 0)
             ORDER BY pcds.id DESC
             LIMIT :limit OFFSET :offset
         `;
