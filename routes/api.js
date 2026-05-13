@@ -159,6 +159,8 @@ api.post("/api/event/post/like/:slug", verifyToken, EventContentControllers.togg
 api.get("/api/event/posts/user/:username", verifyToken, EventContentControllers.getPostsByUser);
 api.get("/api/event/content/liked/:username", verifyToken, EventContentControllers.getPostsLikedByUser);
 api.get("/api/event/content/commented/:username", verifyToken, EventContentControllers.getPostsCommentedByUser);
+api.get("/api/event/moments/liked/:username", verifyToken, EventContentControllers.getMomentsLikedByUser);
+api.get("/api/event/moments/commented/:username", verifyToken, EventContentControllers.getMomentsCommentedByUser);
 api.get("/api/event/moments/user/:username", verifyToken, EventContentControllers.getMomentsByUser);
 
 // Event post detail

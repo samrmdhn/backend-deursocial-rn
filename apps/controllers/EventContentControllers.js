@@ -1142,6 +1142,122 @@ export const getMomentsByUser = async (req, res) => {
 };
 
 /**
+ * GET /api/event/moments/liked/:username
+ * Moments liked by a user
+ */
+export const getMomentsLikedByUser = async (req, res) => {
+    try {
+        const usersToken = getDataUserUsingToken(req, res);
+        const viewer_id = usersToken?.tod ?? 0;
+        const { username } = req.params;
+        const { page = 1, limit = 10 } = req.query;
+        const offset = (page - 1) * limit;
+
+        const replacements = { usersId: viewer_id, username, limit: parseInt(limit, 10), offset: parseInt(offset, 10) };
+
+        const data = await db.query(`
+            SELECT ${POST_SELECT_FIELDS},
+                ${POST_IS_LIKED_FIELD(viewer_id)},
+                ${POST_EVENT_FIELD}
+            FROM ir_post_content_details pcds
+            JOIN ir_users u ON pcds.users_id = u.id
+            JOIN ir_like_post_content_details lk ON lk.post_content_details_id = pcds.id
+            JOIN ir_users lu ON lu.id = lk.users_id AND lu.username = :username
+            WHERE pcds.is_accepted = 1 AND pcds.post_category = 1
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
+            ORDER BY lk.created_at DESC
+            LIMIT :limit OFFSET :offset
+        `, { type: db.QueryTypes.SELECT, replacements });
+
+        const [{ total_count }] = await db.query(`
+            SELECT COUNT(*) AS total_count
+            FROM ir_post_content_details pcds
+            JOIN ir_users u ON pcds.users_id = u.id
+            JOIN ir_like_post_content_details lk ON lk.post_content_details_id = pcds.id
+            JOIN ir_users lu ON lu.id = lk.users_id AND lu.username = :username
+            WHERE pcds.is_accepted = 1 AND pcds.post_category = 1
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
+        `, { type: db.QueryTypes.SELECT, replacements });
+
+        return responseApi(res, data, buildPaginationMeta(page, limit, total_count), "Data has been retrieved", 0);
+    } catch (error) {
+        console.log("error getMomentsLikedByUser", error);
+        return responseApi(res, [], null, "Server error", 1);
+    }
+};
+
+/**
+ * GET /api/event/moments/commented/:username
+ * Moments commented on by a user
+ */
+export const getMomentsCommentedByUser = async (req, res) => {
+    try {
+        const usersToken = getDataUserUsingToken(req, res);
+        const viewer_id = usersToken?.tod ?? 0;
+        const { username } = req.params;
+        const { page = 1, limit = 10 } = req.query;
+        const offset = (page - 1) * limit;
+
+        const replacements = { usersId: viewer_id, username, limit: parseInt(limit, 10), offset: parseInt(offset, 10) };
+
+        const data = await db.query(`
+            SELECT ${POST_SELECT_FIELDS},
+                ${POST_IS_LIKED_FIELD(viewer_id)},
+                ${POST_EVENT_FIELD},
+                (
+                    SELECT c.comment_post
+                    FROM ir_comment_post_content_details c
+                    JOIN ir_users cu ON cu.id = c.users_id AND cu.username = :username
+                    WHERE c.post_content_details_id = pcds.id
+                    ORDER BY c.created_at DESC
+                    LIMIT 1
+                ) AS latest_comment,
+                (
+                    SELECT TO_CHAR(TO_TIMESTAMP(c.created_at) AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS')
+                    FROM ir_comment_post_content_details c
+                    JOIN ir_users cu ON cu.id = c.users_id AND cu.username = :username
+                    WHERE c.post_content_details_id = pcds.id
+                    ORDER BY c.created_at DESC
+                    LIMIT 1
+                ) AS latest_comment_at
+            FROM ir_post_content_details pcds
+            JOIN ir_users u ON pcds.users_id = u.id
+            WHERE pcds.is_accepted = 1 AND pcds.post_category = 1
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
+              AND EXISTS (
+                SELECT 1 FROM ir_comment_post_content_details c
+                JOIN ir_users cu ON cu.id = c.users_id AND cu.username = :username
+                WHERE c.post_content_details_id = pcds.id
+              )
+            ORDER BY (
+                SELECT MAX(c.created_at) FROM ir_comment_post_content_details c
+                JOIN ir_users cu ON cu.id = c.users_id AND cu.username = :username
+                WHERE c.post_content_details_id = pcds.id
+            ) DESC
+            LIMIT :limit OFFSET :offset
+        `, { type: db.QueryTypes.SELECT, replacements });
+
+        const [{ total_count }] = await db.query(`
+            SELECT COUNT(DISTINCT pcds.id) AS total_count
+            FROM ir_post_content_details pcds
+            JOIN ir_users u ON pcds.users_id = u.id
+            WHERE pcds.is_accepted = 1 AND pcds.post_category = 1
+              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
+              AND EXISTS (
+                SELECT 1 FROM ir_comment_post_content_details c
+                JOIN ir_users cu ON cu.id = c.users_id AND cu.username = :username
+                WHERE c.post_content_details_id = pcds.id
+              )
+        `, { type: db.QueryTypes.SELECT, replacements });
+
+        return responseApi(res, data, buildPaginationMeta(page, limit, total_count), "Data has been retrieved", 0);
+    } catch (error) {
+        console.log("error getMomentsCommentedByUser", error);
+        return responseApi(res, [], null, "Server error", 1);
+    }
+};
+
+/**
  * GET /api/organizer/:id/posts
  * Community posts across all events by an organizer
  */

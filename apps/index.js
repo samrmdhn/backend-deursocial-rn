@@ -141,6 +141,8 @@ export {
     getPostsByUser,
     getPostsLikedByUser,
     getPostsCommentedByUser,
+    getMomentsLikedByUser,
+    getMomentsCommentedByUser,
     getMomentsByUser,
     getHomeFeed,
     getHomeFeedNewCount,
