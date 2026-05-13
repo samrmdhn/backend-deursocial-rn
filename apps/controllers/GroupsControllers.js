@@ -405,6 +405,7 @@ export const getGroups = async (req, res) => {
             LEFT JOIN ir_citys c ON c.id = g.citys_id
             LEFT JOIN ir_group_members gm ON gm.groups_id = g.id
             ${whereClause}
+            AND (u.is_deleted IS NULL OR u.is_deleted = 0)
             GROUP BY g.id, u.id, c.id, cds.id
             ORDER BY g.created_at DESC
             LIMIT :limit OFFSET :offset;
@@ -419,7 +420,9 @@ export const getGroups = async (req, res) => {
             SELECT COUNT(*) AS total_count
             FROM ir_groups g
             LEFT JOIN ir_content_details cds ON cds.id = g.content_details_id
-            ${whereClause};
+            LEFT JOIN ir_users u ON u.id = g.users_id
+            ${whereClause}
+            AND (u.is_deleted IS NULL OR u.is_deleted = 0);
         `;
         const totalCountResult = await db.query(countQuery, {
             replacements,

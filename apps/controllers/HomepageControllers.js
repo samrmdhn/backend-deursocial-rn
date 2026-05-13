@@ -1042,7 +1042,11 @@ export const getContentDetails = async (req, res) => {
                 END AS is_follow,
                 (
                 SELECT json_build_object(
-                    'total_followers', COUNT(*),
+                    'total_followers', (
+                        SELECT COUNT(*) FROM ir_content_detail_followers cdf2
+                        JOIN ir_users fu ON fu.id = cdf2.users_id AND (fu.is_deleted IS NULL OR fu.is_deleted = 0)
+                        WHERE cdf2.content_details_id = cd.id
+                    ),
                     'users', (
                             SELECT json_agg(
                                 json_build_object(
@@ -1056,6 +1060,7 @@ export const getContentDetails = async (req, res) => {
                                 FROM ir_content_detail_followers cdf
                                 JOIN ir_users u ON cdf.users_id = u.id
                                 WHERE cdf.content_details_id = cd.id
+                                  AND (u.is_deleted IS NULL OR u.is_deleted = 0)
                                 ORDER BY cdf.id DESC
                                 LIMIT 5
                             ) AS limited_users
@@ -1063,7 +1068,8 @@ export const getContentDetails = async (req, res) => {
                     )
                     FROM ir_content_detail_followers cdf
                     WHERE cdf.content_details_id = cd.id
-                )AS followers,
+                    LIMIT 1
+                ) AS followers,
                 (
                     SELECT json_agg(
                         json_build_object(
