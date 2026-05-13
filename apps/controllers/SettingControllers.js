@@ -826,6 +826,8 @@ export const deleteAccount = async (req, res) => {
         } catch (e) {
             console.warn("[deleteAccount] supabase comments update skipped:", e.message);
         }
+        // Touch ir_users via Supabase client to fire Realtime WAL for connected clients
+        supabase.from("ir_users").update({ is_deleted: 1, display_name: "Deleted User", photo: null }).eq("id", String(userId)).then(() => {}).catch(() => {});
         return responseApi(
             res,
             { scheduled_hard_delete_at: new Date((now + thirtyDays) * 1000).toISOString() },
@@ -882,6 +884,9 @@ export const cancelDeleteAccount = async (req, res) => {
         } catch (e) {
             console.warn("[cancelDeleteAccount] supabase comments update skipped:", e.message);
         }
+        // Touch ir_users via Supabase client to fire Realtime WAL for connected clients
+        const restoredName = userFind.original_display_name ?? userFind.original_username;
+        supabase.from("ir_users").update({ is_deleted: 0, display_name: restoredName, photo: userFind.original_photo ?? null }).eq("id", String(userId)).then(() => {}).catch(() => {});
         return responseApi(res, {
             username: userFind.original_username,
             display_name: userFind.original_display_name ?? userFind.original_username,

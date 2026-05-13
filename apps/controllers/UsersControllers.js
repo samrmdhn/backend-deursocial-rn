@@ -8,6 +8,7 @@ import {
 } from "../../helpers/customHelpers.js";
 import FollowingUsersModels from "../models/FollowingUsersModels.js";
 import db from "../../configs/Database.js";
+import supabase from "../../configs/Supabase.js";
 import { signVisitorToken } from "../../libs/JwtHandlers.js";
 import { uploadFileToStorage } from "../../helpers/StorageUpload.js";
 import { generateNotificationMessage } from "../../helpers/notification.js";
@@ -276,6 +277,11 @@ export const updateDataUser = async (req, res) => {
                 },
             }
         );
+        // Touch ir_users via Supabase client so Realtime WAL fires for connected clients
+        supabase.from("ir_users").update({
+            display_name: display_name,
+            photo: objUpdate.photo,
+        }).eq("id", String(getToken.tod)).then(() => {}).catch(() => {});
         let visitorToken = "";
         if (userFind) {
             const userUpdated = await UsersModels.findOne({

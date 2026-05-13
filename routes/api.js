@@ -120,7 +120,6 @@ api.get("/api/reminder/all/users", EmailControllers.reminderForUserManualSchedul
 api.post("/api/deactive/account/:usernameEncoding", SettingControllers.deactiveAccount)
 api.delete("/api/user/account", verifyToken, SettingControllers.deleteAccount)
 api.post("/api/user/cancel-delete", verifyToken, SettingControllers.cancelDeleteAccount)
-
 api.get("/api/get/report", verifyToken, ReportControllers.getDataReport)
 api.post("/api/reported/post", verifyToken, ReportControllers.saveReportedByUsers)
 api.delete("/api/delete/comment/moment", verifyToken, MomentControllers.deleteCommentMoment);
