@@ -385,7 +385,7 @@ export const getGroups = async (req, res) => {
                             CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.username END,
                             'member' AS role
                         FROM ir_group_members gm
-                        JOIN ir_users u ON u.id = gm.users_id
+                        JOIN ir_users u ON u.id = gm.users_id AND (u.is_deleted IS NULL OR u.is_deleted = 0)
                         WHERE gm.groups_id = g.id AND gm.status = 1
 
                         UNION ALL
@@ -397,6 +397,7 @@ export const getGroups = async (req, res) => {
                             'creator' AS role
                         FROM ir_users creator
                         WHERE creator.id = g.users_id
+                          AND (creator.is_deleted IS NULL OR creator.is_deleted = 0)
                     ) AS member
                 ) AS members
             FROM ir_groups g
@@ -624,7 +625,7 @@ export const getGroupsDetail = async (req, res) => {
                             CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.username END AS username,
                             'member' AS role
                         FROM ir_group_members gm
-                        JOIN ir_users u ON u.id = gm.users_id
+                        JOIN ir_users u ON u.id = gm.users_id AND (u.is_deleted IS NULL OR u.is_deleted = 0)
                         WHERE gm.groups_id = g.id AND gm.status = 1
 
                         UNION ALL
@@ -636,6 +637,7 @@ export const getGroupsDetail = async (req, res) => {
                             'creator' AS role
                         FROM ir_users creator
                         WHERE creator.id = g.users_id
+                          AND (creator.is_deleted IS NULL OR creator.is_deleted = 0)
                     ) AS member
                 ) AS members,
                 CASE

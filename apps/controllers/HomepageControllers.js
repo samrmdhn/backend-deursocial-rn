@@ -288,7 +288,7 @@ export const getContents = async (req, res) => {
                         ),
                         'followers', (
                             SELECT json_build_object(
-                                'total_followers', COUNT(*),
+                                'total_followers', (SELECT COUNT(*) FROM ir_content_detail_followers cdf2 JOIN ir_users fu ON fu.id = cdf2.users_id AND (fu.is_deleted IS NULL OR fu.is_deleted = 0) WHERE cdf2.content_details_id = cd.id),
                                 'users', (
                                     SELECT json_agg(
                                         json_build_object(
@@ -302,6 +302,7 @@ export const getContents = async (req, res) => {
                                         FROM ir_content_detail_followers cdf
                                         JOIN ir_users u ON cdf.users_id = u.id
                                         WHERE cdf.content_details_id = cd.id
+                                          AND (u.is_deleted IS NULL OR u.is_deleted = 0)
                                         ORDER BY cdf.id DESC
                                         LIMIT 5
                                     ) AS limited_users
@@ -309,17 +310,21 @@ export const getContents = async (req, res) => {
                             )
                             FROM ir_content_detail_followers cdf
                             WHERE cdf.content_details_id = cd.id
+                            LIMIT 1
                         ),
 
                         'total_posts',(
                             SELECT COUNT(*) AS total_posts
-                            FROM ir_segmented_post_content_details gp 
-                            JOIN ir_post_content_details pcds on gp.post_content_details_id = pcds.id 
+                            FROM ir_segmented_post_content_details gp
+                            JOIN ir_post_content_details pcds ON gp.post_content_details_id = pcds.id
+                            JOIN ir_users pu ON pu.id = pcds.users_id AND (pu.is_deleted IS NULL OR pu.is_deleted = 0)
                             WHERE gp.content_details_id = cd.id AND pcds.is_accepted = 1
                         ),
                         'total_groups',(
                             SELECT COUNT(*) AS total_groups
-                            FROM ir_groups g WHERE g.content_details_id = cd.id
+                            FROM ir_groups g
+                            JOIN ir_users gu ON gu.id = g.users_id AND (gu.is_deleted IS NULL OR gu.is_deleted = 0)
+                            WHERE g.content_details_id = cd.id
                         ),
                         'location', json_build_object(
                             'region', json_build_object(
@@ -453,7 +458,7 @@ export const getContentsData = async (req, res) => {
                 ) AS event_organizers,
                 (
                     SELECT json_build_object(
-                        'total_followers', COUNT(*),
+                        'total_followers', (SELECT COUNT(*) FROM ir_content_detail_followers cdf3 JOIN ir_users fu ON fu.id = cdf3.users_id AND (fu.is_deleted IS NULL OR fu.is_deleted = 0) WHERE cdf3.content_details_id = cd.id),
                         'users', (
                             SELECT json_agg(
                                 json_build_object(
@@ -465,17 +470,24 @@ export const getContentsData = async (req, res) => {
                             FROM ir_content_detail_followers cdf2
                             JOIN ir_users u ON cdf2.users_id = u.id
                             WHERE cdf2.content_details_id = cd.id
+                              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
                             LIMIT 3
                         )
                     )
                     FROM ir_content_detail_followers cdf
                     WHERE cdf.content_details_id = cd.id
+                    LIMIT 1
                 ) AS followers,
                 (
-                    SELECT COUNT(*) FROM ir_segmented_post_content_details gp WHERE gp.content_details_id = cd.id
+                    SELECT COUNT(*) FROM ir_segmented_post_content_details gp
+                    JOIN ir_post_content_details pcds ON pcds.id = gp.post_content_details_id
+                    JOIN ir_users pu ON pu.id = pcds.users_id AND (pu.is_deleted IS NULL OR pu.is_deleted = 0)
+                    WHERE gp.content_details_id = cd.id AND pcds.is_accepted = 1
                 ) AS total_posts,
                 (
-                    SELECT COUNT(*) FROM ir_groups g WHERE g.content_details_id = cd.id
+                    SELECT COUNT(*) FROM ir_groups g
+                    JOIN ir_users gu ON gu.id = g.users_id AND (gu.is_deleted IS NULL OR gu.is_deleted = 0)
+                    WHERE g.content_details_id = cd.id
                 ) AS total_groups,
                 json_build_object(
                     'region', json_build_object(
@@ -650,10 +662,10 @@ export const getOrganizerProfile = async (req, res) => {
                     WHEN cd.status = 1 THEN 'ongoing'
                     ELSE 'upcoming'
                 END AS status,
-                (SELECT COUNT(*) FROM ir_segmented_post_content_details spcd WHERE spcd.content_details_id = cd.id) AS total_posts,
-                (SELECT COUNT(*) FROM ir_groups g WHERE g.content_details_id = cd.id) AS total_groups,
+                (SELECT COUNT(*) FROM ir_segmented_post_content_details spcd JOIN ir_post_content_details pcds ON pcds.id = spcd.post_content_details_id JOIN ir_users pu ON pu.id = pcds.users_id AND (pu.is_deleted IS NULL OR pu.is_deleted = 0) WHERE spcd.content_details_id = cd.id AND pcds.is_accepted = 1) AS total_posts,
+                (SELECT COUNT(*) FROM ir_groups g JOIN ir_users gu ON gu.id = g.users_id AND (gu.is_deleted IS NULL OR gu.is_deleted = 0) WHERE g.content_details_id = cd.id) AS total_groups,
                 json_build_object(
-                    'total_followers', (SELECT COUNT(*) FROM ir_content_detail_followers cdf WHERE cdf.content_details_id = cd.id),
+                    'total_followers', (SELECT COUNT(*) FROM ir_content_detail_followers cdf JOIN ir_users fu ON fu.id = cdf.users_id AND (fu.is_deleted IS NULL OR fu.is_deleted = 0) WHERE cdf.content_details_id = cd.id),
                     'users', (
                         SELECT COALESCE(json_agg(json_build_object('id', u.id, 'display_name', u.display_name, 'image', u.photo)), '[]')
                         FROM (
@@ -661,6 +673,7 @@ export const getOrganizerProfile = async (req, res) => {
                             FROM ir_content_detail_followers cdf2
                             JOIN ir_users u ON cdf2.users_id = u.id
                             WHERE cdf2.content_details_id = cd.id
+                              AND (u.is_deleted IS NULL OR u.is_deleted = 0)
                             LIMIT 4
                         ) u
                     )
@@ -1144,16 +1157,20 @@ export const getContentDetails = async (req, res) => {
                     SELECT COUNT(*) AS total_posts
                     FROM ir_post_content_details pcds
                     LEFT JOIN ir_segmented_post_content_details spcds ON pcds.id = spcds.post_content_details_id
+                    JOIN ir_users pu ON pu.id = pcds.users_id AND (pu.is_deleted IS NULL OR pu.is_deleted = 0)
                     WHERE spcds.content_details_id = cd.id AND pcds.is_accepted = 1
                 ) AS total_posts,
                 (
                     SELECT COUNT(*) AS total_groups
-                    FROM ir_groups g WHERE g.content_details_id = cd.id
+                    FROM ir_groups g
+                    JOIN ir_users gu ON gu.id = g.users_id AND (gu.is_deleted IS NULL OR gu.is_deleted = 0)
+                    WHERE g.content_details_id = cd.id
                 ) AS total_groups,
                 (
                     SELECT COUNT(*) AS total_moments
                     FROM ir_post_content_details pcds
                     LEFT JOIN ir_segmented_post_content_details spcds ON pcds.id = spcds.post_content_details_id
+                    JOIN ir_users pu ON pu.id = pcds.users_id AND (pu.is_deleted IS NULL OR pu.is_deleted = 0)
                     WHERE spcds.content_details_id = cd.id AND pcds.is_accepted = 1 AND pcds.post_category = 1
                 ) AS total_moments,
                 json_build_object(
