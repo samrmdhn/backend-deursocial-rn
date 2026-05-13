@@ -380,24 +380,23 @@ export const getGroups = async (req, res) => {
                     )
                     FROM (
                         SELECT DISTINCT
-                            CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
-                            CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END,
-                            CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.username END,
+                            CASE WHEN u.is_deleted = 1 THEN 'Deleted Account' WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
+                            CASE WHEN u.is_deleted = 1 THEN NULL WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END,
+                            CASE WHEN u.is_deleted = 1 THEN 'deleted_account' WHEN g.is_anonymous = 1 THEN '' ELSE u.username END,
                             'member' AS role
                         FROM ir_group_members gm
-                        JOIN ir_users u ON u.id = gm.users_id AND (u.is_deleted IS NULL OR u.is_deleted = 0)
+                        JOIN ir_users u ON u.id = gm.users_id
                         WHERE gm.groups_id = g.id AND gm.status = 1
 
                         UNION ALL
 
                         SELECT DISTINCT
-                            CASE WHEN g.is_anonymous = 1 THEN creator.display_name_anonymous ELSE creator.display_name END AS display_name,
-                            CASE WHEN g.is_anonymous = 1 THEN '' ELSE creator.photo END,
-                            CASE WHEN g.is_anonymous = 1 THEN '' ELSE creator.username END,
+                            CASE WHEN creator.is_deleted = 1 THEN 'Deleted Account' WHEN g.is_anonymous = 1 THEN creator.display_name_anonymous ELSE creator.display_name END AS display_name,
+                            CASE WHEN creator.is_deleted = 1 THEN NULL WHEN g.is_anonymous = 1 THEN '' ELSE creator.photo END,
+                            CASE WHEN creator.is_deleted = 1 THEN 'deleted_account' ELSE creator.username END,
                             'creator' AS role
                         FROM ir_users creator
                         WHERE creator.id = g.users_id
-                          AND (creator.is_deleted IS NULL OR creator.is_deleted = 0)
                     ) AS member
                 ) AS members
             FROM ir_groups g
@@ -620,24 +619,23 @@ export const getGroupsDetail = async (req, res) => {
                     )
                     FROM (
                         SELECT DISTINCT
-                            CASE WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
-                            CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END AS photo,
-                            CASE WHEN g.is_anonymous = 1 THEN '' ELSE u.username END AS username,
+                            CASE WHEN u.is_deleted = 1 THEN 'Deleted Account' WHEN g.is_anonymous = 1 THEN u.display_name_anonymous ELSE u.display_name END AS display_name,
+                            CASE WHEN u.is_deleted = 1 THEN NULL WHEN g.is_anonymous = 1 THEN '' ELSE u.photo END AS photo,
+                            CASE WHEN u.is_deleted = 1 THEN 'deleted_account' WHEN g.is_anonymous = 1 THEN '' ELSE u.username END AS username,
                             'member' AS role
                         FROM ir_group_members gm
-                        JOIN ir_users u ON u.id = gm.users_id AND (u.is_deleted IS NULL OR u.is_deleted = 0)
+                        JOIN ir_users u ON u.id = gm.users_id
                         WHERE gm.groups_id = g.id AND gm.status = 1
 
                         UNION ALL
 
                         SELECT DISTINCT
-                            CASE WHEN g.is_anonymous = 1 THEN creator.display_name_anonymous ELSE creator.display_name END AS display_name,
-                            CASE WHEN g.is_anonymous = 1 THEN '' ELSE creator.photo END AS photo,
-                            creator.username AS username,
+                            CASE WHEN creator.is_deleted = 1 THEN 'Deleted Account' WHEN g.is_anonymous = 1 THEN creator.display_name_anonymous ELSE creator.display_name END AS display_name,
+                            CASE WHEN creator.is_deleted = 1 THEN NULL WHEN g.is_anonymous = 1 THEN '' ELSE creator.photo END AS photo,
+                            CASE WHEN creator.is_deleted = 1 THEN 'deleted_account' ELSE creator.username END AS username,
                             'creator' AS role
                         FROM ir_users creator
                         WHERE creator.id = g.users_id
-                          AND (creator.is_deleted IS NULL OR creator.is_deleted = 0)
                     ) AS member
                 ) AS members,
                 CASE
