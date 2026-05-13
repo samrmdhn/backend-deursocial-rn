@@ -137,7 +137,10 @@ api.post("/api/event/posts/:eventSlug", verifyToken, EventContentControllers.cre
 api.get("/api/event/official-posts/:eventSlug", verifyToken, EventContentControllers.getEventOfficialPosts);
 api.post("/api/event/official-posts/:eventSlug", verifyToken, EventContentControllers.createEventOfficialPost);
 
-// Event moments
+// Event moments (specific routes before wildcard)
+api.get("/api/event/moments/liked/:username", verifyToken, EventContentControllers.getMomentsLikedByUser);
+api.get("/api/event/moments/commented/:username", verifyToken, EventContentControllers.getMomentsCommentedByUser);
+api.get("/api/event/moments/user/:username", verifyToken, EventContentControllers.getMomentsByUser);
 api.get("/api/event/moments/:eventSlug", verifyToken, EventContentControllers.getEventMoments);
 api.post("/api/event/moments/:eventSlug", verifyToken, EventContentControllers.createEventMoment);
 
@@ -159,9 +162,6 @@ api.post("/api/event/post/like/:slug", verifyToken, EventContentControllers.togg
 api.get("/api/event/posts/user/:username", verifyToken, EventContentControllers.getPostsByUser);
 api.get("/api/event/content/liked/:username", verifyToken, EventContentControllers.getPostsLikedByUser);
 api.get("/api/event/content/commented/:username", verifyToken, EventContentControllers.getPostsCommentedByUser);
-api.get("/api/event/moments/liked/:username", verifyToken, EventContentControllers.getMomentsLikedByUser);
-api.get("/api/event/moments/commented/:username", verifyToken, EventContentControllers.getMomentsCommentedByUser);
-api.get("/api/event/moments/user/:username", verifyToken, EventContentControllers.getMomentsByUser);
 
 // Event post detail
 api.get("/api/event/post/detail/:slug", verifyToken, EventContentControllers.getEventPostDetail);
