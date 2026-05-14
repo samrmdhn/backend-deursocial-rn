@@ -892,7 +892,7 @@ export const deleteEventPost = withTransaction(async (req, res, transaction) => 
         const slug = req.params.slug;
         const post = await PostContentDetailModels.findOne({ where: { slug } });
         if (!post) return responseApi(res, [], null, "Not found", 400);
-        if (post.users_id !== users_id) return responseApi(res, [], null, "Unauthorized", 403);
+        if (Number(post.users_id) !== Number(users_id)) return responseApi(res, [], null, "Unauthorized", 403);
 
         await post.destroy({ transaction });
         return responseApi(res, [], null, "Deleted", 0);
