@@ -894,6 +894,16 @@ export const deleteEventPost = withTransaction(async (req, res, transaction) => 
         if (!post) return responseApi(res, [], null, "Not found", 400);
         if (Number(post.users_id) !== Number(users_id)) return responseApi(res, [], null, "Unauthorized", 403);
 
+        const comments = await CommentPostContentDetailModels.findAll({ where: { post_content_details_id: post.id }, attributes: ["id"], transaction });
+        const commentIds = comments.map((c) => c.id);
+        if (commentIds.length > 0) {
+            await LikeCommentPostContentDetailModels.destroy({ where: { comment_post_content_details_id: commentIds }, transaction });
+        }
+        await CommentPostContentDetailModels.destroy({ where: { post_content_details_id: post.id }, transaction });
+        await LikePostContentDetailModels.destroy({ where: { post_content_details_id: post.id }, transaction });
+        await FilePostContentDetailModels.destroy({ where: { post_content_details_id: post.id }, transaction });
+        await ImpressionPostContentDetailModels.destroy({ where: { post_content_details_id: post.id }, transaction });
+        await SegmentedPostContentDetailModels.destroy({ where: { post_content_details_id: post.id }, transaction });
         await post.destroy({ transaction });
         return responseApi(res, [], null, "Deleted", 0);
     } catch (error) {
