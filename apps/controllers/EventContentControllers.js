@@ -242,6 +242,26 @@ export const createEventPost = withTransaction(async (req, res, transaction) => 
             }
         }
 
+        // Send mention notifications
+        if (caption_post) {
+            const mentionedUsernames = [...new Set((caption_post.match(/@(\w+)/g) || []).map(m => m.slice(1)))];
+            if (mentionedUsernames.length) {
+                const mentionedUsers = await db.query(
+                    `SELECT id, username FROM ir_users WHERE username IN (:usernames) AND (is_deleted IS NULL OR is_deleted = 0)`,
+                    { replacements: { usernames: mentionedUsernames }, type: db.QueryTypes.SELECT }
+                );
+                for (const u of mentionedUsers) {
+                    if (u.id === users_id) continue;
+                    await generateNotificationMessage({
+                        users_id: u.id,
+                        source_id: post.id,
+                        created_at: dateToEpochTime(req.headers["x-date-for"]),
+                        type: 9,
+                    });
+                }
+            }
+        }
+
         return responseApi(res, [{ post_slug: post.slug }], null, "Post created", 0);
     } catch (error) {
         console.log("error createEventPost", error);
@@ -866,6 +886,26 @@ export const createEventMoment = withTransaction(async (req, res, transaction) =
                     file: storagePath,
                     created_at: dateToEpochTime(req.headers["x-date-for"]),
                 }, { transaction });
+            }
+        }
+
+        // Send mention notifications
+        if (caption_post) {
+            const mentionedUsernames = [...new Set((caption_post.match(/@(\w+)/g) || []).map(m => m.slice(1)))];
+            if (mentionedUsernames.length) {
+                const mentionedUsers = await db.query(
+                    `SELECT id, username FROM ir_users WHERE username IN (:usernames) AND (is_deleted IS NULL OR is_deleted = 0)`,
+                    { replacements: { usernames: mentionedUsernames }, type: db.QueryTypes.SELECT }
+                );
+                for (const u of mentionedUsers) {
+                    if (u.id === users_id) continue;
+                    await generateNotificationMessage({
+                        users_id: u.id,
+                        source_id: post.id,
+                        created_at: dateToEpochTime(req.headers["x-date-for"]),
+                        type: 9,
+                    });
+                }
             }
         }
 

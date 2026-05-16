@@ -34,8 +34,8 @@ export const generateNotificationMessage = async ({ type, users_id, source_id, c
             case 8: // new messages group
                 message = `You have new messages on group.`;
                 break;
-            case 9: // someone mentioned your
-                message = `someone mentioned your.`;
+            case 9: // someone mentioned you
+                message = `mentioned you in a post.`;
                 break;
             case 10: // approved to join group
                 message = `Your request to join the group has been approved.`;
