@@ -18,6 +18,7 @@ import { deleteFile, fileExists, uploadFile } from "../../helpers/FileUpload.js"
 import SegmentedPostContentDetailModels from "../models/SegmentedPostContentDetailModels.js";
 import UsersModels from "../models/UsersModels.js";
 import { generateNotificationMessage } from "../../helpers/notification.js";
+import { sendMentionNotifications } from "../../helpers/mentionNotification.js";
 import { sendMail, templateHtmlRequestPost } from "../../libs/Mailist.js";
 import { Sequelize } from "sequelize";
 const Op = Sequelize.Op;
@@ -562,6 +563,22 @@ export const commentMomentPerContentDetail = withTransaction(
                     created_at: dateToEpochTime(req.headers["x-date-for"]),
                     type: 3
                 })
+            }
+            // Send mention notifications for @mentions in comment
+            if (comment_post) {
+                const eventRow = await db.query(
+                    `SELECT cd.slug FROM ir_content_details cd
+                     JOIN ir_segmented_post_content_details sp ON sp.content_details_id = cd.id
+                     WHERE sp.post_content_details_id = :postId LIMIT 1`,
+                    { replacements: { postId: getIdPostContentDetail.id }, type: db.QueryTypes.SELECT, plain: true }
+                );
+                sendMentionNotifications({
+                    caption: comment_post,
+                    actorId: users_id,
+                    referenceId: slugPostContentDetail,
+                    referenceType: 'comment_moment',
+                    referenceEventId: eventRow?.slug ?? null,
+                });
             }
             return responseApi(res, [], null, "Data has been saved", 0);
         } catch (error) {
