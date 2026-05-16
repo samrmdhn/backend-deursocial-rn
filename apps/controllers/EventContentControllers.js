@@ -12,6 +12,7 @@ import GroupsModels from "../models/GroupsModels.js";
 import { parseToRichText } from "../../libs/ParseToRichText.js";
 import { generateNotificationMessage } from "../../helpers/notification.js";
 import { uploadPostImage, getPostImageUrl } from "../../helpers/StorageUpload.js";
+import supabase from "../../configs/Supabase.js";
 import ImpressionPostContentDetailModels from "../models/ImpressionPostContentDetailModels.js";
 
 // ═══════════════════════════════════════════════════════════════
@@ -174,6 +175,50 @@ export const getEventPosts = async (req, res) => {
     }
 };
 
+async function sendMentionNotificationsToSupabase({ caption, actorId, postSlug, referenceType, createdAt }) {
+    try {
+        const usernames = [...new Set((caption.match(/@(\w+)/g) || []).map(m => m.slice(1)))];
+        if (!usernames.length) return;
+
+        const [actorRows, mentionedRows] = await Promise.all([
+            db.query(
+                `SELECT id, display_name, username, photo FROM ir_users WHERE id = :id LIMIT 1`,
+                { replacements: { id: actorId }, type: db.QueryTypes.SELECT }
+            ),
+            db.query(
+                `SELECT id, username FROM ir_users WHERE username IN (:usernames) AND (is_deleted IS NULL OR is_deleted = 0)`,
+                { replacements: { usernames }, type: db.QueryTypes.SELECT }
+            ),
+        ]);
+
+        const actor = actorRows[0];
+        if (!actor) return;
+
+        const actorImage = actor.photo
+            ? (actor.photo.startsWith('http') ? actor.photo : `${process.env.APP_BUCKET_IMAGE || ''}${actor.photo}`)
+            : null;
+
+        for (const u of mentionedRows) {
+            if (String(u.id) === String(actorId)) continue;
+            await supabase.from('notifications').insert({
+                user_id: String(u.id),
+                actor_id: String(actorId),
+                actor_name: actor.display_name || actor.username,
+                actor_username: actor.username,
+                actor_image: actorImage,
+                type: 'mention',
+                reference_id: postSlug,
+                reference_type: referenceType,
+                actor_count: 1,
+                message: `${actor.display_name || actor.username} mentioned you`,
+                is_read: false,
+            });
+        }
+    } catch (e) {
+        console.log('[MENTION NOTIF ERROR]', e);
+    }
+}
+
 /**
  * POST /api/event/posts/:eventSlug
  * Create community post in event
@@ -242,24 +287,15 @@ export const createEventPost = withTransaction(async (req, res, transaction) => 
             }
         }
 
-        // Send mention notifications
+        // Send mention notifications to Supabase (realtime + push)
         if (caption_post) {
-            const mentionedUsernames = [...new Set((caption_post.match(/@(\w+)/g) || []).map(m => m.slice(1)))];
-            if (mentionedUsernames.length) {
-                const mentionedUsers = await db.query(
-                    `SELECT id, username FROM ir_users WHERE username IN (:usernames) AND (is_deleted IS NULL OR is_deleted = 0)`,
-                    { replacements: { usernames: mentionedUsernames }, type: db.QueryTypes.SELECT }
-                );
-                for (const u of mentionedUsers) {
-                    if (u.id === users_id) continue;
-                    await generateNotificationMessage({
-                        users_id: u.id,
-                        source_id: post.id,
-                        created_at: dateToEpochTime(req.headers["x-date-for"]),
-                        type: 9,
-                    });
-                }
-            }
+            sendMentionNotificationsToSupabase({
+                caption: caption_post,
+                actorId: users_id,
+                postSlug: post.slug,
+                referenceType: 'post',
+                createdAt: dateToEpochTime(req.headers["x-date-for"]),
+            });
         }
 
         return responseApi(res, [{ post_slug: post.slug }], null, "Post created", 0);
@@ -889,24 +925,15 @@ export const createEventMoment = withTransaction(async (req, res, transaction) =
             }
         }
 
-        // Send mention notifications
+        // Send mention notifications to Supabase (realtime + push)
         if (caption_post) {
-            const mentionedUsernames = [...new Set((caption_post.match(/@(\w+)/g) || []).map(m => m.slice(1)))];
-            if (mentionedUsernames.length) {
-                const mentionedUsers = await db.query(
-                    `SELECT id, username FROM ir_users WHERE username IN (:usernames) AND (is_deleted IS NULL OR is_deleted = 0)`,
-                    { replacements: { usernames: mentionedUsernames }, type: db.QueryTypes.SELECT }
-                );
-                for (const u of mentionedUsers) {
-                    if (u.id === users_id) continue;
-                    await generateNotificationMessage({
-                        users_id: u.id,
-                        source_id: post.id,
-                        created_at: dateToEpochTime(req.headers["x-date-for"]),
-                        type: 9,
-                    });
-                }
-            }
+            sendMentionNotificationsToSupabase({
+                caption: caption_post,
+                actorId: users_id,
+                postSlug: post.slug,
+                referenceType: 'moment',
+                createdAt: dateToEpochTime(req.headers["x-date-for"]),
+            });
         }
 
         return responseApi(res, [{ post_slug: post.slug }], null, "Moment created", 0);
